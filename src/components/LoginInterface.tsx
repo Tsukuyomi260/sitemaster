@@ -1,19 +1,31 @@
 import React, { useState, MouseEvent, ChangeEvent } from 'react';
 import { Eye, EyeOff, User, Lock, BookOpen } from 'lucide-react';
 import SplitText from './SplitText';
+import ShinyText from './ShinyText';
 
-export default function LoginInterface() {
+interface LoginInterfaceProps {
+  onLogin: (username: string, password: string) => boolean;
+}
+
+const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState('student');
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   });
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
-    console.log('Connexion:', { ...formData, userType });
-    // Simulation de connexion réussie
-    alert(`Connexion réussie en tant que ${userType === 'student' ? 'Étudiant' : 'Enseignant'}`);
+    setError('');
+    if (userType !== 'student') {
+      setError('Seule la connexion étudiant est disponible pour le test.');
+      return;
+    }
+    const success = onLogin(formData.username, formData.password);
+    if (!success) {
+      setError('Identifiants incorrects.');
+    }
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -26,7 +38,6 @@ export default function LoginInterface() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-900 rounded-2xl mb-4">
@@ -53,7 +64,6 @@ export default function LoginInterface() {
 
         {/* Login Form */}
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-200">
-          
           {/* User Type Toggle */}
           <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
             <button
@@ -81,7 +91,6 @@ export default function LoginInterface() {
           </div>
 
           <div className="space-y-6">
-            
             {/* Username Field */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
@@ -136,13 +145,18 @@ export default function LoginInterface() {
               </a>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="text-red-600 text-sm text-center font-medium">{error}</div>
+            )}
+
             {/* Submit Button */}
             <button
               type="button"
               onClick={handleSubmit}
               className="w-full bg-slate-900 text-white py-3 px-4 rounded-xl font-medium hover:bg-slate-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              Se connecter
+              <ShinyText text="Se connecter" />
             </button>
           </div>
 
@@ -159,4 +173,6 @@ export default function LoginInterface() {
       </div>
     </div>
   );
-}
+};
+
+export default LoginInterface;
