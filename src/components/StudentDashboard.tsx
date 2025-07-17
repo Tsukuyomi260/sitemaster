@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  BookOpen, 
-  Calendar, 
-  CheckCircle, 
-  Clock, 
-  Award, 
-  FileText, 
-  Play, 
+import {
+  BookOpen,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Award,
+  FileText,
+  Play,
   Download,
   Bell,
   User,
@@ -72,6 +72,7 @@ interface StudentDashboardProps {
 
 export default function StudentDashboard({ studentName, onLogout }: StudentDashboardProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Données fictives
   const courses: Course[] = [
@@ -188,20 +189,20 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
         </div>
         <span className={`w-3 h-3 rounded-full ${course.color}`}></span>
       </div>
-      
+
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-slate-600">Progression</span>
           <span className="text-sm font-medium text-slate-900">{course.progress}%</span>
         </div>
         <div className="w-full bg-slate-200 rounded-full h-2">
-          <div 
+          <div
             className={`h-2 rounded-full ${course.color}`}
             style={{ width: `${course.progress}%` }}
           ></div>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between">
         <span className="text-xs text-slate-500">Échéance: {course.nextDeadline}</span>
         <button className="text-sm text-slate-700 hover:text-slate-900 font-medium">
@@ -251,8 +252,8 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-slate-200 z-10">
+      {/* Sidebar desktop */}
+      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-slate-200 z-10 hidden md:block">
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-8">
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
@@ -263,7 +264,6 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
               <p className="text-xs text-slate-600">Espace Étudiant</p>
             </div>
           </div>
-
           <nav className="space-y-2">
             {menuItems.map((item) => (
               <button
@@ -281,7 +281,6 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
             ))}
           </nav>
         </div>
-
         <div className="absolute bottom-0 w-full p-6 border-t border-slate-200">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
@@ -292,7 +291,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
               <p className="text-xs text-slate-600">Étudiant Master</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onLogout}
             className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-all duration-200"
           >
@@ -302,8 +301,83 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
         </div>
       </div>
 
+      {/* Burger menu mobile */}
+      <div className="md:hidden flex items-center p-4 bg-white shadow-sm sticky top-0 z-20">
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-2 rounded-md text-slate-700 hover:bg-slate-100 focus:outline-none"
+          aria-label="Ouvrir le menu"
+        >
+          {/* Icône burger */}
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+        <span className="ml-4 font-bold text-lg text-slate-900">Plateforme Master</span>
+      </div>
+
+      {/* Drawer mobile */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-40 flex">
+          {/* Overlay */}
+          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setIsMobileMenuOpen(false)} />
+          {/* Drawer */}
+          <div className="relative w-64 bg-white h-full shadow-lg p-6 animate-slide-in-left">
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-md text-slate-700 hover:bg-slate-100"
+              aria-label="Fermer le menu"
+            >
+              {/* Icône croix */}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div className="flex items-center space-x-3 mb-8 mt-2">
+              <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-slate-900">Plateforme Master</h1>
+                <p className="text-xs text-slate-600">Espace Étudiant</p>
+              </div>
+            </div>
+            <nav className="space-y-2">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+            </nav>
+            <div className="mt-8 border-t pt-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-slate-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-slate-900">{studentName}</p>
+                  <p className="text-xs text-slate-600">Étudiant Master</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); onLogout(); }}
+                className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-all duration-200"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Déconnexion</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <div className="ml-64 p-8">
+      <div className="p-4 md:ml-64">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -328,28 +402,28 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
           <div className="space-y-8">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <StatCard 
+              <StatCard
                 icon={BookOpen}
                 title="Cours actifs"
                 value="3"
                 subtitle="En progression"
                 color="bg-blue-500"
               />
-              <StatCard 
+              <StatCard
                 icon={ClipboardCheck}
                 title="Devoirs à rendre"
                 value="2"
                 subtitle="Cette semaine"
                 color="bg-orange-500"
               />
-              <StatCard 
+              <StatCard
                 icon={Award}
                 title="Moyenne générale"
                 value="16.2"
                 subtitle="Sur 20"
                 color="bg-green-500"
               />
-              <StatCard 
+              <StatCard
                 icon={Calendar}
                 title="Jours restants"
                 value="45"
@@ -378,7 +452,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
                   ))}
                 </div>
               </div>
-              
+
               <div>
                 <h2 className="text-xl font-semibold text-slate-900 mb-4">Résultats récents</h2>
                 <div className="space-y-3">
