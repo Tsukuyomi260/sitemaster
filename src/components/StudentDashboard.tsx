@@ -78,8 +78,8 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
   const courses: Course[] = [
     {
       id: 1,
-      title: 'Intelligence Artificielle',
-      instructor: 'Dr. Martin',
+      title: "Psychologie de l'enfant et de l'adolescent",
+      instructor: 'Dr. GNONLONFOUN Jean Marc',
       progress: 75,
       nextDeadline: '2025-07-20',
       status: 'En cours',
@@ -87,8 +87,8 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
     },
     {
       id: 2,
-      title: 'Développement Web Avancé',
-      instructor: 'Prof. Laurent',
+      title: 'Chimie des aliments',
+      instructor: 'Dr. Guevarra NONVIHO',
       progress: 90,
       nextDeadline: '2025-07-25',
       status: 'Presque terminé',
@@ -96,8 +96,8 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
     },
     {
       id: 3,
-      title: 'Gestion de Projet',
-      instructor: 'Dr. Sophie',
+      title: 'Alimentation humaine',
+      instructor: 'Dr. KLOTOE Jean Robert',
       progress: 45,
       nextDeadline: '2025-07-30',
       status: 'En cours',
