@@ -7,7 +7,7 @@ function App() {
   const [studentName, setStudentName] = useState('');
 
   // Identifiants fictifs
-  const fakeStudent = { username: 'etudiant', password: 'test123', name: 'Marie Dubois' };
+  const fakeStudent = { username: 'etudiant', password: 'test123', name: 'AVOCE Elodie' };
 
   const handleLogin = (username: string, password: string) => {
     if (username === fakeStudent.username && password === fakeStudent.password) {
