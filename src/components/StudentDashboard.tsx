@@ -127,6 +127,42 @@ interface Settings {
   };
 }
 
+// AJOUTER APRÈS LES IMPORTS
+const coursParSemestre = [
+  {
+    semestre: 'Semestre 1',
+    cours: [
+      { nom: "PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT", fichier: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT.pdf" },
+      { nom: "PSYCHOLOGIE DE L'APPRENTISSAGE", fichier: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE.pdf" },
+      { nom: "Administration des etablissements eftp et gpec en eftp", fichier: "03 S1 Administration des etablissements eftp et gpec en eftp.pdf" },
+      { nom: "Etude des Textes Fondamentaux de l'EFTP", fichier: "04 S1 Etude des Textes Fondamentaux de l'EFTP.pdf" },
+      { nom: "GEOGRAPHIE DE L'EFTP", fichier: "05 S1 GEOGRAPHIE DE L'EFTP.pdf" },
+      { nom: "Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP", fichier: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP.pdf" },
+      { nom: "Théorie didactique", fichier: "07 S1 Théorie didactique.pdf" },
+      { nom: "Fondements de la Didactique des Disciplines de l'EFTP", fichier: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP.pdf" },
+      { nom: "Anglais Technique", fichier: "09 S1 Anglais Technique.pdf" },
+      { nom: "Communication scientifique en anglais", fichier: "10 S1 Communication scientifique en anglais.pdf" },
+      { nom: "Projet apprenant", fichier: "11 S1 Projet apprenant.pdf" },
+    ]
+  },
+  {
+    semestre: 'Semestre 2',
+    cours: [
+      { nom: "Délinquance Juvénile", fichier: "01 S2 Délinquance Juvénile.pdf" },
+      { nom: "Epistomologie et science de l'education et de la formation", fichier: "02 S2 Epistomologie et science de l'education et de la formation.pdf" },
+      { nom: "Gestion de classes en situation formelle dans l'EFTP", fichier: "03 S2 Gestion de classes en situation formelle dans l'EFTP.pdf" },
+      { nom: "Gestion de classes de contexte de formation professionnelle", fichier: "04 S2 Gestion de classes de contexte de formation professionnelle.pdf" },
+      { nom: "Didactique de la matière en EFTP", fichier: "05 S2 Didactique de la matière en EFTP.pdf" },
+      { nom: "Docimologie", fichier: "06 S2 Docimologie.pdf" },
+      { nom: "Pedagogie et Andragogie", fichier: "07 - 08 S2 Pedagogie et Andragogie.pdf" },
+      { nom: "Sociologie de l'Education et Réalité de l'EFTP", fichier: "09 S2 Sociologie de l'Education et Réalité de l'EFTP.pdf" },
+      { nom: "Education des apprenants à besoin spécifiques", fichier: "10 S2 Education des apprenants à besoin spécifiques.pdf" },
+      { nom: "Ethique et déontologie de la profession enseignante", fichier: "11 S2 Ethique et déontologie de la profession enseignante.pdf" },
+      { nom: "Enseignement et formation en entreprise", fichier: "12 S2 Enseignement et formation en entreprise.pdf" },
+    ]
+  }
+];
+
 export default function StudentDashboard({ studentName, onLogout }: StudentDashboardProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -235,85 +271,20 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
     }
   ];
 
-  const assignments: Assignment[] = [
-    {
-      id: 1,
-      title: 'Analyse d\'un cas clinique',
-      course: 'Psychologie de l\'enfant et de l\'adolescent',
-      courseId: 1,
-      dueDate: '2025-07-20',
+  const assignments = coursParSemestre.flatMap((semestre, semestreIdx) =>
+    semestre.cours.map((cours, idx) => ({
+      id: semestreIdx * 100 + idx + 1,
+      title: `Devoir à rendre - ${cours.nom}`,
+      course: cours.nom,
+      courseId: semestreIdx * 100 + idx + 1,
+      dueDate: `2025-09-${(idx+10).toString().padStart(2, '0')}`,
       status: 'À rendre',
-      priority: 'high',
-      description: 'Analysez le cas clinique fourni en appliquant les concepts de développement cognitif étudiés en cours.',
+      priority: 'medium',
+      description: `Rendez le devoir du cours ${cours.nom}.`,
       type: 'Devoir',
       points: 20
-    },
-    {
-      id: 2,
-      title: 'Présentation orale - Développement social',
-      course: 'Psychologie de l\'enfant et de l\'adolescent',
-      courseId: 1,
-      dueDate: '2025-07-25',
-      status: 'En cours',
-      priority: 'medium',
-      description: 'Préparez une présentation de 15 minutes sur le développement social chez l\'adolescent.',
-      type: 'Devoir',
-      points: 15
-    },
-    {
-      id: 3,
-      title: 'Analyse d\'un aliment',
-      course: 'Chimie des aliments',
-      courseId: 2,
-      dueDate: '2025-07-25',
-      status: 'Rendu',
-      priority: 'high',
-      description: 'Analysez la composition chimique d\'un aliment de votre choix.',
-      type: 'TP',
-      points: 25,
-      submittedAt: '2025-07-23'
-    },
-    {
-      id: 4,
-      title: 'Plan alimentaire personnalisé',
-      course: 'Alimentation humaine',
-      courseId: 3,
-      dueDate: '2025-07-30',
-      status: 'En cours',
-      priority: 'medium',
-      description: 'Créez un plan alimentaire personnalisé pour un cas d\'étude donné.',
-      type: 'Projet',
-      points: 30
-    },
-    {
-      id: 5,
-      title: 'Rapport d\'observation',
-      course: 'Psychologie de l\'enfant et de l\'adolescent',
-      courseId: 1,
-      dueDate: '2025-08-05',
-      status: 'Noté',
-      priority: 'low',
-      description: 'Rédigez un rapport d\'observation d\'un enfant en situation de jeu.',
-      type: 'TP',
-      points: 20,
-      submittedAt: '2025-07-28',
-      grade: 17,
-      maxGrade: 20,
-      feedback: 'Excellent travail d\'observation. Analyse pertinente des comportements observés.'
-    },
-    {
-      id: 6,
-      title: 'Évaluation nutritionnelle',
-      course: 'Alimentation humaine',
-      courseId: 3,
-      dueDate: '2025-08-02',
-      status: 'À rendre',
-      priority: 'high',
-      description: 'Réalisez une évaluation nutritionnelle complète d\'un patient.',
-      type: 'TP',
-      points: 25
-    }
-  ];
+    }))
+  );
 
   const recentResults: Result[] = [
     {
@@ -535,7 +506,6 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
     { id: 'dashboard', label: 'Tableau de bord', icon: Home },
     { id: 'courses', label: 'Mes cours', icon: BookOpen },
     { id: 'assignments', label: 'Devoirs', icon: ClipboardCheck },
-    { id: 'results', label: 'Résultats', icon: BarChart3 },
     { id: 'profile', label: 'Profil', icon: User },
     { id: 'settings', label: 'Paramètres', icon: Settings }
   ];
@@ -1767,7 +1737,6 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
                   {activeTab === 'dashboard' ? 'Tableau de bord' :
                    activeTab === 'courses' ? 'Mes cours' :
                    activeTab === 'assignments' ? 'Devoirs' :
-                   activeTab === 'results' ? 'Résultats' :
                    activeTab === 'profile' ? 'Profil' : 'Paramètres'}
                 </h1>
                 <p className="text-slate-600 mt-1">Bienvenue, {studentName}</p>
@@ -1858,21 +1827,30 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
                     <div className="flex items-center justify-between mb-6">
                       <div>
                         <h2 className="text-2xl font-bold text-slate-900">Mes cours</h2>
-                        <p className="text-slate-600">Gérez vos cours et suivez votre progression</p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-                          Filtrer
-                        </button>
-                        <button className="px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors">
-                          Rechercher
-                        </button>
+                        <p className="text-slate-600">Téléchargez vos cours par semestre</p>
                       </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {courses.map(course => (
-                        <DetailedCourseCard key={course.id} course={course} />
+                    <div className="space-y-8">
+                      {coursParSemestre.map((semestre) => (
+                        <div key={semestre.semestre}>
+                          <h3 className="text-xl font-semibold text-slate-900 mb-4">{semestre.semestre}</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {semestre.cours.map((cours) => (
+                              <div key={cours.fichier} className="bg-white rounded-xl p-4 border border-slate-200 flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium text-slate-900">{cours.nom}</p>
+                                </div>
+                                <a
+                                  href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${cours.fichier}`}
+                                  download
+                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                  Télécharger
+                                </a>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -2008,142 +1986,6 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
                   </div>
                 )}
                 
-                {activeTab === 'results' && (
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h2 className="text-2xl font-bold text-slate-900">Mes résultats</h2>
-                        <p className="text-slate-600">Suivez vos performances et votre progression</p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-                          Exporter
-                        </button>
-                        <button className="px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors">
-                          Historique
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Moyenne générale */}
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white mb-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium mb-2">Moyenne générale</h3>
-                          <div className="text-4xl font-bold mb-1">
-                            {calculateAverage().toFixed(1)}/20
-                          </div>
-                          <p className="text-blue-100">
-                            Basée sur {recentResults.length} évaluations
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-6xl mb-2">
-                            {calculateAverage() >= 16 ? '🎉' : 
-                             calculateAverage() >= 12 ? '👍' : '📝'}
-                          </div>
-                          <p className="text-blue-100 text-sm">
-                            {calculateAverage() >= 16 ? 'Excellent !' :
-                             calculateAverage() >= 12 ? 'Bon travail !' : 'Continuez vos efforts !'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Statistiques détaillées */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">Total évaluations</p>
-                            <p className="text-2xl font-bold text-slate-900">{recentResults.length}</p>
-                          </div>
-                          <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                            <Award className="w-5 h-5 text-slate-600" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">Meilleure note</p>
-                            <p className="text-2xl font-bold text-green-600">
-                              {Math.max(...recentResults.map(r => r.score))}/{Math.max(...recentResults.map(r => r.maxScore))}
-                            </p>
-                          </div>
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Award className="w-5 h-5 text-green-600" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">Notes ≥ 16</p>
-                            <p className="text-2xl font-bold text-green-600">
-                              {recentResults.filter(r => (r.score / r.maxScore) * 20 >= 16).length}
-                            </p>
-                          </div>
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">Notes &lt; 12</p>
-                            <p className="text-2xl font-bold text-red-600">
-                              {recentResults.filter(r => (r.score / r.maxScore) * 20 < 12).length}
-                            </p>
-                          </div>
-                          <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-red-600" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Répartition par cours */}
-                    <div className="bg-white rounded-2xl p-6 border border-slate-200 mb-6">
-                      <h3 className="font-semibold text-slate-900 mb-4">Moyennes par cours</h3>
-                      <div className="space-y-4">
-                        {Array.from(new Set(recentResults.map(r => r.course))).map(course => {
-                          const courseResults = recentResults.filter(r => r.course === course);
-                          const courseAverage = courseResults.reduce((sum, r) => {
-                            const percentage = (r.score / r.maxScore) * 20;
-                            return sum + (percentage * r.weight);
-                          }, 0) / courseResults.reduce((sum, r) => sum + r.weight, 0);
-                          
-                          return (
-                            <div key={course} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                              <div>
-                                <p className="font-medium text-slate-900">{course}</p>
-                                <p className="text-sm text-slate-600">{courseResults.length} évaluation(s)</p>
-                              </div>
-                              <div className="text-right">
-                                <p className={`text-lg font-bold ${courseAverage >= 16 ? 'text-green-600' : courseAverage >= 12 ? 'text-orange-600' : 'text-red-600'}`}>
-                                  {courseAverage.toFixed(1)}/20
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Liste des résultats */}
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-4">Tous mes résultats</h3>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {recentResults.map(result => (
-                          <ResultCard key={result.id} result={result} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {activeTab === 'profile' && (
                   <ProfileSection />
                 )}
@@ -2152,7 +1994,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
                   <SettingsSection />
                 )}
 
-                {activeTab !== 'courses' && activeTab !== 'assignments' && activeTab !== 'results' && activeTab !== 'profile' && activeTab !== 'settings' && (
+                {activeTab !== 'courses' && activeTab !== 'assignments' && activeTab !== 'profile' && activeTab !== 'settings' && (
                   <div className="bg-white rounded-2xl p-8 border border-slate-200">
                     <p className="text-slate-600">Contenu de l'onglet "{activeTab}" à développer...</p>
                   </div>
