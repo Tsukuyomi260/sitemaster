@@ -132,33 +132,45 @@ const coursParSemestre = [
   {
     semestre: 'Semestre 1',
     cours: [
-      { nom: "PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT", fichier: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT.pdf" },
-      { nom: "PSYCHOLOGIE DE L'APPRENTISSAGE", fichier: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE.pdf" },
-      { nom: "Administration des etablissements eftp et gpec en eftp", fichier: "03 S1 Administration des etablissements eftp et gpec en eftp.pdf" },
-      { nom: "Etude des Textes Fondamentaux de l'EFTP", fichier: "04 S1 Etude des Textes Fondamentaux de l'EFTP.pdf" },
-      { nom: "GEOGRAPHIE DE L'EFTP", fichier: "05 S1 GEOGRAPHIE DE L'EFTP.pdf" },
-      { nom: "Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP", fichier: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP.pdf" },
-      { nom: "Théorie didactique", fichier: "07 S1 Théorie didactique.pdf" },
-      { nom: "Fondements de la Didactique des Disciplines de l'EFTP", fichier: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP.pdf" },
-      { nom: "Anglais Technique", fichier: "09 S1 Anglais Technique.pdf" },
-      { nom: "Communication scientifique en anglais", fichier: "10 S1 Communication scientifique en anglais.pdf" },
-      { nom: "Projet apprenant", fichier: "11 S1 Projet apprenant.pdf" },
+      {
+        nom: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT",
+        fichier: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT.pdf",
+        professeur: "Dr (MC) Jean Marc GNONLONFOUN"
+      },
+      {
+        nom: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE",
+        fichier: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE.pdf",
+        professeur: "Dr (MC) Jean Marc GNONLONFOUN"
+      },
+      {
+        nom: "03 S1 Administration des Etablissements d'EFTP et GPEC en EFTP",
+        fichier: "03 S1 Administration des etablissements eftp et gpec en eftp.pdf",
+        professeur: "Dr (MC) Jean Marc GNONLONFOUN"
+      },
+      { nom: "04 S1 Etude des Textes Fondamentaux de l'EFTP", fichier: "04 S1 Etude des Textes Fondamentaux de l'EFTP.pdf" },
+      { nom: "05 S1 GEOGRAPHIE DE L'EFTP", fichier: "05 S1 GEOGRAPHIE DE L'EFTP.pdf" },
+      { nom: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP", fichier: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP.pdf" },
+      { nom: "07 S1 Théorie didactique", fichier: "07 S1 Théorie didactique.pdf" },
+      { nom: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP", fichier: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP.pdf" },
+      { nom: "09 S1 Anglais Technique", fichier: "09 S1 Anglais Technique.pdf" },
+      { nom: "10 S1 Communication scientifique en anglais", fichier: "10 S1 Communication scientifique en anglais.pdf" },
+      { nom: "11 S1 Projet apprenant", fichier: "11 S1 Projet apprenant.pdf" }
     ]
   },
   {
     semestre: 'Semestre 2',
     cours: [
-      { nom: "Délinquance Juvénile", fichier: "01 S2 Délinquance Juvénile.pdf" },
-      { nom: "Epistomologie et science de l'education et de la formation", fichier: "02 S2 Epistomologie et science de l'education et de la formation.pdf" },
-      { nom: "Gestion de classes en situation formelle dans l'EFTP", fichier: "03 S2 Gestion de classes en situation formelle dans l'EFTP.pdf" },
-      { nom: "Gestion de classes de contexte de formation professionnelle", fichier: "04 S2 Gestion de classes de contexte de formation professionnelle.pdf" },
-      { nom: "Didactique de la matière en EFTP", fichier: "05 S2 Didactique de la matière en EFTP.pdf" },
-      { nom: "Docimologie", fichier: "06 S2 Docimologie.pdf" },
-      { nom: "Pedagogie et Andragogie", fichier: "07 - 08 S2 Pedagogie et Andragogie.pdf" },
-      { nom: "Sociologie de l'Education et Réalité de l'EFTP", fichier: "09 S2 Sociologie de l'Education et Réalité de l'EFTP.pdf" },
-      { nom: "Education des apprenants à besoin spécifiques", fichier: "10 S2 Education des apprenants à besoin spécifiques.pdf" },
-      { nom: "Ethique et déontologie de la profession enseignante", fichier: "11 S2 Ethique et déontologie de la profession enseignante.pdf" },
-      { nom: "Enseignement et formation en entreprise", fichier: "12 S2 Enseignement et formation en entreprise.pdf" },
+      { nom: "01 S2 Délinquance Juvénile", fichier: "01 S2 Délinquance Juvénile.pdf" },
+      { nom: "02 S2 Epistomologie et science de l'education et de la formation", fichier: "02 S2 Epistomologie et science de l'education et de la formation.pdf" },
+      { nom: "03 S2 Gestion de classes en situation formelle dans l'EFTP", fichier: "03 S2 Gestion de classes en situation formelle dans l'EFTP.pdf" },
+      { nom: "04 S2 Gestion de classes de contexte de formation professionnelle", fichier: "04 S2 Gestion de classes de contexte de formation professionnelle.pdf" },
+      { nom: "05 S2 Didactique de la matière en EFTP", fichier: "05 S2 Didactique de la matière en EFTP.pdf" },
+      { nom: "06 S2 Docimologie", fichier: "06 S2 Docimologie.pdf" },
+      { nom: "07 - 08 S2 Pedagogie et Andragogie", fichier: "07 - 08 S2 Pedagogie et Andragogie.pdf" },
+      { nom: "09 S2 Sociologie de l'Education et Réalité de l'EFTP", fichier: "09 S2 Sociologie de l'Education et Réalité de l'EFTP.pdf" },
+      { nom: "10 S2 Education des apprenants à besoin spécifiques", fichier: "10 S2 Education des apprenants à besoin spécifiques.pdf" },
+      { nom: "11 S2 Ethique et déontologie de la profession enseignante", fichier: "11 S2 Ethique et déontologie de la profession enseignante.pdf" },
+      { nom: "12 S2 Enseignement et formation en entreprise", fichier: "12 S2 Enseignement et formation en entreprise.pdf" }
     ]
   }
 ];
@@ -248,8 +260,8 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
   const courses: Course[] = [
     {
       id: 1,
-      title: "Psychologie de l'enfant et de l'adolescent",
-      instructor: 'Dr. GNONLONFOUN Jean Marc',
+      title: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT",
+      instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
       progress: 75,
       nextDeadline: '2025-07-20',
       status: 'En cours',
@@ -263,6 +275,36 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
     },
     {
       id: 2,
+      title: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE",
+      instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
+      progress: 90,
+      nextDeadline: '2025-07-25',
+      status: 'Presque terminé',
+      color: 'bg-green-500',
+      description: 'Analyse des processus d\'apprentissage chez l\'enfant et l\'adolescent',
+      credits: 4,
+      semester: 'Semestre 1',
+      lastActivity: 'Aujourd\'hui',
+      assignmentsCount: 4,
+      completedAssignments: 4
+    },
+    {
+      id: 3,
+      title: "03 S1 Administration des Etablissements d'EFTP et GPEC en EFTP",
+      instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
+      progress: 45,
+      nextDeadline: '2025-07-30',
+      status: 'En cours',
+      color: 'bg-orange-500',
+      description: 'Gestion et administration des établissements d\'EFTP, GPEC',
+      credits: 5,
+      semester: 'Semestre 1',
+      lastActivity: 'Il y a 1 semaine',
+      assignmentsCount: 2,
+      completedAssignments: 1
+    },
+    {
+      id: 4,
       title: 'Chimie des aliments',
       instructor: 'Dr. Guevarra NONVIHO',
       progress: 90,
@@ -277,7 +319,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
       completedAssignments: 4
     },
     {
-      id: 3,
+      id: 5,
       title: 'Alimentation humaine',
       instructor: 'Dr. KLOTOE Jean Robert',
       progress: 45,
@@ -1624,7 +1666,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
         <div className="p-6">
                       <div className="flex items-center space-x-3 mb-8">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo-enset.jpg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
+                <img src="/logo-enset.png" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
               </div>
               <div>
                 <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MRTDDEFTP</h1>
@@ -1698,7 +1740,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
             </button>
             <div className="flex items-center space-x-3 mb-8 mt-2">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo-enset.jpg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
+                <img src="/logo-enset.png" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
               </div>
               <div>
                 <h1 className="font-bold text-slate-900">ENSET-MRTDDEFTP</h1>
@@ -1858,6 +1900,9 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
                               <div key={cours.fichier} className="bg-white rounded-xl p-4 border border-slate-200 flex items-center justify-between">
                                 <div>
                                   <p className="font-medium text-slate-900">{cours.nom}</p>
+                                  {cours.professeur && (
+                                    <p className="text-xs text-slate-600">{cours.professeur}</p>
+                                  )}
                                 </div>
                                 <a
                                   href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${cours.fichier}`}
