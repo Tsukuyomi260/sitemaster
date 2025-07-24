@@ -36,18 +36,11 @@ function App() {
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between">
           {/* Logo et nom */}
           <div className="flex items-center space-x-4 mb-4 md:mb-0">
-            <img src="/logo-enset.jpg" alt="Logo ENSET" className="w-12 h-12 rounded" />
+            <img src="/logo-enset.png" alt="Logo ENSET" className="w-12 h-12 rounded" />
             <div>
               <div className="font-bold text-lg">ENSET-MRTDDEFTP</div>
               <div className="text-xs text-slate-300">Ecole Normale Supérieure de l'Enseignement Technique</div>
             </div>
-          </div>
-          {/* Liens utiles */}
-          <div className="flex space-x-6 mb-4 md:mb-0">
-            <a href="/" className="hover:underline">Accueil</a>
-            <a href="/dashboard" className="hover:underline">Tableau de bord</a>
-            <a href="/cours" className="hover:underline">Cours</a>
-            <a href="/contact" className="hover:underline">Contact</a>
           </div>
           {/* Contact et copyright */}
           <div className="text-xs text-slate-400 text-center md:text-right">
