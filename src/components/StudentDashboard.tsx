@@ -163,6 +163,28 @@ const coursParSemestre = [
   }
 ];
 
+// Fonction de fabrique pour Assignment
+function createAssignment(
+  id: number,
+  title: string,
+  course: string,
+  courseId: number,
+  dueDate: string
+): Assignment {
+  return {
+    id,
+    title,
+    course,
+    courseId,
+    dueDate,
+    status: 'À rendre',
+    priority: 'medium',
+    description: `Rendez le devoir du cours ${course}.`,
+    type: 'Devoir',
+    points: 20
+  };
+}
+
 export default function StudentDashboard({ studentName, onLogout }: StudentDashboardProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -271,19 +293,16 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
     }
   ];
 
-  const assignments = coursParSemestre.flatMap((semestre, semestreIdx) =>
-    semestre.cours.map((cours, idx) => ({
-      id: semestreIdx * 100 + idx + 1,
-      title: `Devoir à rendre - ${cours.nom}`,
-      course: cours.nom,
-      courseId: semestreIdx * 100 + idx + 1,
-      dueDate: `2025-09-${(idx+10).toString().padStart(2, '0')}`,
-      status: 'À rendre',
-      priority: 'medium',
-      description: `Rendez le devoir du cours ${cours.nom}.`,
-      type: 'Devoir',
-      points: 20
-    }))
+  const assignments: Assignment[] = coursParSemestre.flatMap((semestre, semestreIdx) =>
+    semestre.cours.map((cours, idx) =>
+      createAssignment(
+        semestreIdx * 100 + idx + 1,
+        `Devoir à rendre - ${cours.nom}`,
+        cours.nom,
+        semestreIdx * 100 + idx + 1,
+        `2025-09-${(idx+10).toString().padStart(2, '0')}`
+      )
+    )
   );
 
   const recentResults: Result[] = [
@@ -1604,12 +1623,12 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
       <div className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-800 shadow-lg border-r border-slate-200 dark:border-slate-700 z-10 hidden md:block">
         <div className="p-6">
                       <div className="flex items-center space-x-3 mb-8">
-              <div className="w-10 h-10 bg-slate-900 dark:bg-slate-700 rounded-xl flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
+                <img src="/logo.jpg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
               </div>
               <div>
-                <h1 className="font-bold text-slate-900 dark:text-white">Plateforme Master</h1>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Espace Étudiant</p>
+                <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MRTDDEFTP</h1>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Espace Étudiant MRTDDEFTP</p>
               </div>
             </div>
           <nav className="space-y-2">
@@ -1659,7 +1678,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
           {/* Icône burger */}
           <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
-        <span className="ml-4 font-bold text-lg text-slate-900">Plateforme Master</span>
+        <span className="ml-4 font-bold text-lg text-slate-900">ENSET-MRTDDEFTP</span>
       </div>
 
       {/* Drawer mobile */}
@@ -1678,12 +1697,12 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
             <div className="flex items-center space-x-3 mb-8 mt-2">
-              <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
+                <img src="/logo.jpg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
               </div>
               <div>
-                <h1 className="font-bold text-slate-900">Plateforme Master</h1>
-                <p className="text-xs text-slate-600">Espace Étudiant</p>
+                <h1 className="font-bold text-slate-900">ENSET-MRTDDEFTP</h1>
+                <p className="text-xs text-slate-600">Espace Étudiant MRTDDEFTP</p>
               </div>
             </div>
             <nav className="space-y-2">
