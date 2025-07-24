@@ -40,7 +40,7 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src="/logo-enset.png" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-20 h-20 mx-auto mb-4" />
+          <img src="/logo-enset.jpg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-20 h-20 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-900 mb-2">
             <SplitText 
               text="ENSET-MRTDDEFTP"

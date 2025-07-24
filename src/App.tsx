@@ -32,21 +32,13 @@ function App() {
           <LoginInterface onLogin={handleLogin} />
         )}
       </div>
-      <footer className="bg-slate-900 text-white py-8 mt-12">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between">
-          {/* Logo et nom */}
-          <div className="flex items-center space-x-4 mb-4 md:mb-0">
-            <img src="/logo-enset.png" alt="Logo ENSET" className="w-12 h-12 rounded" />
-            <div>
-              <div className="font-bold text-lg">ENSET-MRTDDEFTP</div>
-              <div className="text-xs text-slate-300">Ecole Normale Supérieure de l'Enseignement Technique</div>
-            </div>
-          </div>
-          {/* Contact et copyright */}
-          <div className="text-xs text-slate-400 text-center md:text-right">
-            <div>Contact : master.mrtddeftp@enset.bj</div>
-            <div>© {new Date().getFullYear()} ENSET-MRTDDEFTP. Tous droits réservés.</div>
-          </div>
+      <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">
+        <div className="container mx-auto px-4 flex flex-col items-center justify-center">
+          <img src="/logo-enset.jpg" alt="Logo ENSET" className="w-16 h-16 rounded mb-2" />
+          <div className="font-bold text-lg text-center">ENSET-MRTDDEFTP</div>
+          <div className="text-xs text-slate-500 text-center mb-2">Ecole Normale Supérieure de l'Enseignement Technique</div>
+          <div className="text-xs text-slate-400 text-center mb-1">Contact : master.mrtddeftp@enset.bj</div>
+          <div className="text-xs text-slate-400 text-center">© {new Date().getFullYear()} ENSET-MRTDDEFTP. Tous droits réservés.</div>
         </div>
       </footer>
     </div>
