@@ -1624,7 +1624,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
         <div className="p-6">
                       <div className="flex items-center space-x-3 mb-8">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo.jpg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
+                <img src="/logo-enset.jpeg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
               </div>
               <div>
                 <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MRTDDEFTP</h1>
@@ -1698,7 +1698,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
             </button>
             <div className="flex items-center space-x-3 mb-8 mt-2">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo.jpg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
+                <img src="/logo-enset.jpeg" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
               </div>
               <div>
                 <h1 className="font-bold text-slate-900">ENSET-MRTDDEFTP</h1>
