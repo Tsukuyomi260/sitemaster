@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginStudent } from './api';
+import { loginStudent } from '../api';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
