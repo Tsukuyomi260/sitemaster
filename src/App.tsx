@@ -1,81 +1,110 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
-import AdminDashboard from './components/AdminDashboard'; // à créer
+import AdminDashboard from './components/AdminDashboard';
+import { loginUser, getCurrentUser, signOut } from './api';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [studentName, setStudentName] = useState('');
-  const [isTeacher, setIsTeacher] = useState(false);
-  const [teacherName, setTeacherName] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminName, setAdminName] = useState('');
+  const [user, setUser] = useState<any>(null);
+  const [userType, setUserType] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
-  // Identifiants fictifs
-  const fakeStudent = { username: 'etudiant', password: 'test123', name: 'AVOCE Elodie' };
-  const teachers = [
-    { username: 'enseignant1', password: 'enset2024a', name: 'Enseignant 1' },
-    { username: 'enseignant2', password: 'enset2024b', name: 'Enseignant 2' },
-    { username: 'enseignant3', password: 'enset2024c', name: 'Enseignant 3' },
-  ];
-  const admins = [
-    { username: 'admin1', password: 'ensetadmin1', name: 'Administrateur 1' },
-    { username: 'admin2', password: 'ensetadmin2', name: 'Administrateur 2' },
-  ];
+  // Vérifier si l'utilisateur est déjà connecté au chargement
+  useEffect(() => {
+    checkUser();
+  }, []);
 
-  const handleLogin = (username: string, password: string, userType?: string) => {
-    if (userType === 'admin') {
-      const found = admins.find(a => a.username === username && a.password === password);
-      if (found) {
+  const checkUser = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
         setIsLoggedIn(true);
-        setIsAdmin(true);
-        setAdminName(found.name);
-        return true;
+        // Déterminer le type d'utilisateur basé sur l'email ou les métadonnées
+        determineUserType(currentUser);
       }
-      return false;
+    } catch (error) {
+      console.error('Erreur lors de la vérification de l\'utilisateur:', error);
+    } finally {
+      setLoading(false);
     }
-    if (userType === 'teacher') {
-      const found = teachers.find(t => t.username === username && t.password === password);
-      if (found) {
-        setIsLoggedIn(true);
-        setIsTeacher(true);
-        setTeacherName(found.name);
-        return true;
-      }
-      return false;
+  };
+
+  const determineUserType = (user: any) => {
+    // Logique pour déterminer le type d'utilisateur
+    // Tu peux adapter cette logique selon ta structure de données
+    const email = user.email?.toLowerCase() || '';
+    
+    if (email.includes('admin') || email.includes('administrateur')) {
+      setUserType('admin');
+    } else if (email.includes('enseignant') || email.includes('teacher') || email.includes('prof')) {
+      setUserType('teacher');
+    } else {
+      setUserType('student');
     }
-    if (username === fakeStudent.username && password === fakeStudent.password) {
+  };
+
+  const handleLogin = async (username: string, password: string, userType?: string) => {
+    try {
+      setLoading(true);
+      const userData = await loginUser(username, password);
+      setUser(userData);
       setIsLoggedIn(true);
-      setIsTeacher(false);
-      setStudentName(fakeStudent.name);
+      
+      // Utiliser le type spécifié ou le déterminer automatiquement
+      if (userType) {
+        setUserType(userType);
+      } else {
+        determineUserType(userData);
+      }
+      
       return true;
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      // Retourner le message d'erreur pour l'afficher à l'utilisateur
+      throw new Error(error.message || 'Erreur de connexion');
+    } finally {
+      setLoading(false);
     }
-    return false;
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setIsTeacher(false);
-    setIsAdmin(false);
-    setStudentName('');
-    setTeacherName('');
-    setAdminName('');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setIsLoggedIn(false);
+      setUser(null);
+      setUserType('');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto mb-4"></div>
+          <p className="text-slate-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="App min-h-screen flex flex-col">
       <div className="flex-1">
         {isLoggedIn ? (
-          isAdmin ? (
-            <AdminDashboard adminName={adminName} onLogout={handleLogout} />
-          ) : isTeacher ? (
-            <TeacherDashboard teacherName={teacherName} onLogout={handleLogout} />
+          userType === 'admin' ? (
+            <AdminDashboard adminName={user?.email || 'Administrateur'} onLogout={handleLogout} />
+          ) : userType === 'teacher' ? (
+            <TeacherDashboard teacherName={user?.email || 'Enseignant'} onLogout={handleLogout} />
           ) : (
-            <StudentDashboard studentName={studentName} onLogout={handleLogout} />
+            <StudentDashboard studentName={user?.email || 'Étudiant'} onLogout={handleLogout} />
           )
         ) : (
-          <LoginInterface onLogin={(username, password, userType) => handleLogin(username, password, userType)} />
+          <LoginInterface onLogin={handleLogin} />
         )}
       </div>
       <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">

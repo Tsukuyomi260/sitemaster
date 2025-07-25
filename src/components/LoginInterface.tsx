@@ -4,7 +4,7 @@ import SplitText from './SplitText';
 import ShinyText from './ShinyText';
 
 interface LoginInterfaceProps {
-  onLogin: (username: string, password: string, userType?: string) => boolean;
+  onLogin: (username: string, password: string, userType?: string) => Promise<boolean>;
 }
 
 const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
@@ -15,12 +15,22 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
+  const handleSubmit = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     setError('');
-    const success = onLogin(formData.username, formData.password, userType);
-    if (!success) {
-      setError('Identifiants incorrects.');
+    setLoading(true);
+    
+    try {
+      const success = await onLogin(formData.username, formData.password, userType);
+      if (!success) {
+        setError('Identifiants incorrects.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erreur de connexion');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,19 +97,20 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
             {/* Username Field */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
-                Nom d'utilisateur
+                Email
               </label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   id="username"
                   name="username"
-                  type="text"
+                  type="email"
                   required
                   value={formData.username}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-200 bg-slate-50 focus:bg-white"
-                  placeholder="Entrez votre nom d'utilisateur"
+                  className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all duration-200"
+                  placeholder="votre@email.com"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -118,50 +129,52 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-12 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-200 bg-slate-50 focus:bg-white"
-                  placeholder="Entrez votre mot de passe"
+                  className="w-full pl-12 pr-12 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all duration-200"
+                  placeholder="••••••••"
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors duration-200"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  disabled={loading}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Forgot Password */}
-            <div className="text-right">
-              <a href="#" className="text-sm text-slate-600 hover:text-slate-900 transition-colors duration-200">
-                Mot de passe oublié ?
-              </a>
-            </div>
-
             {/* Error Message */}
             {error && (
-              <div className="text-red-600 text-sm text-center font-medium">{error}</div>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
             )}
 
             {/* Submit Button */}
             <button
-              type="button"
+              type="submit"
               onClick={handleSubmit}
-              className="w-full bg-slate-900 text-white py-3 px-4 rounded-xl font-medium hover:bg-slate-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+              disabled={loading || !formData.username || !formData.password}
+              className="w-full bg-slate-900 text-white py-3 px-6 rounded-xl font-medium hover:bg-slate-800 focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ShinyText text="Se connecter" />
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Connexion en cours...
+                </div>
+              ) : (
+                'Se connecter'
+              )}
             </button>
           </div>
 
-          {/* Footer */}
-          <div className="mt-6 text-center text-sm text-slate-500">
-            Besoin d'aide ? Contactez l'administration
+          {/* Additional Info */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-slate-500">
+              Utilisez votre email et mot de passe ENSET-MASTERS
+            </p>
           </div>
-        </div>
-
-        {/* Additional Info */}
-        <div className="mt-6 text-center text-xs text-slate-500">
-          © 2025 ENSET-MASTERS. Tous droits réservés.
         </div>
       </div>
     </div>
