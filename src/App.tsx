@@ -60,10 +60,10 @@ function App() {
       <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">
         <div className="container mx-auto px-4 flex flex-col items-center justify-center">
           <img src="/logo-enset.png" alt="Logo ENSET" className="w-16 h-16 rounded mb-2" />
-          <div className="font-bold text-lg text-center">ENSET-MRTDDEFTP</div>
+          <div className="font-bold text-lg text-center">ENSET-MASTERS</div>
           <div className="text-xs text-slate-500 text-center mb-2">Ecole Normale Supérieure de l'Enseignement Technique</div>
           <div className="text-xs text-slate-400 text-center mb-1">Contact : master.mrtddeftp@enset.bj</div>
-          <div className="text-xs text-slate-400 text-center">© {new Date().getFullYear()} ENSET-MRTDDEFTP. Tous droits réservés.</div>
+          <div className="text-xs text-slate-400 text-center">© {new Date().getFullYear()} ENSET-MASTERS. Tous droits réservés.</div>
         </div>
       </footer>
     </div>

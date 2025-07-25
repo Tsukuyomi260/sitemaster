@@ -57,11 +57,11 @@ export default function TeacherDashboard({ teacherName, onLogout }: TeacherDashb
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-8">
             <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-              <img src="/logo-enset.png" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
+              <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
             </div>
             <div>
-              <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MRTDDEFTP</h1>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Espace Enseignant</p>
+              <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MASTERS</h1>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Espace Master</p>
             </div>
           </div>
           <nav className="space-y-2">

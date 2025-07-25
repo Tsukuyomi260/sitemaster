@@ -1685,11 +1685,11 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
         <div className="p-6">
                       <div className="flex items-center space-x-3 mb-8">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo-enset.png" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
+                <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
               </div>
               <div>
-                <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MRTDDEFTP</h1>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Espace Étudiant MRTDDEFTP</p>
+                <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MASTERS</h1>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Espace Master ENSET-MASTERS</p>
               </div>
             </div>
           <nav className="space-y-2">
@@ -1739,7 +1739,7 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
           {/* Icône burger */}
           <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
-        <span className="ml-4 font-bold text-lg text-slate-900">ENSET-MRTDDEFTP</span>
+        <span className="ml-4 font-bold text-lg text-slate-900">ENSET-MASTERS</span>
       </div>
 
       {/* Drawer mobile */}
@@ -1759,11 +1759,11 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
             </button>
             <div className="flex items-center space-x-3 mb-8 mt-2">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo-enset.png" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-full h-full" />
+                <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
               </div>
               <div>
-                <h1 className="font-bold text-slate-900">ENSET-MRTDDEFTP</h1>
-                <p className="text-xs text-slate-600">Espace Étudiant MRTDDEFTP</p>
+                <h1 className="font-bold text-slate-900">ENSET-MASTERS</h1>
+                <p className="text-xs text-slate-600">Espace Master ENSET-MASTERS</p>
               </div>
             </div>
             <nav className="space-y-2">

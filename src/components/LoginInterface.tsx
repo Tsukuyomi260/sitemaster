@@ -36,10 +36,10 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src="/logo-enset.png" alt="Logo ENSET-MRTDDEFTP" className="object-contain w-20 h-20 mx-auto mb-4" />
+          <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-20 h-20 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-900 mb-2">
             <SplitText 
-              text="ENSET-MRTDDEFTP"
+              text="ENSET-MASTERS"
               splitType="chars"
               delay={80}
               duration={0.8}
@@ -52,7 +52,7 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
             />
           </h1>
           <p className="text-slate-600">
-            Accédez à votre espace d'apprentissage
+            Accéder à votre espace Master
           </p>
         </div>
 
@@ -162,7 +162,7 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
 
         {/* Additional Info */}
         <div className="mt-6 text-center text-xs text-slate-500">
-          © 2025 ENSET-MRTDDEFTP. Tous droits réservés.
+          © 2025 ENSET-MASTERS. Tous droits réservés.
         </div>
       </div>
     </div>
