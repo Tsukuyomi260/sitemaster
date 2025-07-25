@@ -3,7 +3,7 @@ import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 import AdminDashboard from './components/AdminDashboard';
-import { loginUser, getCurrentUser, signOut } from './api';
+import { loginUser, getCurrentUser, signOut, getUserRole } from './api';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,8 +22,9 @@ function App() {
       if (currentUser) {
         setUser(currentUser);
         setIsLoggedIn(true);
-        // Déterminer le type d'utilisateur basé sur l'email ou les métadonnées
-        determineUserType(currentUser);
+        // Récupérer le rôle depuis Supabase
+        const role = await getUserRole(currentUser.id);
+        setUserType(role);
       }
     } catch (error) {
       console.error('Erreur lors de la vérification de l\'utilisateur:', error);
@@ -32,33 +33,16 @@ function App() {
     }
   };
 
-  const determineUserType = (user: any) => {
-    // Logique pour déterminer le type d'utilisateur
-    // Tu peux adapter cette logique selon ta structure de données
-    const email = user.email?.toLowerCase() || '';
-    
-    if (email.includes('admin') || email.includes('administrateur')) {
-      setUserType('admin');
-    } else if (email.includes('enseignant') || email.includes('teacher') || email.includes('prof')) {
-      setUserType('teacher');
-    } else {
-      setUserType('student');
-    }
-  };
-
-  const handleLogin = async (username: string, password: string, userType?: string) => {
+  const handleLogin = async (username: string, password: string) => {
     try {
       setLoading(true);
       const userData = await loginUser(username, password);
       setUser(userData);
       setIsLoggedIn(true);
       
-      // Utiliser le type spécifié ou le déterminer automatiquement
-      if (userType) {
-        setUserType(userType);
-      } else {
-        determineUserType(userData);
-      }
+      // Récupérer le rôle depuis Supabase
+      const role = await getUserRole(userData.id);
+      setUserType(role);
       
       return true;
     } catch (error: any) {
@@ -100,8 +84,23 @@ function App() {
             <AdminDashboard adminName={user?.email || 'Administrateur'} onLogout={handleLogout} />
           ) : userType === 'teacher' ? (
             <TeacherDashboard teacherName={user?.email || 'Enseignant'} onLogout={handleLogout} />
-          ) : (
+          ) : userType === 'student' ? (
             <StudentDashboard studentName={user?.email || 'Étudiant'} onLogout={handleLogout} />
+          ) : (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+              <div className="text-center">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-8 max-w-md">
+                  <h2 className="text-xl font-semibold text-red-800 mb-4">Accès non autorisé</h2>
+                  <p className="text-red-700 mb-4">Votre compte n'a pas de rôle défini. Veuillez contacter l'administration.</p>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+                  >
+                    Se déconnecter
+                  </button>
+                </div>
+              </div>
+            </div>
           )
         ) : (
           <LoginInterface onLogin={handleLogin} />
