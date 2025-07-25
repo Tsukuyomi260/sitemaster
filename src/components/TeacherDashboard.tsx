@@ -142,7 +142,10 @@ export default function TeacherDashboard({ teacherName, onLogout }: TeacherDashb
               {courses.map(course => (
                 <li key={course.id} className="py-2 flex items-center justify-between">
                   <span>{course.name}</span>
-                  <button onClick={() => handleDeleteCourse(course.id)} className="text-xs text-red-600 hover:underline">Supprimer</button>
+                  <div className="flex space-x-2">
+                    <button onClick={() => handleDeleteCourse(course.id)} className="text-xs text-red-600 hover:underline">Supprimer</button>
+                    <button className="text-xs text-slate-600 hover:underline">Masquer</button>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
+import AdminDashboard from './components/AdminDashboard'; // à créer
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [studentName, setStudentName] = useState('');
   const [isTeacher, setIsTeacher] = useState(false);
   const [teacherName, setTeacherName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminName, setAdminName] = useState('');
 
   // Identifiants fictifs
   const fakeStudent = { username: 'etudiant', password: 'test123', name: 'AVOCE Elodie' };
@@ -16,8 +19,22 @@ function App() {
     { username: 'enseignant2', password: 'enset2024b', name: 'Enseignant 2' },
     { username: 'enseignant3', password: 'enset2024c', name: 'Enseignant 3' },
   ];
+  const admins = [
+    { username: 'admin1', password: 'ensetadmin1', name: 'Administrateur 1' },
+    { username: 'admin2', password: 'ensetadmin2', name: 'Administrateur 2' },
+  ];
 
   const handleLogin = (username: string, password: string, userType?: string) => {
+    if (userType === 'admin') {
+      const found = admins.find(a => a.username === username && a.password === password);
+      if (found) {
+        setIsLoggedIn(true);
+        setIsAdmin(true);
+        setAdminName(found.name);
+        return true;
+      }
+      return false;
+    }
     if (userType === 'teacher') {
       const found = teachers.find(t => t.username === username && t.password === password);
       if (found) {
@@ -40,15 +57,19 @@ function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setIsTeacher(false);
+    setIsAdmin(false);
     setStudentName('');
     setTeacherName('');
+    setAdminName('');
   };
 
   return (
     <div className="App min-h-screen flex flex-col">
       <div className="flex-1">
         {isLoggedIn ? (
-          isTeacher ? (
+          isAdmin ? (
+            <AdminDashboard adminName={adminName} onLogout={handleLogout} />
+          ) : isTeacher ? (
             <TeacherDashboard teacherName={teacherName} onLogout={handleLogout} />
           ) : (
             <StudentDashboard studentName={studentName} onLogout={handleLogout} />

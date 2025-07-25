@@ -63,24 +63,23 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
             <button
               type="button"
               onClick={() => setUserType('student')}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                userType === 'student'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'student' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Étudiant
             </button>
             <button
               type="button"
               onClick={() => setUserType('teacher')}
-              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                userType === 'teacher'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'teacher' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Enseignant
+            </button>
+            <button
+              type="button"
+              onClick={() => setUserType('admin')}
+              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'admin' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Administrateur
             </button>
           </div>
 
