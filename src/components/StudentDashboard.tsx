@@ -32,6 +32,7 @@ interface Course {
   lastActivity: string;
   assignmentsCount: number;
   completedAssignments: number;
+  pdf?: string;
 }
 
 interface Assignment {
@@ -271,7 +272,8 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
       semester: 'Semestre 1',
       lastActivity: 'Il y a 2 jours',
       assignmentsCount: 3,
-      completedAssignments: 2
+      completedAssignments: 2,
+      pdf: '/cours/semestre1/01 S1 PSYCHOPEDAGOGIE DE L\'ENFANT ET DE L\'ADOLESCENT.pdf'
     },
     {
       id: 2,
@@ -286,7 +288,8 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
       semester: 'Semestre 1',
       lastActivity: 'Aujourd\'hui',
       assignmentsCount: 4,
-      completedAssignments: 4
+      completedAssignments: 4,
+      pdf: '/cours/semestre1/02 S1 PSYCHOLOGIE DE L\'APPRENTISSAGE.pdf'
     },
     {
       id: 3,
@@ -301,7 +304,8 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
       semester: 'Semestre 1',
       lastActivity: 'Il y a 1 semaine',
       assignmentsCount: 2,
-      completedAssignments: 1
+      completedAssignments: 1,
+      pdf: '/cours/semestre1/03 S1 Administration des etablissements eftp et gpec en eftp.pdf'
     },
     {
       id: 4,
@@ -618,9 +622,15 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
           >
             Voir le cours
           </button>
-          <button className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95">
+          <a
+            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
+            href={course.pdf}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Télécharger
-          </button>
+          </a>
         </div>
       </div>
     </div>
@@ -690,11 +700,28 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
           >
             Voir le cours
           </button>
-          <button className="text-sm font-medium px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95">
+          <a
+            className="text-sm font-medium px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
+            href={course.pdf}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Télécharger
-          </button>
+          </a>
         </div>
       </div>
+      {course.pdf && (
+        <a
+          href={course.pdf}
+          download
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mt-4"
+        >
+          Télécharger le PDF du cours
+        </a>
+      )}
     </div>
   );
 
@@ -974,14 +1001,6 @@ export default function StudentDashboard({ studentName, onLogout }: StudentDashb
               Rendre
             </button>
           )}
-          {assignment.status === 'En cours' && (
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-              Continuer
-            </button>
-          )}
-          <button className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm">
-            Voir détails
-          </button>
         </div>
         <div className="text-right">
           <p className="text-xs text-slate-500">Priorité</p>

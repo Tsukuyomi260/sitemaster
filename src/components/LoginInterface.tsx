@@ -4,7 +4,7 @@ import SplitText from './SplitText';
 import ShinyText from './ShinyText';
 
 interface LoginInterfaceProps {
-  onLogin: (username: string, password: string) => boolean;
+  onLogin: (username: string, password: string, userType?: string) => boolean;
 }
 
 const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
@@ -18,11 +18,7 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
 
   const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
     setError('');
-    if (userType !== 'student') {
-      setError('Seule la connexion étudiant est disponible pour le test.');
-      return;
-    }
-    const success = onLogin(formData.username, formData.password);
+    const success = onLogin(formData.username, formData.password, userType);
     if (!success) {
       setError('Identifiants incorrects.');
     }

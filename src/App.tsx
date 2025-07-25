@@ -1,17 +1,36 @@
 import React, { useState } from 'react';
 import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
+import TeacherDashboard from './components/TeacherDashboard';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [studentName, setStudentName] = useState('');
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [teacherName, setTeacherName] = useState('');
 
   // Identifiants fictifs
   const fakeStudent = { username: 'etudiant', password: 'test123', name: 'AVOCE Elodie' };
+  const teachers = [
+    { username: 'enseignant1', password: 'enset2024a', name: 'Enseignant 1' },
+    { username: 'enseignant2', password: 'enset2024b', name: 'Enseignant 2' },
+    { username: 'enseignant3', password: 'enset2024c', name: 'Enseignant 3' },
+  ];
 
-  const handleLogin = (username: string, password: string) => {
+  const handleLogin = (username: string, password: string, userType?: string) => {
+    if (userType === 'teacher') {
+      const found = teachers.find(t => t.username === username && t.password === password);
+      if (found) {
+        setIsLoggedIn(true);
+        setIsTeacher(true);
+        setTeacherName(found.name);
+        return true;
+      }
+      return false;
+    }
     if (username === fakeStudent.username && password === fakeStudent.password) {
       setIsLoggedIn(true);
+      setIsTeacher(false);
       setStudentName(fakeStudent.name);
       return true;
     }
@@ -20,16 +39,22 @@ function App() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setIsTeacher(false);
     setStudentName('');
+    setTeacherName('');
   };
 
   return (
     <div className="App min-h-screen flex flex-col">
       <div className="flex-1">
         {isLoggedIn ? (
-          <StudentDashboard studentName={studentName} onLogout={handleLogout} />
+          isTeacher ? (
+            <TeacherDashboard teacherName={teacherName} onLogout={handleLogout} />
+          ) : (
+            <StudentDashboard studentName={studentName} onLogout={handleLogout} />
+          )
         ) : (
-          <LoginInterface onLogin={handleLogin} />
+          <LoginInterface onLogin={(username, password, userType) => handleLogin(username, password, userType)} />
         )}
       </div>
       <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">
