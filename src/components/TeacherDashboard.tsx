@@ -25,4 +25,6 @@ function LoginForm() {
       {error && <div style={{color: 'red'}}>{error}</div>}
     </form>
   );
-} 
+}
+
+export default LoginForm; 
