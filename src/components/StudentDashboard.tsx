@@ -266,224 +266,88 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       id: 1,
       title: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT",
       instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
-      progress: 75,
+      progress: 0,
       nextDeadline: '2025-07-20',
-      status: 'En cours',
-      color: 'bg-blue-500',
+      status: 'Non commencé',
+      color: 'bg-gray-500',
       description: 'Étude du développement psychologique de l\'enfant et de l\'adolescent',
       credits: 6,
       semester: 'Semestre 1',
-      lastActivity: 'Il y a 2 jours',
-      assignmentsCount: 3,
-      completedAssignments: 2,
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0,
       pdf: '/cours/semestre1/01 S1 PSYCHOPEDAGOGIE DE L\'ENFANT ET DE L\'ADOLESCENT.pdf'
     },
     {
       id: 2,
       title: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE",
       instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
-      progress: 90,
+      progress: 0,
       nextDeadline: '2025-07-25',
-      status: 'Presque terminé',
-      color: 'bg-green-500',
+      status: 'Non commencé',
+      color: 'bg-gray-500',
       description: 'Analyse des processus d\'apprentissage chez l\'enfant et l\'adolescent',
       credits: 4,
       semester: 'Semestre 1',
-      lastActivity: 'Aujourd\'hui',
-      assignmentsCount: 4,
-      completedAssignments: 4,
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0,
       pdf: '/cours/semestre1/02 S1 PSYCHOLOGIE DE L\'APPRENTISSAGE.pdf'
     },
     {
       id: 3,
       title: "03 S1 Administration des Etablissements d'EFTP et GPEC en EFTP",
       instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
-      progress: 45,
+      progress: 0,
       nextDeadline: '2025-07-30',
-      status: 'En cours',
-      color: 'bg-orange-500',
+      status: 'Non commencé',
+      color: 'bg-gray-500',
       description: 'Gestion et administration des établissements d\'EFTP, GPEC',
       credits: 5,
       semester: 'Semestre 1',
-      lastActivity: 'Il y a 1 semaine',
-      assignmentsCount: 2,
-      completedAssignments: 1,
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0,
       pdf: '/cours/semestre1/03 S1 Administration des etablissements eftp et gpec en eftp.pdf'
     },
     {
       id: 4,
       title: 'Chimie des aliments',
       instructor: 'Dr. Guevarra NONVIHO',
-      progress: 90,
+      progress: 0,
       nextDeadline: '2025-07-25',
-      status: 'Presque terminé',
-      color: 'bg-green-500',
+      status: 'Non commencé',
+      color: 'bg-gray-500',
       description: 'Analyse chimique et composition des aliments',
       credits: 4,
       semester: 'Semestre 1',
-      lastActivity: 'Aujourd\'hui',
-      assignmentsCount: 4,
-      completedAssignments: 4
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0
     },
     {
       id: 5,
       title: 'Alimentation humaine',
       instructor: 'Dr. KLOTOE Jean Robert',
-      progress: 45,
+      progress: 0,
       nextDeadline: '2025-07-30',
-      status: 'En cours',
-      color: 'bg-orange-500',
+      status: 'Non commencé',
+      color: 'bg-gray-500',
       description: 'Besoins nutritionnels et alimentation équilibrée',
       credits: 5,
       semester: 'Semestre 1',
-      lastActivity: 'Il y a 1 semaine',
-      assignmentsCount: 2,
-      completedAssignments: 1
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0
     }
   ];
 
-  const assignments: Assignment[] = coursParSemestre.flatMap((semestre, semestreIdx) =>
-    semestre.cours.map((cours, idx) =>
-      createAssignment(
-        semestreIdx * 100 + idx + 1,
-        `Devoir à rendre - ${cours.nom}`,
-        cours.nom,
-        semestreIdx * 100 + idx + 1,
-        `2025-09-${(idx+10).toString().padStart(2, '0')}`
-      )
-    )
-  );
+  const assignments: Assignment[] = [];
 
-  const recentResults: Result[] = [
-    {
-      id: 1,
-      title: 'Rapport d\'observation',
-      course: 'Psychologie de l\'enfant et de l\'adolescent',
-      courseId: 1,
-      score: 17,
-      maxScore: 20,
-      date: '2025-07-28',
-      type: 'TP',
-      weight: 1,
-      feedback: 'Excellent travail d\'observation. Analyse pertinente des comportements observés.'
-    },
-    {
-      id: 2,
-      title: 'Analyse d\'un aliment',
-      course: 'Chimie des aliments',
-      courseId: 2,
-      score: 18,
-      maxScore: 20,
-      date: '2025-07-23',
-      type: 'TP',
-      weight: 1,
-      feedback: 'Analyse très complète et méthodique. Bonne maîtrise des techniques.'
-    },
-    {
-      id: 3,
-      title: 'Quiz - Développement cognitif',
-      course: 'Psychologie de l\'enfant et de l\'adolescent',
-      courseId: 1,
-      score: 16,
-      maxScore: 20,
-      date: '2025-07-15',
-      type: 'Devoir',
-      weight: 0.8,
-      feedback: 'Bonne compréhension des concepts. Quelques imprécisions mineures.'
-    },
-    {
-      id: 4,
-      title: 'Examen partiel - Chimie',
-      course: 'Chimie des aliments',
-      courseId: 2,
-      score: 19,
-      maxScore: 20,
-      date: '2025-07-10',
-      type: 'Examen',
-      weight: 1.5,
-      feedback: 'Excellente performance. Maîtrise parfaite du programme.'
-    },
-    {
-      id: 5,
-      title: 'Projet - Plan nutritionnel',
-      course: 'Alimentation humaine',
-      courseId: 3,
-      score: 15,
-      maxScore: 20,
-      date: '2025-07-05',
-      type: 'Projet',
-      weight: 1.2,
-      feedback: 'Travail satisfaisant mais manque de précision dans certaines parties.'
-    },
-    {
-      id: 6,
-      title: 'TP - Analyse nutritionnelle',
-      course: 'Alimentation humaine',
-      courseId: 3,
-      score: 14,
-      maxScore: 20,
-      date: '2025-06-28',
-      type: 'TP',
-      weight: 1,
-      feedback: 'Bonne approche méthodologique. Résultats corrects.'
-    }
-  ];
+  const recentResults: Result[] = [];
 
   // Données fictives pour les supports de cours
-  const courseSupports = {
-    1: {
-      videos: [
-        { id: 1, title: 'Introduction à la psychologie de l\'enfant', duration: '45:30', url: '/videos/psychologie-enfant/intro.mp4', watched: false, isLocal: true },
-        { id: 2, title: 'Développement cognitif', duration: '52:15', url: '#', watched: false, isLocal: false },
-        { id: 3, title: 'Adolescence et identité', duration: '38:45', url: '#', watched: false, isLocal: false }
-      ],
-      documents: [
-        { id: 1, title: 'Cours 1 - Introduction', type: 'PDF', size: '2.3 MB', url: '#' },
-        { id: 2, title: 'Exercices pratiques', type: 'DOCX', size: '1.8 MB', url: '#' },
-        { id: 3, title: 'Bibliographie', type: 'PDF', size: '856 KB', url: '#' }
-      ],
-      assignments: [
-        { id: 1, title: 'Analyse d\'un cas clinique', dueDate: '2025-07-20', status: 'À rendre', type: 'Devoir' },
-        { id: 2, title: 'Présentation orale', dueDate: '2025-07-25', status: 'En cours', type: 'Devoir' }
-      ],
-      practicalWorks: [
-        { id: 1, title: 'Observation d\'un enfant', dueDate: '2025-07-30', status: 'Pas commencé', type: 'TP' },
-        { id: 2, title: 'Rapport d\'observation', dueDate: '2025-08-05', status: 'Pas commencé', type: 'TP' }
-      ]
-    },
-    2: {
-      videos: [
-        { id: 1, title: 'Composition chimique des aliments', duration: '40:20', url: '#', watched: true, isLocal: false },
-        { id: 2, title: 'Analyse nutritionnelle', duration: '35:10', url: '#', watched: true, isLocal: false }
-      ],
-      documents: [
-        { id: 1, title: 'Cours - Chimie des aliments', type: 'PDF', size: '3.1 MB', url: '#' },
-        { id: 2, title: 'Protocoles de laboratoire', type: 'PDF', size: '2.5 MB', url: '#' }
-      ],
-      assignments: [
-        { id: 1, title: 'Analyse d\'un aliment', dueDate: '2025-07-25', status: 'Terminé', type: 'Devoir' }
-      ],
-      practicalWorks: [
-        { id: 1, title: 'Expérience en laboratoire', dueDate: '2025-07-28', status: 'Terminé', type: 'TP' }
-      ]
-    },
-    3: {
-      videos: [
-        { id: 1, title: 'Besoins nutritionnels', duration: '48:15', url: '#', watched: false, isLocal: false },
-        { id: 2, title: 'Alimentation équilibrée', duration: '42:30', url: '#', watched: false, isLocal: false }
-      ],
-      documents: [
-        { id: 1, title: 'Cours - Alimentation humaine', type: 'PDF', size: '2.8 MB', url: '#' },
-        { id: 2, title: 'Guide nutritionnel', type: 'PDF', size: '1.5 MB', url: '#' }
-      ],
-      assignments: [
-        { id: 1, title: 'Plan alimentaire personnalisé', dueDate: '2025-07-30', status: 'En cours', type: 'Devoir' }
-      ],
-      practicalWorks: [
-        { id: 1, title: 'Évaluation nutritionnelle', dueDate: '2025-08-02', status: 'Pas commencé', type: 'TP' }
-      ]
-    }
-  };
+  const courseSupports: any = {};
 
   const handleViewCourse = (course: Course) => {
     setSelectedCourse(course);
@@ -603,18 +467,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         <span className={`w-3 h-3 rounded-full ${course.color}`}></span>
       </div>
 
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-slate-600">Progression</span>
-          <span className="text-sm font-medium text-slate-900">{course.progress}%</span>
-        </div>
-        <div className="w-full bg-slate-200 rounded-full h-2">
-          <div
-            className={`h-2 rounded-full ${course.color}`}
-            style={{ width: `${course.progress}%` }}
-          ></div>
-        </div>
-      </div>
+
 
       <div className="flex items-center justify-between">
         <span className="text-xs text-slate-500">Échéance: {course.nextDeadline}</span>
@@ -678,18 +531,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         </div>
       </div>
       
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-slate-600">Progression</span>
-          <span className="text-sm font-medium text-slate-900">{course.progress}%</span>
-        </div>
-        <div className="w-full bg-slate-200 rounded-full h-3">
-          <div 
-            className={`h-3 rounded-full ${course.color}`}
-            style={{ width: `${course.progress}%` }}
-          ></div>
-        </div>
-      </div>
+
       
       <div className="flex items-center justify-between">
         <div>
@@ -797,7 +639,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
           <h3 className="font-semibold text-slate-900 mb-4">Vidéos de cours</h3>
           
           {/* Video Player */}
-          {selectedVideo && (
+          {selectedVideo && supports.videos && supports.videos[selectedVideo - 1] && (
             <div className="mb-6">
               <div className="relative w-full bg-black rounded-lg overflow-hidden">
                 <video 
@@ -823,7 +665,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
           )}
           
           <div className="space-y-3">
-            {supports.videos.map((video, index) => {
+            {supports.videos && supports.videos.map((video: any, index: number) => {
               const isUnlocked = isVideoUnlocked(course.id, index);
               const isWatched = isVideoWatched(course.id, video.id);
               
@@ -871,7 +713,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         <div className="bg-white rounded-2xl p-6 border border-slate-200">
           <h3 className="font-semibold text-slate-900 mb-4">Documents de cours</h3>
           <div className="space-y-3">
-            {supports.documents.map((doc) => (
+            {supports.documents && supports.documents.map((doc: any) => (
               <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center">
@@ -894,7 +736,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         <div className="bg-white rounded-2xl p-6 border border-slate-200">
           <h3 className="font-semibold text-slate-900 mb-4">Devoirs</h3>
           <div className="space-y-3">
-            {supports.assignments.map((assignment) => (
+            {supports.assignments && supports.assignments.map((assignment: any) => (
               <div key={assignment.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
                 <div>
                   <p className="font-medium text-slate-900">{assignment.title}</p>
@@ -921,7 +763,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         <div className="bg-white rounded-2xl p-6 border border-slate-200">
           <h3 className="font-semibold text-slate-900 mb-4">Travaux Pratiques</h3>
           <div className="space-y-3">
-            {supports.practicalWorks.map((tp) => (
+            {supports.practicalWorks && supports.practicalWorks.map((tp: any) => (
               <div key={tp.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
                 <div>
                   <p className="font-medium text-slate-900">{tp.title}</p>
@@ -1279,19 +1121,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     <p className="text-slate-900">{formData.phone}</p>
                   )}
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Adresse</label>
-                  {isEditingProfile ? (
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      rows={2}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <p className="text-slate-900">{formData.address}</p>
-                  )}
-                </div>
+
               </div>
             </div>
 
@@ -1307,57 +1137,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   <label className="block text-sm font-medium text-slate-700 mb-1">Année d'étude</label>
                   <p className="text-slate-900">{formData.yearOfStudy}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Programme</label>
-                  <p className="text-slate-900">{formData.program}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Département</label>
-                  <p className="text-slate-900">{formData.department}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Conseiller académique</label>
-                  <p className="text-slate-900">{formData.advisor}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Date d'inscription</label>
-                  <p className="text-slate-900">{formData.enrollmentDate}</p>
-                </div>
+
               </div>
             </div>
 
-            {/* Contact d'urgence */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200">
-              <h3 className="font-semibold text-slate-900 mb-4">Contact d'urgence</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Nom du contact</label>
-                  {isEditingProfile ? (
-                    <input
-                      type="text"
-                      value={formData.emergencyContact}
-                      onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <p className="text-slate-900">{formData.emergencyContact}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Téléphone d'urgence</label>
-                  {isEditingProfile ? (
-                    <input
-                      type="tel"
-                      value={formData.emergencyPhone}
-                      onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <p className="text-slate-900">{formData.emergencyPhone}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
@@ -1718,7 +1502,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
             </div>
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">{studentName}</p>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {studentInfo?.nom_complet || studentName}
+              </p>
               <p className="text-xs text-slate-600 dark:text-slate-400">Étudiant Master</p>
             </div>
           </div>
@@ -1791,7 +1577,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   <User className="w-5 h-5 text-slate-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-slate-900">{studentName}</p>
+                  <p className="font-medium text-slate-900">
+                    {studentInfo?.nom_complet || studentName}
+                  </p>
                   <p className="text-xs text-slate-600">Étudiant Master</p>
                 </div>
               </div>
@@ -1822,7 +1610,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                    activeTab === 'assignments' ? 'Devoirs' :
                    activeTab === 'profile' ? 'Profil' : 'Paramètres'}
                 </h1>
-                <p className="text-slate-600 mt-1">Bienvenue, {studentInfo?.nom_complet || studentName}</p>
+                <p className="text-slate-600 mt-1">
+                  Bienvenue, {studentInfo?.nom_complet || studentName}
+                </p>
               </div>
               <div className="flex items-center space-x-4">
                 <button className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">
@@ -1842,28 +1632,28 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   <StatCard
                     icon={BookOpen}
                     title="Cours actifs"
-                    value="3"
+                    value="0"
                     subtitle="En progression"
                     color="bg-blue-500"
                   />
                   <StatCard
                     icon={ClipboardCheck}
                     title="Devoirs à rendre"
-                    value="2"
+                    value="0"
                     subtitle="Cette semaine"
                     color="bg-orange-500"
                   />
                   <StatCard
                     icon={Award}
                     title="Moyenne générale"
-                    value="16.2"
+                    value="0.0"
                     subtitle="Sur 20"
                     color="bg-green-500"
                   />
                   <StatCard
                     icon={Calendar}
                     title="Jours restants"
-                    value="45"
+                    value="0"
                     subtitle="Fin de semestre"
                     color="bg-purple-500"
                   />
