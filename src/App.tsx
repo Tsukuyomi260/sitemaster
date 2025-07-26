@@ -45,19 +45,25 @@ function App() {
   const handleLogin = async (username: string, password: string, selectedUserType: string) => {
     try {
       setLoading(true);
+      console.log('Tentative de connexion pour:', username, 'avec type:', selectedUserType);
+      
       const userData = await loginUser(username, password);
+      console.log('UserData reçu:', userData);
       setUser(userData);
       
       // Récupérer le rôle réel depuis Supabase
       const actualRole = await getUserRole(userData.id);
+      console.log('Rôle réel trouvé:', actualRole, 'Rôle sélectionné:', selectedUserType);
       
       // Vérifier si le rôle choisi correspond au rôle réel
       if (selectedUserType !== actualRole) {
+        console.log('Rôles ne correspondent pas! Déconnexion...');
         // Déconnexion automatique si le rôle ne correspond pas
         await signOut();
         return false; // Retourner false pour afficher le message d'erreur
       }
       
+      console.log('Rôles correspondent! Connexion réussie.');
       // Si le rôle correspond, connecter l'utilisateur
       setIsLoggedIn(true);
       setUserType(actualRole);

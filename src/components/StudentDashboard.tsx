@@ -652,7 +652,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         <div className="flex-1">
           <h3 className="font-semibold text-slate-900 mb-1">{course.title}</h3>
           {course.instructor && (
-            <p className="text-sm text-slate-600">Prof. {course.instructor}</p>
+          <p className="text-sm text-slate-600">Prof. {course.instructor}</p>
           )}
         </div>
         <span className={`w-3 h-3 rounded-full ${course.color}`}></span>
@@ -693,7 +693,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
           </div>
           <h3 className="font-semibold text-slate-900 mb-1 text-lg">{course.title}</h3>
           {course.instructor && (
-            <p className="text-sm text-slate-600 mb-2">Prof. {course.instructor}</p>
+          <p className="text-sm text-slate-600 mb-2">Prof. {course.instructor}</p>
           )}
           <p className="text-sm text-slate-500 mb-3">{course.description}</p>
         </div>
@@ -777,7 +777,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{course.title}</h1>
               {course.instructor && (
-                <p className="text-slate-600">Prof. {course.instructor}</p>
+              <p className="text-slate-600">Prof. {course.instructor}</p>
               )}
             </div>
           </div>
@@ -980,15 +980,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
   const AssignmentCard: React.FC<{ assignment: Assignment }> = ({ assignment }) => (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between min-h-[160px]">
-      <div>
+        <div>
         <h3 className="font-semibold text-slate-900 text-lg mb-2">Devoir - {assignment.course}</h3>
-      </div>
+        </div>
       <button
         onClick={() => handleSubmitAssignment(assignment)}
         className="mt-6 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
       >
         Rendre le devoir
-      </button>
+            </button>
     </div>
   );
 

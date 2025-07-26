@@ -43,15 +43,23 @@ export async function getUserProfile(userId: string) {
 
 export async function getUserRole(userId: string) {
   try {
+    console.log('Recherche du rôle pour userId:', userId);
+    
     // Essayer de récupérer le rôle depuis la table profiles
     const profile = await getUserProfile(userId);
+    console.log('Profil trouvé:', profile);
+    
     if (profile && profile.role) {
+      console.log('Rôle trouvé dans profiles:', profile.role);
       return profile.role;
     }
     
     // Si pas de profil, essayer de récupérer depuis les métadonnées
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('User auth:', user);
+    
     if (user && user.user_metadata && user.user_metadata.role) {
+      console.log('Rôle trouvé dans metadata:', user.user_metadata.role);
       return user.user_metadata.role;
     }
     
