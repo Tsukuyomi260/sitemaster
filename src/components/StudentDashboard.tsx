@@ -200,6 +200,8 @@ function createAssignment(
 }
 
 export default function StudentDashboard({ studentName, studentInfo, onLogout }: StudentDashboardProps) {
+  console.log('StudentDashboard - studentInfo:', studentInfo); // Debug
+  console.log('StudentDashboard - studentName:', studentName); // Debug
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -243,12 +245,12 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   // Données du profil étudiant - utiliser les vraies données de studentInfo
   const studentProfile: StudentProfile = {
     id: studentInfo?.id || 'STU001',
-    firstName: studentInfo?.prenom || 'Prénom',
-    lastName: studentInfo?.nom || 'Nom',
+    firstName: studentInfo?.nom_complet ? studentInfo.nom_complet.split(' ')[0] : 'Prénom',
+    lastName: studentInfo?.nom_complet ? studentInfo.nom_complet.split(' ').slice(1).join(' ') : 'Nom',
     email: studentInfo?.email || 'email@example.com',
     phone: studentInfo?.telephone || '+229 90 12 34 56',
     matricule: studentInfo?.matricule || 'Matricule',
-    yearOfStudy: studentInfo?.annee || '2ème année',
+    yearOfStudy: studentInfo?.niveau || '2ème année',
     program: studentInfo?.formation || 'Master en Sciences et Technologies de l\'Information',
     department: studentInfo?.departement || 'Informatique et Télécommunications',
     advisor: studentInfo?.encadreur || 'Dr. GNONLONFOUN Jean Marc',
@@ -1820,7 +1822,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                    activeTab === 'assignments' ? 'Devoirs' :
                    activeTab === 'profile' ? 'Profil' : 'Paramètres'}
                 </h1>
-                <p className="text-slate-600 mt-1">Bienvenue, {studentInfo?.prenom ? `${studentInfo.prenom} ${studentInfo.nom}` : studentName}</p>
+                <p className="text-slate-600 mt-1">Bienvenue, {studentInfo?.nom_complet || studentName}</p>
               </div>
               <div className="flex items-center space-x-4">
                 <button className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">

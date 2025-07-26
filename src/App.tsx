@@ -63,6 +63,7 @@ function App() {
       // Si c'est un étudiant, récupérer ses informations
       if (actualRole === 'student' && userData.email) {
         const info = await getStudentInfo(userData.email);
+        console.log('Student info récupéré:', info); // Debug
         setStudentInfo(info);
       }
       

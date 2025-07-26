@@ -56,9 +56,11 @@ export async function getUserRole(userId: string) {
     }
     
     // Par défaut, retourner 'student'
+    console.log('Aucun rôle trouvé, utilisation du rôle par défaut: student');
     return 'student';
   } catch (error) {
     console.error('Erreur lors de la récupération du rôle:', error);
+    // En cas d'erreur, retourner 'student' par défaut
     return 'student';
   }
 }
