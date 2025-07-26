@@ -33,16 +33,25 @@ function App() {
     }
   };
 
-  const handleLogin = async (username: string, password: string) => {
+  const handleLogin = async (username: string, password: string, selectedUserType: string) => {
     try {
       setLoading(true);
       const userData = await loginUser(username, password);
       setUser(userData);
-      setIsLoggedIn(true);
       
-      // Récupérer le rôle depuis Supabase
-      const role = await getUserRole(userData.id);
-      setUserType(role);
+      // Récupérer le rôle réel depuis Supabase
+      const actualRole = await getUserRole(userData.id);
+      
+      // Vérifier si le rôle choisi correspond au rôle réel
+      if (selectedUserType !== actualRole) {
+        // Déconnexion automatique si le rôle ne correspond pas
+        await signOut();
+        throw new Error(`Accès refusé. Votre compte est configuré comme ${getRoleDisplayName(actualRole)}. Veuillez sélectionner le bon type d'utilisateur.`);
+      }
+      
+      // Si le rôle correspond, connecter l'utilisateur
+      setIsLoggedIn(true);
+      setUserType(actualRole);
       
       return true;
     } catch (error: any) {
@@ -51,6 +60,15 @@ function App() {
       throw new Error(error.message || 'Erreur de connexion');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'student': return 'Étudiant';
+      case 'teacher': return 'Enseignant';
+      case 'admin': return 'Administrateur';
+      default: return 'Utilisateur';
     }
   };
 

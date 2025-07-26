@@ -3,11 +3,12 @@ import { Eye, EyeOff, User, Lock } from 'lucide-react';
 import SplitText from './SplitText';
 
 interface LoginInterfaceProps {
-  onLogin: (username: string, password: string) => Promise<boolean>;
+  onLogin: (username: string, password: string, userType: string) => Promise<boolean>;
 }
 
 const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [userType, setUserType] = useState('student');
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -21,7 +22,7 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
     setLoading(true);
     
     try {
-      const success = await onLogin(formData.username, formData.password);
+      const success = await onLogin(formData.username, formData.password, userType);
       if (!success) {
         setError('Identifiants incorrects.');
       }
@@ -66,6 +67,31 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
 
         {/* Login Form */}
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-200">
+          {/* User Type Toggle */}
+          <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
+            <button
+              type="button"
+              onClick={() => setUserType('student')}
+              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'student' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Étudiant
+            </button>
+            <button
+              type="button"
+              onClick={() => setUserType('teacher')}
+              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'teacher' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Enseignant
+            </button>
+            <button
+              type="button"
+              onClick={() => setUserType('admin')}
+              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'admin' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Administrateur
+            </button>
+          </div>
+
           <div className="space-y-6">
             {/* Email Field */}
             <div>
@@ -145,7 +171,7 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
           {/* Additional Info */}
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-500">
-              Votre accès sera automatiquement déterminé selon votre profil
+              Sélectionnez votre type d'utilisateur pour accéder à votre espace
             </p>
           </div>
         </div>
