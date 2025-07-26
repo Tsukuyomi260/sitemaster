@@ -165,4 +165,55 @@ export async function getAssignmentSubmissions(studentId: string) {
     console.error('Erreur lors de la récupération des soumissions:', error);
     throw error;
   }
+}
+
+// Fonction pour récupérer tous les étudiants
+export async function getAllStudents() {
+  try {
+    const { data: students, error } = await supabase
+      .from('students')
+      .select('*')
+      .order('nom_complet', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return students;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des étudiants:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer tous les devoirs rendus
+export async function getAllAssignmentSubmissions() {
+  try {
+    const { data: submissions, error } = await supabase
+      .from('assignment_submissions')
+      .select(`
+        *,
+        assignments (
+          title,
+          course,
+          due_date,
+          points
+        ),
+        students (
+          nom_complet,
+          email,
+          matricule
+        )
+      `)
+      .order('submitted_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return submissions;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des soumissions:', error);
+    throw error;
+  }
 } 
