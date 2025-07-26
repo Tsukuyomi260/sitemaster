@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MasterSelection from './components/MasterSelection';
 import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
@@ -11,6 +12,7 @@ function App() {
   const [userType, setUserType] = useState<string>('');
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedMaster, setSelectedMaster] = useState<string>('');
 
   // Vérifier si l'utilisateur est déjà connecté au chargement
   useEffect(() => {
@@ -76,6 +78,10 @@ function App() {
     }
   };
 
+  const handleMasterSelect = (master: string) => {
+    setSelectedMaster(master);
+  };
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -83,6 +89,7 @@ function App() {
       setUser(null);
       setUserType('');
       setStudentInfo(null);
+      setSelectedMaster('');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
@@ -129,8 +136,10 @@ function App() {
               </div>
             </div>
           )
-        ) : (
+        ) : selectedMaster === 'mrtddeftp' ? (
           <LoginInterface onLogin={handleLogin} />
+        ) : (
+          <MasterSelection onMasterSelect={handleMasterSelect} />
         )}
       </div>
       <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">

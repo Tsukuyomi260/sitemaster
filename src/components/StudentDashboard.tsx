@@ -472,12 +472,6 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       <div className="flex items-center justify-between">
         <span className="text-xs text-slate-500">Échéance: {course.nextDeadline}</span>
         <div className="flex space-x-2">
-          <button 
-            onClick={() => handleViewCourse(course)}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
-          >
-            Voir le cours
-          </button>
           <a
             className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
             href={course.pdf}
@@ -1663,32 +1657,12 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900 mb-4">Mes cours</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {courses.map(course => (
+                    {courses.filter(course => course.id <= 3).map(course => (
                       <CourseCard key={course.id} course={course} />
                     ))}
                   </div>
                 </div>
 
-                {/* Recent Activity */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div>
-                    <h2 className="text-xl font-semibold text-slate-900 mb-4">Prochains devoirs</h2>
-                    <div className="space-y-3">
-                      {assignments.slice(0, 3).map(assignment => (
-                        <AssignmentItem key={assignment.id} assignment={assignment} />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl font-semibold text-slate-900 mb-4">Résultats récents</h2>
-                    <div className="space-y-3">
-                      {recentResults.map(result => (
-                        <ResultItem key={result.id} result={result} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
 
