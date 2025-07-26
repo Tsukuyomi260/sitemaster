@@ -63,6 +63,26 @@ export async function getUserRole(userId: string) {
   }
 }
 
+export async function getStudentInfo(email: string) {
+  try {
+    // Récupérer les informations de l'étudiant depuis la table students
+    const { data: student, error } = await supabase
+      .from('students')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Erreur lors de la récupération des infos étudiant:', error);
+    }
+    
+    return student;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des infos étudiant:', error);
+    return null;
+  }
+}
+
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;

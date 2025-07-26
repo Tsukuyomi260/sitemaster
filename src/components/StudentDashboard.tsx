@@ -87,6 +87,7 @@ interface ResultItemProps {
 
 interface StudentDashboardProps {
   studentName: string;
+  studentInfo?: any; // Informations de l'étudiant depuis la table students
   onLogout: () => void;
 }
 
@@ -198,7 +199,7 @@ function createAssignment(
   };
 }
 
-export default function StudentDashboard({ studentName, onLogout }: StudentDashboardProps) {
+export default function StudentDashboard({ studentName, studentInfo, onLogout }: StudentDashboardProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);

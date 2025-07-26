@@ -3,12 +3,13 @@ import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 import AdminDashboard from './components/AdminDashboard';
-import { loginUser, getCurrentUser, signOut, getUserRole } from './api';
+import { loginUser, getCurrentUser, signOut, getUserRole, getStudentInfo } from './api';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [userType, setUserType] = useState<string>('');
+  const [studentInfo, setStudentInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Vérifier si l'utilisateur est déjà connecté au chargement
@@ -25,6 +26,12 @@ function App() {
         // Récupérer le rôle depuis Supabase
         const role = await getUserRole(currentUser.id);
         setUserType(role);
+        
+        // Si c'est un étudiant, récupérer ses informations
+        if (role === 'student' && currentUser.email) {
+          const info = await getStudentInfo(currentUser.email);
+          setStudentInfo(info);
+        }
       }
     } catch (error) {
       console.error('Erreur lors de la vérification de l\'utilisateur:', error);
@@ -46,29 +53,25 @@ function App() {
       if (selectedUserType !== actualRole) {
         // Déconnexion automatique si le rôle ne correspond pas
         await signOut();
-        throw new Error(`Accès refusé. Votre compte est configuré comme ${getRoleDisplayName(actualRole)}. Veuillez sélectionner le bon type d'utilisateur.`);
+        return false; // Retourner false pour afficher le message d'erreur
       }
       
       // Si le rôle correspond, connecter l'utilisateur
       setIsLoggedIn(true);
       setUserType(actualRole);
       
+      // Si c'est un étudiant, récupérer ses informations
+      if (actualRole === 'student' && userData.email) {
+        const info = await getStudentInfo(userData.email);
+        setStudentInfo(info);
+      }
+      
       return true;
     } catch (error: any) {
       console.error('Erreur de connexion:', error);
-      // Retourner le message d'erreur pour l'afficher à l'utilisateur
-      throw new Error(error.message || 'Erreur de connexion');
+      return false; // Retourner false pour afficher le message d'erreur
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'student': return 'Étudiant';
-      case 'teacher': return 'Enseignant';
-      case 'admin': return 'Administrateur';
-      default: return 'Utilisateur';
     }
   };
 
@@ -78,6 +81,7 @@ function App() {
       setIsLoggedIn(false);
       setUser(null);
       setUserType('');
+      setStudentInfo(null);
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
@@ -103,7 +107,11 @@ function App() {
           ) : userType === 'teacher' ? (
             <TeacherDashboard teacherName={user?.email || 'Enseignant'} onLogout={handleLogout} />
           ) : userType === 'student' ? (
-            <StudentDashboard studentName={user?.email || 'Étudiant'} onLogout={handleLogout} />
+            <StudentDashboard 
+              studentName={studentInfo?.nom || user?.email || 'Étudiant'} 
+              studentInfo={studentInfo}
+              onLogout={handleLogout} 
+            />
           ) : (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
               <div className="text-center">

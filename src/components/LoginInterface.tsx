@@ -24,10 +24,10 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
     try {
       const success = await onLogin(formData.username, formData.password, userType);
       if (!success) {
-        setError('Identifiants incorrects.');
+        setError('Identifiants invalides');
       }
     } catch (err: any) {
-      setError(err.message || 'Erreur de connexion');
+      setError('Identifiants invalides');
     } finally {
       setLoading(false);
     }
