@@ -240,22 +240,22 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     }
   });
 
-  // Données du profil étudiant
+  // Données du profil étudiant - utiliser les vraies données de studentInfo
   const studentProfile: StudentProfile = {
-    id: 'STU001',
-    firstName: 'Elodie',
-    lastName: 'AVOCE',
-    email: 'elodie.avoce@student.university.edu',
-    phone: '+229 90 12 34 56',
-    matricule: '24654STI25',
-    yearOfStudy: '2ème année',
-    program: 'Master en Sciences et Technologies de l\'Information',
-    department: 'Informatique et Télécommunications',
-    advisor: 'Dr. GNONLONFOUN Jean Marc',
-    enrollmentDate: '2023-09-15',
-    address: '123 Rue de l\'Université, Cotonou, Bénin',
-    emergencyContact: 'Marie AVOCE',
-    emergencyPhone: '+229 90 98 76 54'
+    id: studentInfo?.id || 'STU001',
+    firstName: studentInfo?.prenom || 'Prénom',
+    lastName: studentInfo?.nom || 'Nom',
+    email: studentInfo?.email || 'email@example.com',
+    phone: studentInfo?.telephone || '+229 90 12 34 56',
+    matricule: studentInfo?.matricule || 'Matricule',
+    yearOfStudy: studentInfo?.annee || '2ème année',
+    program: studentInfo?.formation || 'Master en Sciences et Technologies de l\'Information',
+    department: studentInfo?.departement || 'Informatique et Télécommunications',
+    advisor: studentInfo?.encadreur || 'Dr. GNONLONFOUN Jean Marc',
+    enrollmentDate: studentInfo?.date_inscription || '2023-09-15',
+    address: studentInfo?.adresse || '123 Rue de l\'Université, Cotonou, Bénin',
+    emergencyContact: studentInfo?.contact_urgence || 'Contact d\'urgence',
+    emergencyPhone: studentInfo?.telephone_urgence || '+229 90 98 76 54'
   };
 
   // Données fictives
@@ -1820,7 +1820,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                    activeTab === 'assignments' ? 'Devoirs' :
                    activeTab === 'profile' ? 'Profil' : 'Paramètres'}
                 </h1>
-                <p className="text-slate-600 mt-1">Bienvenue, {studentName}</p>
+                <p className="text-slate-600 mt-1">Bienvenue, {studentInfo?.prenom ? `${studentInfo.prenom} ${studentInfo.nom}` : studentName}</p>
               </div>
               <div className="flex items-center space-x-4">
                 <button className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">
