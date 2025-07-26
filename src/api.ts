@@ -110,7 +110,7 @@ export async function signOut() {
 }
 
 // Fonctions pour les soumissions de devoirs
-export async function submitAssignment(assignmentId: number, studentId: string, file: File, comments?: string) {
+export async function submitAssignment(assignmentId: number, studentId: string, file: File, title: string, comments?: string) {
   try {
     // Upload du fichier vers Supabase Storage
     const fileName = `${studentId}_assignment_${assignmentId}_${Date.now()}.${file.name.split('.').pop()}`;
@@ -135,6 +135,7 @@ export async function submitAssignment(assignmentId: number, studentId: string, 
         student_id: studentId,
         file_url: publicUrl,
         file_name: file.name,
+        submission_title: title,
         submitted_at: new Date().toISOString(),
         comments: comments || '',
         status: 'submitted'

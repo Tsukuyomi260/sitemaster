@@ -203,6 +203,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [submissionTitle, setSubmissionTitle] = useState('');
   const [submissionComments, setSubmissionComments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
@@ -1136,6 +1137,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
   const handleSubmitAssignment = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
+    setSubmissionTitle(`Devoir - ${assignment.course}`);
     setIsSubmissionModalOpen(true);
     setSubmissionError('');
     setSubmissionSuccess(false);
@@ -1170,6 +1172,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       return;
     }
 
+    if (!submissionTitle.trim()) {
+      setSubmissionError('Veuillez saisir le titre du devoir.');
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmissionError('');
 
@@ -1178,11 +1185,13 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         selectedAssignment.id,
         studentInfo.id,
         submissionFile,
+        submissionTitle,
         submissionComments
       );
 
       setSubmissionSuccess(true);
       setSubmissionFile(null);
+      setSubmissionTitle('');
       setSubmissionComments('');
       
       // Fermer le modal après 2 secondes
@@ -1204,6 +1213,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     setIsSubmissionModalOpen(false);
     setSelectedAssignment(null);
     setSubmissionFile(null);
+    setSubmissionTitle('');
     setSubmissionComments('');
     setSubmissionError('');
     setSubmissionSuccess(false);
@@ -2161,6 +2171,20 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   )}
                 </div>
 
+                {/* Titre du devoir */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Titre du devoir *
+                  </label>
+                  <input
+                    type="text"
+                    value={submissionTitle}
+                    onChange={(e) => setSubmissionTitle(e.target.value)}
+                    placeholder="Saisissez le titre de votre devoir..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
                 {/* Commentaires */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -2200,7 +2224,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   </button>
                   <button
                     onClick={handleSubmissionSubmit}
-                    disabled={!submissionFile || isSubmitting}
+                    disabled={!submissionFile || !submissionTitle.trim() || isSubmitting}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed font-medium"
                   >
                     {isSubmitting ? 'Soumission...' : 'Soumettre'}
