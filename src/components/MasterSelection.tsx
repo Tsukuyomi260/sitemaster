@@ -8,30 +8,30 @@ interface MasterSelectionProps {
 const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => {
   const masters = [
     {
-      id: 'master-a',
-      name: 'Master A',
-      description: 'Description du Master A',
+      id: 'mr-fib',
+      name: 'MR-FIB',
+      description: 'Master de recherche en Teintures Fibres et Bois',
       color: 'from-blue-500 to-blue-600',
-      icon: '🎓'
+      icon: '🪵'
     },
     {
-      id: 'master-b', 
-      name: 'Master B',
-      description: 'Description du Master B',
+      id: 'mr-ip',
+      name: 'MR-IP',
+      description: 'Master de Recherche en Ingénierie Pédagogique',
       color: 'from-green-500 to-green-600',
-      icon: '📚'
+      icon: '🧑‍🏫'
     },
     {
-      id: 'master-c',
-      name: 'Master C', 
-      description: 'Description du Master C',
+      id: 'mr-mhrt',
+      name: 'MR-MHRT',
+      description: "Master de Recherche en Management de l'Hôtellerie, de la Restauration et du Tourisme",
       color: 'from-purple-500 to-purple-600',
-      icon: '🔬'
+      icon: '🏨'
     },
     {
-      id: 'mrtddeftp',
-      name: 'MRTDDEFTP',
-      description: 'Master de Recherche en Didactique',
+      id: 'mr-mrtddeftp',
+      name: 'MR-MRTDDEFTP',
+      description: 'Technopédagogie et Didactique des Disciplines de l\'Enseignement et de la Formation Technique et Professionnelle',
       color: 'from-slate-700 to-slate-800',
       icon: '📖'
     }
@@ -68,27 +68,27 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
             <div
               key={master.id}
               onClick={() => onMasterSelect(master.id)}
-              className="group cursor-pointer transform transition-all duration-300 hover:scale-105 h-full"
+              className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.03] h-full"
             >
-              <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-200 hover:shadow-2xl transition-all duration-300 h-full flex flex-col">
+              <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200 hover:shadow-xl transition-all duration-300 h-full flex flex-col min-h-[260px] max-h-[320px] min-w-[180px] max-w-[260px] mx-auto">
                 {/* Master Icon */}
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${master.color} flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>
-                  <span className="text-2xl">{master.icon}</span>
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${master.color} flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform duration-300 flex-shrink-0`}>
+                  <span className="text-xl">{master.icon}</span>
                 </div>
 
                 {/* Master Name */}
-                <h3 className="text-xl font-bold text-slate-900 text-center mb-3 group-hover:text-slate-700 transition-colors duration-300 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-slate-900 text-center mb-2 group-hover:text-slate-700 transition-colors duration-300 flex-shrink-0">
                   {master.name}
                 </h3>
 
                 {/* Master Description */}
-                <p className="text-slate-600 text-center text-sm leading-relaxed flex-grow">
+                <p className="text-slate-500 text-center text-xs leading-snug flex-grow">
                   {master.description}
                 </p>
 
                 {/* Selection Indicator */}
-                <div className="mt-6 flex justify-center flex-shrink-0">
-                  <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${master.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                <div className="mt-4 flex justify-center flex-shrink-0">
+                  <div className={`w-2 h-2 rounded-full bg-gradient-to-br ${master.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                 </div>
               </div>
             </div>

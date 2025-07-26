@@ -136,7 +136,7 @@ function App() {
               </div>
             </div>
           )
-        ) : selectedMaster === 'mrtddeftp' ? (
+        ) : selectedMaster === 'mr-mrtddeftp' ? (
           <LoginInterface onLogin={handleLogin} />
         ) : (
           <MasterSelection onMasterSelect={handleMasterSelect} />
