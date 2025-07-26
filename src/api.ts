@@ -41,17 +41,23 @@ export async function getUserProfile(userId: string) {
   return profile;
 }
 
-export async function getUserRole(userId: string) {
+export async function getUserRoles(userId: string): Promise<string[]> {
   try {
-    console.log('Recherche du rôle pour userId:', userId);
+    console.log('Recherche des rôles pour userId:', userId);
     
-    // Essayer de récupérer le rôle depuis la table profiles
+    // Essayer de récupérer les rôles depuis la table profiles
     const profile = await getUserProfile(userId);
     console.log('Profil trouvé:', profile);
     
+    if (profile && profile.roles && Array.isArray(profile.roles)) {
+      console.log('Rôles trouvés dans profiles:', profile.roles);
+      return profile.roles;
+    }
+    
+    // Fallback vers l'ancien système avec un seul rôle
     if (profile && profile.role) {
-      console.log('Rôle trouvé dans profiles:', profile.role);
-      return profile.role;
+      console.log('Rôle unique trouvé dans profiles:', profile.role);
+      return [profile.role];
     }
     
     // Si pas de profil, essayer de récupérer depuis les métadonnées
@@ -60,17 +66,22 @@ export async function getUserRole(userId: string) {
     
     if (user && user.user_metadata && user.user_metadata.role) {
       console.log('Rôle trouvé dans metadata:', user.user_metadata.role);
-      return user.user_metadata.role;
+      return [user.user_metadata.role];
     }
     
     // Par défaut, retourner 'student'
     console.log('Aucun rôle trouvé, utilisation du rôle par défaut: student');
-    return 'student';
+    return ['student'];
   } catch (error) {
-    console.error('Erreur lors de la récupération du rôle:', error);
+    console.error('Erreur lors de la récupération des rôles:', error);
     // En cas d'erreur, retourner 'student' par défaut
-    return 'student';
+    return ['student'];
   }
+}
+
+export async function getUserRole(userId: string) {
+  const roles = await getUserRoles(userId);
+  return roles.length > 0 ? roles[0] : 'student';
 }
 
 export async function getStudentInfo(email: string) {

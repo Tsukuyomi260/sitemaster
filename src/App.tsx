@@ -4,8 +4,9 @@ import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import RoleSelection from './components/RoleSelection';
 import { EmailIcon, WhatsAppIcon } from './components/ContactIcons';
-import { loginUser, getCurrentUser, signOut, getUserRole, getStudentInfo } from './api';
+import { loginUser, getCurrentUser, signOut, getUserRole, getUserRoles, getStudentInfo } from './api';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,6 +15,8 @@ function App() {
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMaster, setSelectedMaster] = useState<string>('');
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
 
   // Vérifier si l'utilisateur est déjà connecté au chargement
   useEffect(() => {
@@ -26,7 +29,7 @@ function App() {
       if (currentUser) {
         setUser(currentUser);
         setIsLoggedIn(true);
-        // Récupérer le rôle depuis Supabase
+        // Récupérer le premier rôle depuis Supabase (compatibilité)
         const role = await getUserRole(currentUser.id);
         setUserType(role);
         
@@ -52,37 +55,51 @@ function App() {
       console.log('UserData reçu:', userData);
       setUser(userData);
       
-      // Récupérer le rôle réel depuis Supabase
-      const actualRole = await getUserRole(userData.id);
-      console.log('Rôle réel trouvé:', actualRole, 'Rôle sélectionné:', selectedUserType);
+      // Récupérer tous les rôles disponibles depuis Supabase
+      const availableRoles = await getUserRoles(userData.id);
+      console.log('Rôles disponibles trouvés:', availableRoles, 'Rôle sélectionné:', selectedUserType);
       
-      // Vérifier si le rôle choisi correspond au rôle réel
-      if (selectedUserType !== actualRole) {
-        console.log('Rôles ne correspondent pas! Déconnexion...');
-        // Déconnexion automatique si le rôle ne correspond pas
+      // Si l'utilisateur a plusieurs rôles, afficher la sélection
+      if (availableRoles.length > 1) {
+        setAvailableRoles(availableRoles);
+        setShowRoleSelection(true);
+        return true; // Retourner true pour ne pas afficher d'erreur
+      }
+      
+      // Si l'utilisateur n'a qu'un seul rôle, vérifier s'il correspond
+      if (!availableRoles.includes(selectedUserType)) {
+        console.log('Rôle sélectionné non autorisé! Déconnexion...');
         await signOut();
-        return false; // Retourner false pour afficher le message d'erreur
+        return false;
       }
       
-      console.log('Rôles correspondent! Connexion réussie.');
-      // Si le rôle correspond, connecter l'utilisateur
-      setIsLoggedIn(true);
-      setUserType(actualRole);
-      
-      // Si c'est un étudiant, récupérer ses informations
-      if (actualRole === 'student' && userData.email) {
-        const info = await getStudentInfo(userData.email);
-        console.log('Student info récupéré:', info); // Debug
-        setStudentInfo(info);
-      }
-      
+      // Connexion réussie avec un seul rôle
+      await completeLogin(selectedUserType, userData);
       return true;
     } catch (error: any) {
       console.error('Erreur de connexion:', error);
-      return false; // Retourner false pour afficher le message d'erreur
+      return false;
     } finally {
       setLoading(false);
     }
+  };
+
+  const completeLogin = async (selectedRole: string, userData: any) => {
+    console.log('Finalisation de la connexion avec le rôle:', selectedRole);
+    setIsLoggedIn(true);
+    setUserType(selectedRole);
+    
+    // Si c'est un étudiant, récupérer ses informations
+    if (selectedRole === 'student' && userData.email) {
+      const info = await getStudentInfo(userData.email);
+      console.log('Student info récupéré:', info);
+      setStudentInfo(info);
+    }
+  };
+
+  const handleRoleSelect = async (role: string) => {
+    setShowRoleSelection(false);
+    await completeLogin(role, user);
   };
 
   const handleMasterSelect = (master: string) => {
@@ -135,6 +152,16 @@ function App() {
 
   return (
     <div className="App min-h-screen flex flex-col">
+      {showRoleSelection && (
+        <RoleSelection
+          availableRoles={availableRoles}
+          onRoleSelect={handleRoleSelect}
+          onCancel={() => {
+            setShowRoleSelection(false);
+            handleLogout();
+          }}
+        />
+      )}
       <div className="flex-1">
         {isLoggedIn ? (
           userType === 'admin' ? (
