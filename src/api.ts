@@ -88,4 +88,73 @@ export async function getStudentInfo(email: string) {
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
+}
+
+// Fonctions pour les soumissions de devoirs
+export async function submitAssignment(assignmentId: number, studentId: string, file: File, comments?: string) {
+  try {
+    // Upload du fichier vers Supabase Storage
+    const fileName = `${studentId}_assignment_${assignmentId}_${Date.now()}.${file.name.split('.').pop()}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('assignments')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    // Récupérer l'URL publique du fichier
+    const { data: { publicUrl } } = supabase.storage
+      .from('assignments')
+      .getPublicUrl(fileName);
+
+    // Enregistrer la soumission dans la base de données
+    const { data, error } = await supabase
+      .from('assignment_submissions')
+      .insert({
+        assignment_id: assignmentId,
+        student_id: studentId,
+        file_url: publicUrl,
+        file_name: file.name,
+        submitted_at: new Date().toISOString(),
+        comments: comments || '',
+        status: 'submitted'
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data, fileUrl: publicUrl };
+  } catch (error) {
+    console.error('Erreur lors de la soumission du devoir:', error);
+    throw error;
+  }
+}
+
+export async function getAssignmentSubmissions(studentId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('assignment_submissions')
+      .select(`
+        *,
+        assignments (
+          title,
+          course,
+          due_date,
+          points
+        )
+      `)
+      .eq('student_id', studentId)
+      .order('submitted_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des soumissions:', error);
+    throw error;
+  }
 } 

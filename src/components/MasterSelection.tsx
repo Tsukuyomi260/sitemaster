@@ -31,7 +31,7 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
     {
       id: 'mr-mrtddeftp',
       name: 'MR-MRTDDEFTP',
-      description: 'Technopédagogie et Didactique des Disciplines de l\'Enseignement et de la Formation Technique et Professionnelle',
+      description: 'Master de Recherche en Technopédagogie et Didactique des Disciplines de l\'Enseignementde de la Formation Technique et Professionnel',
       color: 'from-slate-700 to-slate-800',
       icon: '📖'
     }
@@ -96,14 +96,12 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
         </div>
 
         {/* Footer */}
-        <div className="text-center">
-          <p className="text-sm text-slate-500">
-            Cliquez sur un programme pour accéder à votre espace
-          </p>
-        </div>
+        <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">
+          <div className="text-xs text-slate-400 text-center mb-1">Contact : gnonlonfoun@ensetmasters.org</div>
+        </footer>
       </div>
     </div>
   );
 };
 
-export default MasterSelection; 
+export default MasterSelection;

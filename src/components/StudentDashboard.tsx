@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { submitAssignment } from '../api';
 import {
   BookOpen,
   Calendar,
@@ -129,50 +130,28 @@ interface Settings {
   };
 }
 
+// Interface pour les cours
+interface CoursItem {
+  nom: string;
+  fichier: string;
+  professeur?: string;
+}
+
 // AJOUTER APRÈS LES IMPORTS
-const coursParSemestre = [
+const coursParSemestre: { semestre: string; cours: CoursItem[] }[] = [
   {
-    semestre: 'Semestre 1',
+    semestre: 'Semestre 3',
     cours: [
-      {
-        nom: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT",
-        fichier: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT.pdf",
-        professeur: "Dr (MC) Jean Marc GNONLONFOUN"
-      },
-      {
-        nom: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE",
-        fichier: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE.pdf",
-        professeur: "Dr (MC) Jean Marc GNONLONFOUN"
-      },
-      {
-        nom: "03 S1 Administration des Etablissements d'EFTP et GPEC en EFTP",
-        fichier: "03 S1 Administration des etablissements eftp et gpec en eftp.pdf",
-        professeur: "Dr (MC) Jean Marc GNONLONFOUN"
-      },
-      { nom: "04 S1 Etude des Textes Fondamentaux de l'EFTP", fichier: "04 S1 Etude des Textes Fondamentaux de l'EFTP.pdf" },
-      { nom: "05 S1 GEOGRAPHIE DE L'EFTP", fichier: "05 S1 GEOGRAPHIE DE L'EFTP.pdf" },
-      { nom: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP", fichier: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP.pdf" },
-      { nom: "07 S1 Théorie didactique", fichier: "07 S1 Théorie didactique.pdf" },
-      { nom: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP", fichier: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP.pdf" },
-      { nom: "09 S1 Anglais Technique", fichier: "09 S1 Anglais Technique.pdf" },
-      { nom: "10 S1 Communication scientifique en anglais", fichier: "10 S1 Communication scientifique en anglais.pdf" },
-      { nom: "11 S1 Projet apprenant", fichier: "11 S1 Projet apprenant.pdf" }
-    ]
-  },
-  {
-    semestre: 'Semestre 2',
-    cours: [
-      { nom: "01 S2 Délinquance Juvénile", fichier: "01 S2 Délinquance Juvénile.pdf" },
-      { nom: "02 S2 Epistomologie et science de l'education et de la formation", fichier: "02 S2 Epistomologie et science de l'education et de la formation.pdf" },
-      { nom: "03 S2 Gestion de classes en situation formelle dans l'EFTP", fichier: "03 S2 Gestion de classes en situation formelle dans l'EFTP.pdf" },
-      { nom: "04 S2 Gestion de classes de contexte de formation professionnelle", fichier: "04 S2 Gestion de classes de contexte de formation professionnelle.pdf" },
-      { nom: "05 S2 Didactique de la matière en EFTP", fichier: "05 S2 Didactique de la matière en EFTP.pdf" },
-      { nom: "06 S2 Docimologie", fichier: "06 S2 Docimologie.pdf" },
-      { nom: "07 - 08 S2 Pedagogie et Andragogie", fichier: "07 - 08 S2 Pedagogie et Andragogie.pdf" },
-      { nom: "09 S2 Sociologie de l'Education et Réalité de l'EFTP", fichier: "09 S2 Sociologie de l'Education et Réalité de l'EFTP.pdf" },
-      { nom: "10 S2 Education des apprenants à besoin spécifiques", fichier: "10 S2 Education des apprenants à besoin spécifiques.pdf" },
-      { nom: "11 S2 Ethique et déontologie de la profession enseignante", fichier: "11 S2 Ethique et déontologie de la profession enseignante.pdf" },
-      { nom: "12 S2 Enseignement et formation en entreprise", fichier: "12 S2 Enseignement et formation en entreprise.pdf" }
+      { nom: "01 S3 Collaboration interdisciplinaire dans l'EFTP", fichier: "01 S3 Collaboration interdisciplinaire dans l'EFTP.pdf" },
+      { nom: "02 S3 Projet transverseaux dans l'EFTP", fichier: "02 S3 Projet transverseaux dans l'EFTP.pdf" },
+      { nom: "03 S3 Conception et mise en oeuvre de projet de recherche action", fichier: "03 S3 Conception et mise en oeuvre de projet de recherche action.pdf" },
+      { nom: "04 S3 Amélioration des pratiques pédagogiques dans les etablissements d'EFTP", fichier: "04 S3 Amélioration des pratiques pédagogiques dans les etablissements d'EFTP.pdf" },
+      { nom: "05 S3 Appropriation des programmes d'études", fichier: "05 S3 Appropriation des programmes d'études.pdf" },
+      { nom: "06 S3 Evaluation des programmes d'etude", fichier: "06 S3 Evaluation des programmes d'etude.pdf" },
+      { nom: "07 - 08 S3 Conception et redaction des curricula dans l'EFTP", fichier: "07 - 08 S3 Conception et redaction des curricula dans l'EFTP.pdf" },
+      { nom: "09 S3 Tice et innovation pédagogique en EFTP", fichier: "09 S3 Tice et innovation pédagogique en EFTP.pdf" },
+      { nom: "10 S3 Anglais scientifique", fichier: "10 S3 Anglais scientifique.pdf" },
+      { nom: "11 S3 Montage d'évènement scientifique et culturels", fichier: "11 S3 Montage d'évènement scientifique et culturels.pdf" }
     ]
   }
 ];
@@ -209,6 +188,13 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'submitted' | 'graded'>('all');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [submissionComments, setSubmissionComments] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState('');
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
   // Appliquer le thème au chargement
   React.useEffect(() => {
@@ -260,89 +246,292 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     emergencyPhone: studentInfo?.telephone_urgence || '+229 90 98 76 54'
   };
 
-  // Données fictives
+  // Données fictives - Tous les cours du semestre 3
   const courses: Course[] = [
     {
       id: 1,
-      title: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT",
-      instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
+      title: "01 S3 Collaboration interdisciplinaire dans l'EFTP",
+      instructor: '',
       progress: 0,
-      nextDeadline: '2025-07-20',
+      nextDeadline: '2025-08-15',
       status: 'Non commencé',
-      color: 'bg-gray-500',
-      description: 'Étude du développement psychologique de l\'enfant et de l\'adolescent',
-      credits: 6,
-      semester: 'Semestre 1',
+      color: 'bg-blue-500',
+      description: 'Développement de la collaboration entre disciplines dans l\'EFTP',
+      credits: 4,
+      semester: 'Semestre 3',
       lastActivity: 'Aucune activité',
       assignmentsCount: 0,
       completedAssignments: 0,
-      pdf: '/cours/semestre1/01 S1 PSYCHOPEDAGOGIE DE L\'ENFANT ET DE L\'ADOLESCENT.pdf'
+      pdf: '/cours/semestre3/01 S3 Collaboration interdisciplinaire dans l\'EFTP.pdf'
     },
     {
       id: 2,
-      title: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE",
-      instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
+      title: "02 S3 Projet transverseaux dans l'EFTP",
+      instructor: '',
       progress: 0,
-      nextDeadline: '2025-07-25',
+      nextDeadline: '2025-08-20',
       status: 'Non commencé',
-      color: 'bg-gray-500',
-      description: 'Analyse des processus d\'apprentissage chez l\'enfant et l\'adolescent',
-      credits: 4,
-      semester: 'Semestre 1',
+      color: 'bg-blue-500',
+      description: 'Conception et mise en œuvre de projets transversaux',
+      credits: 5,
+      semester: 'Semestre 3',
       lastActivity: 'Aucune activité',
       assignmentsCount: 0,
       completedAssignments: 0,
-      pdf: '/cours/semestre1/02 S1 PSYCHOLOGIE DE L\'APPRENTISSAGE.pdf'
+      pdf: '/cours/semestre3/02 S3 Projet transverseaux dans l\'EFTP.pdf'
     },
     {
       id: 3,
-      title: "03 S1 Administration des Etablissements d'EFTP et GPEC en EFTP",
-      instructor: 'Dr (MC) Jean Marc GNONLONFOUN',
+      title: "03 S3 Conception et mise en oeuvre de projet de recherche action",
+      instructor: '',
       progress: 0,
-      nextDeadline: '2025-07-30',
+      nextDeadline: '2025-08-25',
       status: 'Non commencé',
-      color: 'bg-gray-500',
-      description: 'Gestion et administration des établissements d\'EFTP, GPEC',
-      credits: 5,
-      semester: 'Semestre 1',
+      color: 'bg-blue-500',
+      description: 'Méthodologie de recherche-action en contexte EFTP',
+      credits: 6,
+      semester: 'Semestre 3',
       lastActivity: 'Aucune activité',
       assignmentsCount: 0,
       completedAssignments: 0,
-      pdf: '/cours/semestre1/03 S1 Administration des etablissements eftp et gpec en eftp.pdf'
+      pdf: '/cours/semestre3/03 S3 Conception et mise en oeuvre de projet de recherche action.pdf'
     },
     {
       id: 4,
-      title: 'Chimie des aliments',
-      instructor: 'Dr. Guevarra NONVIHO',
+      title: "04 S3 Amélioration des pratiques pédagogiques dans les etablissements d'EFTP",
+      instructor: '',
       progress: 0,
-      nextDeadline: '2025-07-25',
+      nextDeadline: '2025-08-30',
       status: 'Non commencé',
-      color: 'bg-gray-500',
-      description: 'Analyse chimique et composition des aliments',
+      color: 'bg-blue-500',
+      description: 'Amélioration des pratiques pédagogiques en EFTP',
       credits: 4,
-      semester: 'Semestre 1',
+      semester: 'Semestre 3',
       lastActivity: 'Aucune activité',
       assignmentsCount: 0,
-      completedAssignments: 0
+      completedAssignments: 0,
+      pdf: '/cours/semestre3/04 S3 Amélioration des pratiques pédagogiques dans les etablissements d\'EFTP.pdf'
     },
     {
       id: 5,
-      title: 'Alimentation humaine',
-      instructor: 'Dr. KLOTOE Jean Robert',
+      title: "05 S3 Appropriation des programmes d'études",
+      instructor: '',
       progress: 0,
-      nextDeadline: '2025-07-30',
+      nextDeadline: '2025-09-05',
       status: 'Non commencé',
-      color: 'bg-gray-500',
-      description: 'Besoins nutritionnels et alimentation équilibrée',
+      color: 'bg-blue-500',
+      description: 'Appropriation et mise en œuvre des programmes d\'études',
       credits: 5,
-      semester: 'Semestre 1',
+      semester: 'Semestre 3',
       lastActivity: 'Aucune activité',
       assignmentsCount: 0,
-      completedAssignments: 0
+      completedAssignments: 0,
+      pdf: '/cours/semestre3/05 S3 Appropriation des programmes d\'études.pdf'
+    },
+    {
+      id: 6,
+      title: "06 S3 Evaluation des programmes d'etude",
+      instructor: '',
+      progress: 0,
+      nextDeadline: '2025-09-10',
+      status: 'Non commencé',
+      color: 'bg-blue-500',
+      description: 'Évaluation et amélioration des programmes d\'études',
+      credits: 4,
+      semester: 'Semestre 3',
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0,
+      pdf: '/cours/semestre3/06 S3 Evaluation des programmes d\'etude.pdf'
+    },
+    {
+      id: 7,
+      title: "07 - 08 S3 Conception et redaction des curricula dans l'EFTP",
+      instructor: '',
+      progress: 0,
+      nextDeadline: '2025-09-15',
+      status: 'Non commencé',
+      color: 'bg-blue-500',
+      description: 'Conception et rédaction des curricula en EFTP',
+      credits: 6,
+      semester: 'Semestre 3',
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0,
+      pdf: '/cours/semestre3/07 - 08 S3 Conception et redaction des curricula dans l\'EFTP.pdf'
+    },
+    {
+      id: 8,
+      title: "09 S3 Tice et innovation pédagogique en EFTP",
+      instructor: '',
+      progress: 0,
+      nextDeadline: '2025-09-20',
+      status: 'Non commencé',
+      color: 'bg-blue-500',
+      description: 'Technologies de l\'information et innovation pédagogique',
+      credits: 4,
+      semester: 'Semestre 3',
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0,
+      pdf: '/cours/semestre3/09 S3 Tice et innovation pédagogique en EFTP.pdf'
+    },
+    {
+      id: 9,
+      title: "10 S3 Anglais scientifique",
+      instructor: '',
+      progress: 0,
+      nextDeadline: '2025-09-25',
+      status: 'Non commencé',
+      color: 'bg-blue-500',
+      description: 'Anglais scientifique et communication académique',
+      credits: 3,
+      semester: 'Semestre 3',
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0,
+      pdf: '/cours/semestre3/10 S3 Anglais scientifique.pdf'
+    },
+    {
+      id: 10,
+      title: "11 S3 Montage d'évènement scientifique et culturels",
+      instructor: '',
+      progress: 0,
+      nextDeadline: '2025-09-30',
+      status: 'Non commencé',
+      color: 'bg-blue-500',
+      description: 'Organisation d\'événements scientifiques et culturels',
+      credits: 4,
+      semester: 'Semestre 3',
+      lastActivity: 'Aucune activité',
+      assignmentsCount: 0,
+      completedAssignments: 0,
+      pdf: '/cours/semestre3/11 S3 Montage d\'évènement scientifique et culturels.pdf'
     }
   ];
 
-  const assignments: Assignment[] = [];
+  const assignments: Assignment[] = [
+    {
+      id: 1,
+      title: "01 S3 Collaboration interdisciplinaire dans l'EFTP",
+      course: "01 S3 Collaboration interdisciplinaire dans l'EFTP",
+      courseId: 1,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 2,
+      title: "02 S3 Projet transverseaux dans l'EFTP",
+      course: "02 S3 Projet transverseaux dans l'EFTP",
+      courseId: 2,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 3,
+      title: "03 S3 Conception et mise en oeuvre de projet de recherche action",
+      course: "03 S3 Conception et mise en oeuvre de projet de recherche action",
+      courseId: 3,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 4,
+      title: "04 S3 Amélioration des pratiques pédagogiques dans les etablissements d'EFTP",
+      course: "04 S3 Amélioration des pratiques pédagogiques dans les etablissements d'EFTP",
+      courseId: 4,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 5,
+      title: "05 S3 Appropriation des programmes d'études",
+      course: "05 S3 Appropriation des programmes d'études",
+      courseId: 5,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 6,
+      title: "06 S3 Evaluation des programmes d'etude",
+      course: "06 S3 Evaluation des programmes d'etude",
+      courseId: 6,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 7,
+      title: "07 - 08 S3 Conception et redaction des curricula dans l'EFTP",
+      course: "07 - 08 S3 Conception et redaction des curricula dans l'EFTP",
+      courseId: 7,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 8,
+      title: "09 S3 Tice et innovation pédagogique en EFTP",
+      course: "09 S3 Tice et innovation pédagogique en EFTP",
+      courseId: 8,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 9,
+      title: "10 S3 Anglais scientifique",
+      course: "10 S3 Anglais scientifique",
+      courseId: 9,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    },
+    {
+      id: 10,
+      title: "11 S3 Montage d'évènement scientifique et culturels",
+      course: "11 S3 Montage d'évènement scientifique et culturels",
+      courseId: 10,
+      dueDate: '',
+      status: 'À rendre',
+      priority: 'medium',
+      description: '',
+      type: 'Devoir',
+      points: 0
+    }
+  ];
 
   const recentResults: Result[] = [];
 
@@ -462,7 +651,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <h3 className="font-semibold text-slate-900 mb-1">{course.title}</h3>
-          <p className="text-sm text-slate-600">Prof. {course.instructor}</p>
+          {course.instructor && (
+            <p className="text-sm text-slate-600">Prof. {course.instructor}</p>
+          )}
         </div>
         <span className={`w-3 h-3 rounded-full ${course.color}`}></span>
       </div>
@@ -501,7 +692,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             </span>
           </div>
           <h3 className="font-semibold text-slate-900 mb-1 text-lg">{course.title}</h3>
-          <p className="text-sm text-slate-600 mb-2">Prof. {course.instructor}</p>
+          {course.instructor && (
+            <p className="text-sm text-slate-600 mb-2">Prof. {course.instructor}</p>
+          )}
           <p className="text-sm text-slate-500 mb-3">{course.description}</p>
         </div>
       </div>
@@ -583,7 +776,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             </button>
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{course.title}</h1>
-              <p className="text-slate-600">Prof. {course.instructor}</p>
+              {course.instructor && (
+                <p className="text-slate-600">Prof. {course.instructor}</p>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -784,75 +979,16 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   const AssignmentCard: React.FC<{ assignment: Assignment }> = ({ assignment }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center space-x-2 mb-2">
-            <div className={`w-2 h-2 rounded-full ${getPriorityColor(assignment.priority)}`}></div>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
-              {assignment.status}
-            </span>
-            <div className="flex items-center space-x-1 text-slate-500">
-              {getTypeIcon(assignment.type)}
-              <span className="text-xs">{assignment.type}</span>
-            </div>
-          </div>
-          <h3 className="font-semibold text-slate-900 mb-1">{assignment.title}</h3>
-          <p className="text-sm text-slate-600 mb-2">{assignment.course}</p>
-          <p className="text-sm text-slate-500 mb-3">{assignment.description}</p>
-        </div>
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between min-h-[160px]">
+      <div>
+        <h3 className="font-semibold text-slate-900 text-lg mb-2">Devoir - {assignment.course}</h3>
       </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <p className="text-xs text-slate-500">Échéance</p>
-          <p className="font-medium text-slate-900">{assignment.dueDate}</p>
-        </div>
-        <div>
-          <p className="text-xs text-slate-500">Points</p>
-          <p className="font-medium text-slate-900">{assignment.points} pts</p>
-        </div>
-        {assignment.submittedAt && (
-          <div>
-            <p className="text-xs text-slate-500">Rendu le</p>
-            <p className="font-medium text-slate-900">{assignment.submittedAt}</p>
-          </div>
-        )}
-        {assignment.grade && (
-          <div>
-            <p className="text-xs text-slate-500">Note</p>
-            <p className="font-medium text-slate-900">{assignment.grade}/{assignment.maxGrade}</p>
-          </div>
-        )}
-      </div>
-
-      {assignment.feedback && (
-        <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-          <p className="text-xs text-slate-500 mb-1">Feedback</p>
-          <p className="text-sm text-slate-700">{assignment.feedback}</p>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div className="flex space-x-2">
-          {assignment.status === 'À rendre' && (
-            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
-              Rendre
-            </button>
-          )}
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-slate-500">Priorité</p>
-          <p className={`text-xs font-medium ${
-            assignment.priority === 'high' ? 'text-red-600' :
-            assignment.priority === 'medium' ? 'text-orange-600' :
-            'text-green-600'
-          }`}>
-            {assignment.priority === 'high' ? 'Haute' :
-             assignment.priority === 'medium' ? 'Moyenne' : 'Basse'}
-          </p>
-        </div>
-      </div>
+      <button
+        onClick={() => handleSubmitAssignment(assignment)}
+        className="mt-6 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+      >
+        Rendre le devoir
+      </button>
     </div>
   );
 
@@ -971,6 +1107,81 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleSubmitAssignment = (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
+    setIsSubmissionModalOpen(true);
+    setSubmissionError('');
+    setSubmissionSuccess(false);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Vérifier le type de fichier
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/plain'
+      ];
+      
+      if (allowedTypes.includes(file.type)) {
+        setSubmissionFile(file);
+        setSubmissionError('');
+      } else {
+        setSubmissionError('Format de fichier non supporté. Utilisez PDF, Word, PowerPoint ou texte.');
+        setSubmissionFile(null);
+      }
+    }
+  };
+
+  const handleSubmissionSubmit = async () => {
+    if (!submissionFile || !selectedAssignment || !studentInfo?.id) {
+      setSubmissionError('Veuillez sélectionner un fichier à soumettre.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmissionError('');
+
+    try {
+      await submitAssignment(
+        selectedAssignment.id,
+        studentInfo.id,
+        submissionFile,
+        submissionComments
+      );
+
+      setSubmissionSuccess(true);
+      setSubmissionFile(null);
+      setSubmissionComments('');
+      
+      // Fermer le modal après 2 secondes
+      setTimeout(() => {
+        setIsSubmissionModalOpen(false);
+        setSubmissionSuccess(false);
+        setSelectedAssignment(null);
+      }, 2000);
+
+    } catch (error) {
+      console.error('Erreur lors de la soumission:', error);
+      setSubmissionError('Erreur lors de la soumission. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const closeSubmissionModal = () => {
+    setIsSubmissionModalOpen(false);
+    setSelectedAssignment(null);
+    setSubmissionFile(null);
+    setSubmissionComments('');
+    setSubmissionError('');
+    setSubmissionSuccess(false);
   };
 
   const ProfileSection: React.FC = () => {
@@ -1622,42 +1833,28 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             {activeTab === 'dashboard' && (
               <div className="space-y-8">
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <StatCard
                     icon={BookOpen}
                     title="Cours actifs"
-                    value="0"
-                    subtitle="En progression"
+                    value={coursParSemestre.find(s => s.semestre === 'Semestre 3')?.cours.length.toString() || "0"}
+                    subtitle="Semestre 3"
                     color="bg-blue-500"
                   />
                   <StatCard
                     icon={ClipboardCheck}
                     title="Devoirs à rendre"
-                    value="0"
+                    value="10"
                     subtitle="Cette semaine"
                     color="bg-orange-500"
-                  />
-                  <StatCard
-                    icon={Award}
-                    title="Moyenne générale"
-                    value="0.0"
-                    subtitle="Sur 20"
-                    color="bg-green-500"
-                  />
-                  <StatCard
-                    icon={Calendar}
-                    title="Jours restants"
-                    value="0"
-                    subtitle="Fin de semestre"
-                    color="bg-purple-500"
                   />
                 </div>
 
                 {/* Courses Overview */}
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900 mb-4">Mes cours</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {courses.filter(course => course.id <= 3).map(course => (
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {courses.map(course => (
                       <CourseCard key={course.id} course={course} />
                     ))}
                   </div>
@@ -1852,6 +2049,108 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               </div>
             )}
           </>
+        )}
+
+        {/* Modal de soumission de devoir */}
+        {isSubmissionModalOpen && selectedAssignment && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-lg w-full">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-900">Devoir - {selectedAssignment.course}</h2>
+                <button
+                  onClick={closeSubmissionModal}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Formulaire de soumission */}
+              <div className="space-y-4">
+                {/* Upload de fichier */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-3">
+                    Fichier à soumettre *
+                  </label>
+                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-slate-400 transition-colors">
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.txt"
+                      className="hidden"
+                      id="assignment-file"
+                    />
+                    <label htmlFor="assignment-file" className="cursor-pointer">
+                      <div className="space-y-3">
+                        <svg className="mx-auto h-10 w-10 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <div className="text-slate-600">
+                          <span className="font-medium">Cliquez pour sélectionner un fichier</span>
+                          <p className="text-xs mt-1">PDF, Word, PowerPoint ou texte</p>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  {submissionFile && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-700">
+                        <span className="font-medium">✓</span> {submissionFile.name}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Commentaires */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Commentaires (optionnel)
+                  </label>
+                  <textarea
+                    value={submissionComments}
+                    onChange={(e) => setSubmissionComments(e.target.value)}
+                    placeholder="Ajoutez des commentaires sur votre travail..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Messages d'erreur et de succès */}
+                {submissionError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{submissionError}</p>
+                  </div>
+                )}
+
+                {submissionSuccess && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      ✅ Devoir soumis avec succès !
+                    </p>
+                  </div>
+                )}
+
+                {/* Boutons */}
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    onClick={closeSubmissionModal}
+                    className="flex-1 px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleSubmissionSubmit}
+                    disabled={!submissionFile || isSubmitting}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed font-medium"
+                  >
+                    {isSubmitting ? 'Soumission...' : 'Soumettre'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
