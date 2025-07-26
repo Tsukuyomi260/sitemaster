@@ -216,4 +216,518 @@ export async function getAllAssignmentSubmissions() {
     console.error('Erreur lors de la récupération des soumissions:', error);
     throw error;
   }
+}
+
+// Fonction pour récupérer les cours assignés à un enseignant
+export async function getTeacherCourses(teacherEmail: string) {
+  try {
+    const { data: courses, error } = await supabase
+      .from('course_assignments')
+      .select('*')
+      .eq('teacher_email', teacherEmail)
+      .eq('is_active', true)
+      .order('assigned_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return courses;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des cours enseignants:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer les étudiants inscrits à un cours
+export async function getStudentsByCourse(courseName: string) {
+  try {
+    const { data: students, error } = await supabase
+      .from('students')
+      .select('*')
+      .eq('niveau', 'MR-TDDEFTP-2') // Correction: utiliser le bon niveau
+      .order('nom_complet', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return students;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des étudiants par cours:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer les étudiants qui ont téléchargé un cours spécifique
+export async function getStudentsWhoDownloadedCourse(courseName: string) {
+  try {
+    const { data: downloads, error } = await supabase
+      .from('course_downloads')
+      .select('student_email')
+      .eq('course_name', courseName);
+
+    if (error) {
+      throw error;
+    }
+
+    if (downloads && downloads.length > 0) {
+      const studentEmails = downloads.map(d => d.student_email);
+      const { data: students, error: studentsError } = await supabase
+        .from('students')
+        .select('*')
+        .in('email', studentEmails)
+        .order('nom_complet', { ascending: true });
+
+      if (studentsError) {
+        throw studentsError;
+      }
+
+      return students;
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des étudiants ayant téléchargé le cours:', error);
+    throw error;
+  }
+}
+
+// Fonction pour envoyer un message aux étudiants d'un cours
+export async function sendMessageToStudents(teacherEmail: string, courseName: string, messageTitle: string, messageContent: string) {
+  try {
+    // 1. Créer le message
+    const { data: message, error: messageError } = await supabase
+      .from('teacher_messages')
+      .insert({
+        teacher_email: teacherEmail,
+        course_name: courseName,
+        message_title: messageTitle,
+        message_content: messageContent
+      })
+      .select()
+      .single();
+
+    if (messageError) {
+      throw messageError;
+    }
+
+    // 2. Récupérer tous les étudiants Master 2
+    const students = await getStudentsByCourse(courseName);
+
+    // 3. Créer les notifications pour chaque étudiant
+    if (students && students.length > 0) {
+      const notifications = students.map(student => ({
+        student_email: student.email,
+        message_id: message.id
+      }));
+
+      const { error: notificationError } = await supabase
+        .from('student_notifications')
+        .insert(notifications);
+
+      if (notificationError) {
+        throw notificationError;
+      }
+    }
+
+    return { success: true, messageId: message.id, studentsCount: students?.length || 0 };
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du message:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer les notifications d'un étudiant
+export async function getStudentNotifications(studentEmail: string) {
+  try {
+    const { data: notifications, error } = await supabase
+      .from('student_notifications')
+      .select(`
+        *,
+        teacher_messages (
+          id,
+          teacher_email,
+          course_name,
+          message_title,
+          message_content,
+          created_at
+        )
+      `)
+      .eq('student_email', studentEmail)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return notifications;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des notifications:', error);
+    throw error;
+  }
+}
+
+// Fonction pour marquer une notification comme lue
+export async function markNotificationAsRead(notificationId: number) {
+  try {
+    const { error } = await supabase
+      .from('student_notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Erreur lors du marquage de la notification:', error);
+    throw error;
+  }
+}
+
+// Fonction pour enregistrer un téléchargement de cours
+export async function recordCourseDownload(studentEmail: string, courseName: string) {
+  try {
+    const { error } = await supabase
+      .from('course_downloads')
+      .upsert({
+        student_email: studentEmail,
+        course_name: courseName
+      }, {
+        onConflict: 'student_email,course_name'
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Erreur lors de l\'enregistrement du téléchargement:', error);
+    throw error;
+  }
+}
+
+// Fonction pour envoyer un message à tous les étudiants Master 2
+export async function sendMessageToAllStudents(teacherEmail: string, messageTitle: string, messageContent: string) {
+  try {
+    // 1. Créer le message
+    const { data: message, error: messageError } = await supabase
+      .from('teacher_messages')
+      .insert({
+        teacher_email: teacherEmail,
+        course_name: 'Message général',
+        message_title: messageTitle,
+        message_content: messageContent
+      })
+      .select()
+      .single();
+
+    if (messageError) {
+      throw messageError;
+    }
+
+                 // 2. Récupérer tous les étudiants Master 2
+             const { data: students, error: studentsError } = await supabase
+               .from('students')
+               .select('*')
+               .eq('niveau', 'MR-TDDEFTP-2')
+               .order('nom_complet', { ascending: true });
+
+    if (studentsError) {
+      throw studentsError;
+    }
+
+    // 3. Créer les notifications pour chaque étudiant
+    if (students && students.length > 0) {
+      const notifications = students.map(student => ({
+        student_email: student.email,
+        message_id: message.id
+      }));
+
+      const { error: notificationError } = await supabase
+        .from('student_notifications')
+        .insert(notifications);
+
+      if (notificationError) {
+        throw notificationError;
+      }
+    }
+
+    return { success: true, messageId: message.id, studentsCount: students?.length || 0 };
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du message à tous les étudiants:', error);
+    throw error;
+  }
+} 
+
+// Nouvelles fonctions pour le Super Admin Dashboard
+
+// Récupérer tous les administrateurs
+export async function getAllAdmins() {
+  try {
+    const { data: admins, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'admin')
+      .order('email', { ascending: true });
+    
+    if (error) {
+      throw error;
+    }
+    return admins;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des administrateurs:', error);
+    throw error;
+  }
+}
+
+// Récupérer tous les enseignants
+export async function getAllTeachers() {
+  try {
+    const { data: teachers, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'teacher')
+      .order('email', { ascending: true });
+    
+    if (error) {
+      throw error;
+    }
+    return teachers;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des enseignants:', error);
+    throw error;
+  }
+}
+
+// Récupérer tous les cours assignés par master
+export async function getAllCoursesByMaster() {
+  try {
+    const { data: courses, error } = await supabase
+      .from('course_assignments')
+      .select(`
+        *,
+        teachers:profiles(email, role)
+      `)
+      .order('course_name', { ascending: true });
+    
+    if (error) {
+      throw error;
+    }
+    return courses;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des cours par master:', error);
+    throw error;
+  }
+}
+
+// Récupérer les statistiques globales
+export async function getGlobalStats() {
+  try {
+    // Compter les étudiants
+    const { count: studentsCount, error: studentsError } = await supabase
+      .from('students')
+      .select('*', { count: 'exact', head: true });
+    
+    if (studentsError) throw studentsError;
+
+    // Compter les enseignants
+    const { count: teachersCount, error: teachersError } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'teacher');
+    
+    if (teachersError) throw teachersError;
+
+    // Compter les administrateurs
+    const { count: adminsCount, error: adminsError } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'admin');
+    
+    if (adminsError) throw adminsError;
+
+    // Compter les soumissions de devoirs
+    const { count: submissionsCount, error: submissionsError } = await supabase
+      .from('assignment_submissions')
+      .select('*', { count: 'exact', head: true });
+    
+    if (submissionsError) throw submissionsError;
+
+    return {
+      studentsCount: studentsCount || 0,
+      teachersCount: teachersCount || 0,
+      adminsCount: adminsCount || 0,
+      submissionsCount: submissionsCount || 0
+    };
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statistiques:', error);
+    throw error;
+  }
+}
+
+// Créer un nouvel administrateur
+export async function createAdmin(email: string, password: string) {
+  try {
+    // Créer l'utilisateur dans auth.users
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (authError) throw authError;
+
+    // Ajouter le rôle admin dans profiles
+    if (authData.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email: email,
+          role: 'admin'
+        });
+
+      if (profileError) throw profileError;
+    }
+
+    return authData.user;
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'administrateur:', error);
+    throw error;
+  }
+}
+
+// Créer un nouvel enseignant
+export async function createTeacher(email: string, password: string) {
+  try {
+    // Créer l'utilisateur dans auth.users
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (authError) throw authError;
+
+    // Ajouter le rôle teacher dans profiles
+    if (authData.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email: email,
+          role: 'teacher'
+        });
+
+      if (profileError) throw profileError;
+    }
+
+    return authData.user;
+  } catch (error) {
+    console.error('Erreur lors de la création de l\'enseignant:', error);
+    throw error;
+  }
+}
+
+// Assigner un cours à un enseignant
+export async function assignCourseToTeacher(teacherEmail: string, courseName: string) {
+  try {
+    const { data, error } = await supabase
+      .from('course_assignments')
+      .insert({
+        teacher_email: teacherEmail,
+        course_name: courseName
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de l\'assignation du cours:', error);
+    throw error;
+  }
+}
+
+// Supprimer l'assignation d'un cours
+export async function removeCourseAssignment(assignmentId: number) {
+  try {
+    const { error } = await supabase
+      .from('course_assignments')
+      .delete()
+      .eq('id', assignmentId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'assignation:', error);
+    throw error;
+  }
+}
+
+// Bloquer/Débloquer un utilisateur
+export async function toggleUserBlock(userId: string, blocked: boolean) {
+  try {
+    const { error } = await supabase.auth.admin.updateUserById(userId, {
+      user_metadata: { blocked }
+    });
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Erreur lors du changement de statut utilisateur:', error);
+    throw error;
+  }
+}
+
+// Envoyer un message à tous les utilisateurs (fonctionnalité admin)
+export async function sendMessageToAllUsers(adminEmail: string, messageTitle: string, messageContent: string, targetRole?: string) {
+  try {
+    // 1. Créer le message
+    const { data: message, error: messageError } = await supabase
+      .from('teacher_messages')
+      .insert({
+        teacher_email: adminEmail,
+        course_name: 'Message administratif',
+        message_title: messageTitle,
+        message_content: messageContent
+      })
+      .select()
+      .single();
+
+    if (messageError) throw messageError;
+
+    // 2. Récupérer les utilisateurs cibles
+    let usersQuery = supabase.from('students').select('email');
+    
+    if (targetRole) {
+      usersQuery = supabase.from('profiles').select('email').eq('role', targetRole);
+    }
+
+    const { data: users, error: usersError } = await usersQuery;
+    if (usersError) throw usersError;
+
+    // 3. Créer les notifications
+    if (users && users.length > 0) {
+      const notifications = users.map(user => ({
+        student_email: user.email,
+        message_id: message.id
+      }));
+
+      const { error: notificationError } = await supabase
+        .from('student_notifications')
+        .insert(notifications);
+
+      if (notificationError) throw notificationError;
+    }
+
+    return { success: true, messageId: message.id, usersCount: users?.length || 0 };
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du message à tous les utilisateurs:', error);
+    throw error;
+  }
 } 

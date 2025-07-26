@@ -1,23 +1,19 @@
-import React, { useState } from 'react';
-import { submitAssignment } from '../api';
+import React, { useState, useEffect } from 'react';
+import { submitAssignment, getStudentNotifications, markNotificationAsRead, recordCourseDownload } from '../api';
 import {
   BookOpen,
-  Calendar,
-  CheckCircle,
-  Clock,
   Award,
   FileText,
-  Play,
-  Download,
   Bell,
   User,
   LogOut,
   Home,
-  GraduationCap,
   ClipboardCheck,
-  BarChart3,
-  Settings
+  Settings,
+  MessageSquare,
+  Eye
 } from 'lucide-react';
+import { EmailIcon, WhatsAppIcon } from './ContactIcons';
 
 interface Course {
   id: number;
@@ -137,6 +133,22 @@ interface CoursItem {
   professeur?: string;
 }
 
+interface Notification {
+  id: number;
+  student_email: string;
+  message_id: number;
+  is_read: boolean;
+  created_at: string;
+  teacher_messages: {
+    id: number;
+    teacher_email: string;
+    course_name: string;
+    message_title: string;
+    message_content: string;
+    created_at: string;
+  };
+}
+
 // AJOUTER APRÈS LES IMPORTS
 const coursParSemestre: { semestre: string; cours: CoursItem[] }[] = [
   {
@@ -195,6 +207,25 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showNotificationDetail, setShowNotificationDetail] = useState<Notification | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Charger les notifications au montage du composant
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const notificationsData = await getStudentNotifications(studentName);
+        setNotifications(notificationsData || []);
+        setUnreadCount(notificationsData?.filter(n => !n.is_read).length || 0);
+      } catch (error) {
+        console.error('Erreur lors du chargement des notifications:', error);
+      }
+    };
+
+    loadNotifications();
+  }, [studentName]);
 
   // Appliquer le thème au chargement
   React.useEffect(() => {
@@ -732,27 +763,21 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
           >
             Voir le cours
           </button>
-          <a
+          <button
+            onClick={() => course.pdf && handleCourseDownload(course.title, course.pdf)}
             className="text-sm font-medium px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
-            href={course.pdf}
-            download
-            target="_blank"
-            rel="noopener noreferrer"
           >
             Télécharger
-          </a>
+          </button>
         </div>
       </div>
       {course.pdf && (
-        <a
-          href={course.pdf}
-          download
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => handleCourseDownload(course.title, course.pdf!)}
           className="inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mt-4"
         >
           Télécharger le PDF du cours
-        </a>
+        </button>
       )}
     </div>
   );
@@ -1182,6 +1207,45 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     setSubmissionComments('');
     setSubmissionError('');
     setSubmissionSuccess(false);
+  };
+
+  // Fonction pour gérer le téléchargement d'un cours
+  const handleCourseDownload = async (courseName: string, pdfPath: string) => {
+    try {
+      // Enregistrer le téléchargement dans la base de données
+      await recordCourseDownload(studentName, courseName);
+      
+      // Télécharger le fichier
+      const link = document.createElement('a');
+      link.href = pdfPath;
+      link.download = courseName + '.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+    }
+  };
+
+  // Fonction pour marquer une notification comme lue
+  const handleMarkNotificationAsRead = async (notificationId: number) => {
+    try {
+      await markNotificationAsRead(notificationId);
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Erreur lors du marquage de la notification:', error);
+    }
+  };
+
+  // Fonction pour afficher le détail d'une notification
+  const handleViewNotification = (notification: Notification) => {
+    if (!notification.is_read) {
+      handleMarkNotificationAsRead(notification.id);
+    }
+    setShowNotificationDetail(notification);
   };
 
   const ProfileSection: React.FC = () => {
@@ -1651,8 +1715,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                </div>
              </button>
 
-             <button className="p-4 text-left border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-               <div className="flex items-center space-x-3">
+             <div className="p-4 text-left border border-slate-200 rounded-lg">
+               <div className="flex items-center space-x-3 mb-3">
                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -1663,7 +1727,25 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                    <p className="text-sm text-slate-600">Nous aider à améliorer</p>
                  </div>
                </div>
-             </button>
+               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                 <a 
+                   href="mailto:gnonlonfoun@ensetmasters.org" 
+                   className="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
+                 >
+                   <EmailIcon />
+                   gnonlonfoun@ensetmasters.org
+                 </a>
+                 <a 
+                   href="https://wa.me/22996113246" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
+                 >
+                   <WhatsAppIcon />
+                   +229 96 11 32 46
+                 </a>
+               </div>
+             </div>
            </div>
          </div>
       </div>
@@ -1675,28 +1757,28 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       {/* Sidebar desktop */}
       <div className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-800 shadow-lg border-r border-slate-200 dark:border-slate-700 z-10 hidden md:block">
         <div className="p-6">
-                      <div className="flex items-center space-x-3 mb-8">
-              <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
-              </div>
-              <div>
-                <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MASTERS</h1>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Espace Master ENSET-MASTERS</p>
-              </div>
+          <div className="flex items-center space-x-3 mb-8">
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
+              <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
             </div>
-          <nav className="space-y-2">
+            <div>
+              <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MASTERS</h1>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Espace Master ENSET-MASTERS</p>
+            </div>
+          </div>
+          <nav className="space-y-3">
             {menuItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                className={`w-full flex items-center space-x-3 px-4 py-4 rounded-xl transition-all duration-200 font-medium ${
                   activeTab === item.id
-                    ? 'bg-slate-900 dark:bg-slate-700 text-white'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-lg'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">{item.label}</span>
               </button>
             ))}
           </nav>
@@ -1760,19 +1842,19 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 <p className="text-xs text-slate-600">Espace Master ENSET-MASTERS</p>
               </div>
             </div>
-            <nav className="space-y-2">
+            <nav className="space-y-3">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  className={`w-full flex items-center space-x-3 px-4 py-4 rounded-xl transition-all duration-200 font-medium ${
                     activeTab === item.id
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-700 hover:bg-slate-100'
+                      ? 'bg-slate-900 text-white shadow-lg'
+                      : 'text-slate-700 hover:bg-slate-100 hover:shadow-md'
                   }`}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm">{item.label}</span>
                 </button>
               ))}
             </nav>
@@ -1820,8 +1902,16 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 </p>
               </div>
               <div className="flex items-center space-x-4">
-                <button className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">
+                <button 
+                  onClick={() => setShowNotifications(true)}
+                  className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl relative"
+                >
                   <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
                 <button onClick={onLogout} className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">
                   <LogOut className="w-5 h-5" />
@@ -1979,39 +2069,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                           </div>
                         </div>
                       </div>
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">À rendre</p>
-                            <p className="text-2xl font-bold text-red-600">{assignments.filter(a => a.status === 'À rendre').length}</p>
-                          </div>
-                          <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-red-600" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">Rendus</p>
-                            <p className="text-2xl font-bold text-blue-600">{assignments.filter(a => a.status === 'Rendu').length}</p>
-                          </div>
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <CheckCircle className="w-5 h-5 text-blue-600" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">Notés</p>
-                            <p className="text-2xl font-bold text-green-600">{assignments.filter(a => a.status === 'Noté').length}</p>
-                          </div>
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Award className="w-5 h-5 text-green-600" />
-                          </div>
-                        </div>
-                      </div>
+
                     </div>
 
                     {/* Liste des devoirs */}
@@ -2146,6 +2204,145 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed font-medium"
                   >
                     {isSubmitting ? 'Soumission...' : 'Soumettre'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal des notifications */}
+        {showNotifications && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Bell className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">Notifications</h3>
+                    <p className="text-sm text-slate-600">{notifications.length} message(s)</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowNotifications(false)} 
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {notifications.length === 0 ? (
+                <div className="text-center py-12">
+                  <Bell className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                  <p className="text-slate-500">Aucune notification pour le moment</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {notifications.map(notification => (
+                    <div 
+                      key={notification.id} 
+                      className={`p-4 rounded-xl border transition-all cursor-pointer hover:shadow-md ${
+                        notification.is_read 
+                          ? 'bg-slate-50 border-slate-200' 
+                          : 'bg-blue-50 border-blue-200'
+                      }`}
+                      onClick={() => handleViewNotification(notification)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="font-semibold text-slate-900">
+                              {notification.teacher_messages.message_title}
+                            </h4>
+                            {!notification.is_read && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                Nouveau
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-600 mb-2">
+                            Cours : {notification.teacher_messages.course_name}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(notification.created_at).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <button className="text-blue-600 hover:text-blue-700">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modal détail notification */}
+        {showNotificationDetail && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">Message de l'enseignant</h3>
+                    <p className="text-sm text-slate-600">
+                      {new Date(showNotificationDetail.created_at).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowNotificationDetail(null)} 
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <h4 className="font-semibold text-slate-900 mb-2">
+                    {showNotificationDetail.teacher_messages.message_title}
+                  </h4>
+                  <p className="text-sm text-slate-600">
+                    Cours : {showNotificationDetail.teacher_messages.course_name}
+                  </p>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-xl p-4">
+                  <p className="text-slate-900 whitespace-pre-wrap">
+                    {showNotificationDetail.teacher_messages.message_content}
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowNotificationDetail(null)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Fermer
                   </button>
                 </div>
               </div>

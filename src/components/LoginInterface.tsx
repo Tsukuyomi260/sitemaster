@@ -1,5 +1,6 @@
 import React, { useState, MouseEvent, ChangeEvent } from 'react';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
+import { EmailIcon, WhatsAppIcon } from './ContactIcons';
 import SplitText from './SplitText';
 
 interface LoginInterfaceProps {
@@ -146,7 +147,26 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="text-red-700 text-sm">{error}</p>
+                <p className="text-red-700 text-sm mb-3">{error}</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <span className="text-xs text-red-600">Besoin d'aide ? Contactez-nous :</span>
+                  <a 
+                    href="mailto:gnonlonfoun@ensetmasters.org" 
+                    className="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
+                  >
+                    <EmailIcon />
+                    gnonlonfoun@ensetmasters.org
+                  </a>
+                  <a 
+                    href="https://wa.me/22996113246" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
+                  >
+                    <WhatsAppIcon />
+                    +229 96 11 32 46
+                  </a>
+                </div>
               </div>
             )}
 

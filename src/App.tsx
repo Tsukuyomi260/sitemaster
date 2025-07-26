@@ -4,6 +4,7 @@ import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 import AdminDashboard from './components/AdminDashboard';
+import { EmailIcon, WhatsAppIcon } from './components/ContactIcons';
 import { loginUser, getCurrentUser, signOut, getUserRole, getStudentInfo } from './api';
 
 function App() {
@@ -106,7 +107,27 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto mb-4"></div>
-          <p className="text-slate-600">Chargement...</p>
+          <p className="text-slate-600 mb-6">Chargement...</p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <span className="text-xs text-slate-500">Besoin d'aide ? Contactez-nous :</span>
+            <a 
+              href="mailto:gnonlonfoun@ensetmasters.org" 
+              className="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
+            >
+              <EmailIcon />
+              gnonlonfoun@ensetmasters.org
+            </a>
+            <a 
+              href="https://wa.me/22996113246" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
+            >
+              <WhatsAppIcon />
+              +229 96 11 32 46
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -132,6 +153,26 @@ function App() {
                 <div className="bg-red-50 border border-red-200 rounded-xl p-8 max-w-md">
                   <h2 className="text-xl font-semibold text-red-800 mb-4">Accès non autorisé</h2>
                   <p className="text-red-700 mb-4">Votre compte n'a pas de rôle défini. Veuillez contacter l'administration.</p>
+                  
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+                    <a 
+                      href="mailto:gnonlonfoun@ensetmasters.org" 
+                      className="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
+                    >
+                      <EmailIcon />
+                      gnonlonfoun@ensetmasters.org
+                    </a>
+                    <a 
+                      href="https://wa.me/22996113246" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
+                    >
+                      <WhatsAppIcon />
+                      +229 96 11 32 46
+                    </a>
+                  </div>
+                  
                   <button
                     onClick={handleLogout}
                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
@@ -153,7 +194,24 @@ function App() {
           <img src="/logo-enset.png" alt="Logo ENSET" className="w-16 h-16 rounded mb-2" />
           <div className="font-bold text-lg text-center">ENSET-MASTERS</div>
           <div className="text-xs text-slate-500 text-center mb-2">Ecole Normale Supérieure de l'Enseignement Technique</div>
-          <div className="text-xs text-slate-400 text-center mb-1">Contact : gnonlonfoun@ensetmasters.org</div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-2">
+            <a 
+              href="mailto:gnonlonfoun@ensetmasters.org" 
+              className="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
+            >
+              <EmailIcon />
+              gnonlonfoun@ensetmasters.org
+            </a>
+            <a 
+              href="https://wa.me/22996113246" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
+            >
+              <WhatsAppIcon />
+              +229 96 11 32 46
+            </a>
+          </div>
           <div className="text-xs text-slate-400 text-center">© {new Date().getFullYear()} ENSET-MASTERS. Tous droits réservés.</div>
         </div>
       </footer>

@@ -1,5 +1,6 @@
 import React from 'react';
 import SplitText from './SplitText';
+import { EmailIcon, WhatsAppIcon } from './ContactIcons';
 
 interface MasterSelectionProps {
   onMasterSelect: (master: string) => void;
@@ -97,7 +98,24 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
 
         {/* Footer */}
         <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">
-          <div className="text-xs text-slate-400 text-center mb-1">Contact : gnonlonfoun@ensetmasters.org</div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a 
+              href="mailto:gnonlonfoun@ensetmasters.org" 
+              className="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
+            >
+              <EmailIcon />
+              gnonlonfoun@ensetmasters.org
+            </a>
+            <a 
+              href="https://wa.me/22996113246" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
+            >
+              <WhatsAppIcon />
+              +229 96 11 32 46
+            </a>
+          </div>
         </footer>
       </div>
     </div>
