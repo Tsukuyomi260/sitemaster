@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, BookOpen, Users, Download, Upload, Settings, LogOut, ChevronUp, MessageSquare, Send } from 'lucide-react';
-import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents } from '../api';
+import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents, getSubmissionsByCourse } from '../api';
 
 interface TeacherDashboardProps {
   teacherName: string;
@@ -26,6 +26,24 @@ interface Student {
   annee_academique: string;
 }
 
+interface Submission {
+  id: number;
+  assignment_id: number;
+  student_id: string;
+  file_url: string;
+  file_name: string;
+  submission_title: string;
+  submitted_at: string;
+  comments: string;
+  status: string;
+  assignments: {
+    title: string;
+    course: string;
+    due_date: string;
+    points: number;
+  };
+}
+
 function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
   const [activeTab, setActiveTab] = useState('courses');
   const [courses, setCourses] = useState<CourseAssignment[]>([]);
@@ -44,6 +62,9 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
   const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [showStudentProfileModal, setShowStudentProfileModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [selectedCourseForSubmissions, setSelectedCourseForSubmissions] = useState<string>('');
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
   // Charger les cours assignés au montage du composant
   useEffect(() => {
@@ -187,6 +208,29 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
     setShowStudentProfileModal(true);
   };
 
+  const loadSubmissionsForCourse = async (courseName: string) => {
+    try {
+      setSubmissionsLoading(true);
+      const submissionsData = await getSubmissionsByCourse(courseName);
+      setSubmissions(submissionsData || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des soumissions:', error);
+      setSubmissions([]);
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  };
+
+  const handleDownloadSubmission = (fileUrl: string, fileName: string) => {
+    // Créer un lien de téléchargement
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col md:flex-row">
       {/* Sidebar navigation */}
@@ -215,6 +259,11 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
             <button onClick={() => setActiveTab('students')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium ${activeTab === 'students' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'}`}>
               <Users className="w-5 h-5" />
               <span>Mes étudiants</span>
+            </button>
+            
+            <button onClick={() => setActiveTab('submissions')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium ${activeTab === 'submissions' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'}`}>
+              <Upload className="w-5 h-5" />
+              <span>Devoirs rendus</span>
             </button>
           </nav>
           
@@ -266,6 +315,7 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
         <div className="flex items-center gap-2 md:gap-6">
           <button onClick={() => setActiveTab('courses')} className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === 'courses' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-slate-700 hover:bg-slate-100'}`}>Cours</button>
           <button onClick={() => setActiveTab('students')} className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === 'students' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-slate-700 hover:bg-slate-100'}`}>Étudiants</button>
+          <button onClick={() => setActiveTab('submissions')} className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === 'submissions' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-slate-700 hover:bg-slate-100'}`}>Devoirs</button>
         </div>
         
         {/* Raccourcis en haut à droite */}
@@ -423,6 +473,123 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
               </div>
             )}
 
+            {activeTab === 'submissions' && (
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 mb-8 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-slate-900">Devoirs rendus par mes étudiants</h2>
+                    <p className="text-sm text-slate-600 mt-1">Consultez et téléchargez les devoirs soumis</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Upload className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-lg font-bold text-blue-600">{submissions.length}</span>
+                  </div>
+                </div>
+
+                {/* Sélecteur de cours */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Filtrer par cours
+                  </label>
+                  <select
+                    value={selectedCourseForSubmissions}
+                    onChange={(e) => {
+                      setSelectedCourseForSubmissions(e.target.value);
+                      if (e.target.value) {
+                        loadSubmissionsForCourse(e.target.value);
+                      } else {
+                        setSubmissions([]);
+                      }
+                    }}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Tous les cours</option>
+                    {courses.map(course => (
+                      <option key={course.id} value={course.course_name}>
+                        {course.course_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {submissionsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p className="mt-2 text-slate-600">Chargement des soumissions...</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-slate-200">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b-2 border-slate-200 bg-slate-50 rounded-t-xl">
+                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Étudiant</th>
+                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Devoir</th>
+                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Cours</th>
+                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Fichier</th>
+                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Date de soumission</th>
+                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {submissions.map((submission, index) => (
+                          <tr 
+                            key={submission.id} 
+                            className={`hover:bg-slate-50 transition-colors duration-200 ${
+                              index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
+                            }`}
+                          >
+                            <td className="py-4 px-6">
+                              <div>
+                                <div className="font-medium text-slate-900">{submission.student_id}</div>
+                                <div className="text-xs text-slate-500">ID: {submission.student_id}</div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div>
+                                <div className="font-medium text-slate-900">{submission.submission_title}</div>
+                                <div className="text-xs text-slate-500">{submission.assignments?.title}</div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6 text-sm text-slate-600">{submission.assignments?.course}</td>
+                            <td className="py-4 px-6 text-sm text-slate-600">{submission.file_name}</td>
+                            <td className="py-4 px-6 text-sm text-slate-600">
+                              {new Date(submission.submitted_at).toLocaleDateString('fr-FR')}
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={() => handleDownloadSubmission(submission.file_url, submission.file_name)}
+                                  className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                                >
+                                  Télécharger
+                                </button>
+                                {submission.comments && (
+                                  <button 
+                                    onClick={() => alert(`Commentaires: ${submission.comments}`)}
+                                    className="text-xs bg-slate-600 text-white px-3 py-1 rounded hover:bg-slate-700 transition-colors"
+                                  >
+                                    Voir commentaires
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {!submissionsLoading && submissions.length === 0 && (
+                  <div className="text-center py-12 text-slate-500">
+                    <Upload className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                    <p>Aucun devoir rendu trouvé pour ce cours.</p>
+                  </div>
+                )}
+              </div>
+            )}
 
           </>
         )}

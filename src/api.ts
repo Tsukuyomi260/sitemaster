@@ -784,3 +784,58 @@ export async function getAssignmentsByCourse(courseName: string) {
     throw error;
   }
 } 
+
+// Fonction pour récupérer les soumissions de devoirs par cours (pour les enseignants)
+export async function getSubmissionsByCourse(courseName: string) {
+  try {
+    const { data: submissions, error } = await supabase
+      .from('assignment_submissions')
+      .select(`
+        *,
+        assignments (
+          title,
+          course,
+          due_date,
+          points
+        )
+      `)
+      .eq('assignments.course', courseName)
+      .order('submitted_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return submissions;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des soumissions par cours:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer toutes les soumissions (pour les admins)
+export async function getAllSubmissions() {
+  try {
+    const { data: submissions, error } = await supabase
+      .from('assignment_submissions')
+      .select(`
+        *,
+        assignments (
+          title,
+          course,
+          due_date,
+          points
+        )
+      `)
+      .order('submitted_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return submissions;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de toutes les soumissions:', error);
+    throw error;
+  }
+} 

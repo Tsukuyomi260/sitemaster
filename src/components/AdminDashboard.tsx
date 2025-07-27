@@ -34,7 +34,8 @@ import {
   assignCourseToTeacher,
   removeCourseAssignment,
   toggleUserBlock,
-  sendMessageToAllUsers
+  sendMessageToAllUsers,
+  getAllSubmissions
 } from '../api';
 
 interface AdminDashboardProps {
