@@ -132,7 +132,7 @@ export async function submitAssignment(assignmentId: number, studentId: string, 
       .from('assignment_submissions')
       .insert({
         assignment_id: assignmentId,
-        student_id: studentId,
+        student_id: studentId, // Utiliser directement le string
         file_url: publicUrl,
         file_name: file.name,
         submission_title: title,
@@ -740,6 +740,47 @@ export async function sendMessageToAllUsers(adminEmail: string, messageTitle: st
     return { success: true, messageId: message.id, usersCount: users?.length || 0 };
   } catch (error) {
     console.error('Erreur lors de l\'envoi du message à tous les utilisateurs:', error);
+    throw error;
+  }
+} 
+
+// Fonction pour récupérer tous les devoirs disponibles
+export async function getAllAssignments() {
+  try {
+    const { data: assignments, error } = await supabase
+      .from('assignments')
+      .select('*')
+      .eq('is_active', true)
+      .order('due_date', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return assignments;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des devoirs:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer les devoirs d'un cours spécifique
+export async function getAssignmentsByCourse(courseName: string) {
+  try {
+    const { data: assignments, error } = await supabase
+      .from('assignments')
+      .select('*')
+      .eq('course', courseName)
+      .eq('is_active', true)
+      .order('due_date', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return assignments;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des devoirs du cours:', error);
     throw error;
   }
 } 

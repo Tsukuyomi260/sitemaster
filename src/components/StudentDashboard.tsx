@@ -226,6 +226,13 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     };
 
     loadNotifications();
+    
+    // Debug: Afficher les informations de l'étudiant
+    console.log('=== DASHBOARD ÉTUDIANT ===');
+    console.log('Student Name:', studentName);
+    console.log('Student Info:', studentInfo);
+    console.log('Student ID:', studentInfo?.id);
+    console.log('==========================');
   }, [studentName]);
 
   // Appliquer le thème au chargement
@@ -1167,6 +1174,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   const handleSubmissionSubmit = async () => {
+    // Debug: Afficher les informations de débogage
+    console.log('=== DEBUG SOUMISSION ===');
+    console.log('Student Info:', studentInfo);
+    console.log('Student ID:', studentInfo?.id);
+    console.log('Selected Assignment:', selectedAssignment);
+    console.log('Submission File:', submissionFile);
+    console.log('Submission Title:', submissionTitle);
+    console.log('=======================');
+
     if (!submissionFile || !selectedAssignment || !studentInfo?.id) {
       setSubmissionError('Veuillez sélectionner un fichier à soumettre.');
       return;
