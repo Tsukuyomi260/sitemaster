@@ -86,7 +86,7 @@ function App() {
 
   const completeLogin = async (selectedRole: string, userData: any) => {
     console.log('Finalisation de la connexion avec le rôle:', selectedRole);
-    setIsLoggedIn(true);
+      setIsLoggedIn(true);
     setUserType(selectedRole);
     
     // Si c'est un étudiant, récupérer ses informations
@@ -109,7 +109,7 @@ function App() {
   const handleLogout = async () => {
     try {
       await signOut();
-      setIsLoggedIn(false);
+    setIsLoggedIn(false);
       setUser(null);
       setUserType('');
       setStudentInfo(null);

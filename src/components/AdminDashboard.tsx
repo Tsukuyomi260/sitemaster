@@ -448,8 +448,8 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                   <Crown className="w-3 h-3 mr-1" />
                   Super Admin
                 </span>
-              </div>
             </div>
+          </div>
           </div>
           
           {/* Navigation principale */}
@@ -561,9 +561,9 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500 to-blue-600 text-white shadow-sm">
                   Super Admin
                 </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Administrateur central</p>
             </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Administrateur central</p>
+          </div>
           </div>
           <button onClick={onLogout} className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all duration-200 font-medium">
             <LogOut className="w-4 h-4" />
@@ -923,36 +923,36 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
               </div>
             ) : (
               <>
-                {/* Filtres et recherche */}
-                <div className="flex flex-wrap gap-4 mb-6 items-center">
-                  <input
-                    type="text"
+            {/* Filtres et recherche */}
+            <div className="flex flex-wrap gap-4 mb-6 items-center">
+              <input
+                type="text"
                     placeholder="Rechercher par nom, email ou matricule..."
-                    value={studentSearch}
-                    onChange={e => setStudentSearch(e.target.value)}
+                value={studentSearch}
+                onChange={e => setStudentSearch(e.target.value)}
                     className="px-3 py-2 border border-slate-300 rounded-lg text-sm flex-1 min-w-[200px]"
                   />
-                  <select
-                    value={selectedStudentAnnee}
-                    onChange={e => setSelectedStudentAnnee(e.target.value)}
-                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                  >
-                    <option value="">Toutes les années</option>
+              <select
+                value={selectedStudentAnnee}
+                onChange={e => setSelectedStudentAnnee(e.target.value)}
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              >
+                <option value="">Toutes les années</option>
                     {anneesAcademiques.map(annee => (
                       <option key={annee} value={annee}>{annee}</option>
-                    ))}
-                  </select>
-                  <select
+                ))}
+              </select>
+              <select
                     value={selectedStudentNiveau}
                     onChange={e => setSelectedStudentNiveau(e.target.value)}
-                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                  >
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              >
                     <option value="">Tous les niveaux</option>
                     {niveaux.map(niveau => (
                       <option key={niveau} value={niveau}>{niveau}</option>
-                    ))}
-                  </select>
-                </div>
+                ))}
+              </select>
+            </div>
                 
                 {/* Liste des étudiants */}
                 <div className="overflow-x-auto">
@@ -968,7 +968,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredStudents.map(student => (
+              {filteredStudents.map(student => (
                         <tr key={student.id} className="border-b border-slate-100 hover:bg-slate-50">
                           <td className="py-3 px-4 text-sm font-mono text-slate-600">{student.matricule}</td>
                           <td className="py-3 px-4 font-medium text-slate-900">{student.nom_complet}</td>
@@ -991,7 +991,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                               >
                                 {student.blocked ? 'Débloquer' : 'Bloquer'}
                               </button>
-                            </div>
+                  </div>
                           </td>
                         </tr>
                       ))}
@@ -1032,6 +1032,150 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
             )}
           </div>
         )}
+
+        {activeTab === 'teachers' && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Gestion des Enseignants</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Liste de tous les enseignants de la plateforme</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={reloadTeachers}
+                  disabled={teachersLoading}
+                  className="flex items-center space-x-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                >
+                  <RefreshCw className={`w-4 h-4 ${teachersLoading ? 'animate-spin' : ''}`} />
+                  <span>Actualiser</span>
+                </button>
+                <button
+                  onClick={() => setShowCreateTeacherModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Nouvel Enseignant</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Recherche */}
+            <div className="mb-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Rechercher un enseignant..."
+                  value={teacherSearch}
+                  onChange={(e) => setTeacherSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                />
+                <Search className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
+              </div>
+            </div>
+
+            {/* Liste des enseignants */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Enseignants ({teachers.filter(teacher => 
+                    teacher.email.toLowerCase().includes(teacherSearch.toLowerCase())
+                  ).length})
+                </h3>
+              </div>
+              
+              {teachersLoading ? (
+                <div className="p-8 text-center">
+                  <div className="inline-flex items-center space-x-2">
+                    <RefreshCw className="w-6 h-6 animate-spin text-green-600" />
+                    <span className="text-slate-600 dark:text-slate-400">Chargement des enseignants...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 dark:bg-slate-700">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Enseignant
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Rôle
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Date de création
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                      {teachers
+                        .filter(teacher => teacher.email.toLowerCase().includes(teacherSearch.toLowerCase()))
+                        .map((teacher, index) => (
+                          <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                                  <GraduationCap className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-slate-900 dark:text-white">
+                                    {teacher.email.length > 30 ? `${teacher.email.substring(0, 30)}...` : teacher.email}
+                                  </div>
+                                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                                    ID: {teacher.id.substring(0, 8)}...
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                <GraduationCap className="w-3 h-3 mr-1" />
+                                {teacher.role}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                              {new Date(teacher.created_at).toLocaleDateString('fr-FR')}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedUser(teacher);
+                                    setShowUserProfileModal(true);
+                                  }}
+                                  className="flex items-center space-x-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  <span>Voir</span>
+                                </button>
+                                <button
+                                  onClick={() => handleToggleUserBlock(teacher.id, !teacher.blocked)}
+                                  className="flex items-center space-x-1 px-3 py-1.5 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  <span>Bloquer</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                  
+                  {teachers.filter(teacher => teacher.email.toLowerCase().includes(teacherSearch.toLowerCase())).length === 0 && (
+                    <div className="p-8 text-center">
+                      <GraduationCap className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                      <p className="text-slate-500 dark:text-slate-400">Aucun enseignant trouvé</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'courses' && (
           <div className="bg-white rounded-2xl p-6 border border-slate-200 mb-8">
             <h2 className="text-xl font-semibold mb-4">Gestion des cours</h2>
@@ -1113,7 +1257,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
             <ul className="divide-y divide-slate-100">
               <li className="py-2 flex items-center justify-between">
                 <span className="text-slate-400">Aucune notification pour le moment</span>
-              </li>
+                </li>
             </ul>
           </div>
         )}
