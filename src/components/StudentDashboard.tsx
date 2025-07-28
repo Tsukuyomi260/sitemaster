@@ -671,12 +671,12 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   ];
 
   const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, subtitle, color }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-600">{title}</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
-          <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>
         </div>
         <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center`}>
           <Icon className="w-6 h-6 text-white" />
@@ -686,12 +686,12 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   );
 
   const CourseCard: React.FC<CourseCardProps> = ({ course }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="font-semibold text-slate-900 mb-1">{course.title}</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-1">{course.title}</h3>
           {course.instructor && (
-          <p className="text-sm text-slate-600">Prof. {course.instructor}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Prof. {course.instructor}</p>
           )}
         </div>
         <span className={`w-3 h-3 rounded-full ${course.color}`}></span>
@@ -700,7 +700,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-500">Échéance: {course.nextDeadline}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">Échéance: {course.nextDeadline}</span>
         <div className="flex space-x-2">
           <a
             className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
@@ -717,7 +717,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   );
 
   const DetailedCourseCard: React.FC<{ course: Course }> = ({ course }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
@@ -730,30 +730,30 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               {course.status}
             </span>
           </div>
-          <h3 className="font-semibold text-slate-900 mb-1 text-lg">{course.title}</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-1 text-lg">{course.title}</h3>
           {course.instructor && (
-          <p className="text-sm text-slate-600 mb-2">Prof. {course.instructor}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Prof. {course.instructor}</p>
           )}
-          <p className="text-sm text-slate-500 mb-3">{course.description}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{course.description}</p>
         </div>
       </div>
       
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p className="text-xs text-slate-500">Crédits</p>
-          <p className="font-medium text-slate-900">{course.credits} ECTS</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Crédits</p>
+          <p className="font-medium text-slate-900 dark:text-white">{course.credits} ECTS</p>
         </div>
         <div>
-          <p className="text-xs text-slate-500">Semestre</p>
-          <p className="font-medium text-slate-900">{course.semester}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Semestre</p>
+          <p className="font-medium text-slate-900 dark:text-white">{course.semester}</p>
         </div>
         <div>
-          <p className="text-xs text-slate-500">Devoirs</p>
-          <p className="font-medium text-slate-900">{course.completedAssignments}/{course.assignmentsCount}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Devoirs</p>
+          <p className="font-medium text-slate-900 dark:text-white">{course.completedAssignments}/{course.assignmentsCount}</p>
         </div>
         <div>
-          <p className="text-xs text-slate-500">Dernière activité</p>
-          <p className="font-medium text-slate-900">{course.lastActivity}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Dernière activité</p>
+          <p className="font-medium text-slate-900 dark:text-white">{course.lastActivity}</p>
         </div>
       </div>
       
@@ -761,8 +761,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-slate-500">Prochaine échéance</p>
-          <p className="text-sm font-medium text-slate-900">{course.nextDeadline}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Prochaine échéance</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">{course.nextDeadline}</p>
         </div>
         <div className="flex space-x-2">
           <button 
@@ -826,39 +826,39 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         </div>
 
         {/* Course Info */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <h3 className="font-semibold text-slate-900 mb-2">Informations du cours</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-2">Informations du cours</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Crédits:</span>
-                  <span className="font-medium">{course.credits} ECTS</span>
+                  <span className="text-slate-600 dark:text-slate-400">Crédits:</span>
+                  <span className="font-medium dark:text-white">{course.credits} ECTS</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Semestre:</span>
-                  <span className="font-medium">{course.semester}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Semestre:</span>
+                  <span className="font-medium dark:text-white">{course.semester}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Progression:</span>
-                  <span className="font-medium">{course.progress}%</span>
+                  <span className="text-slate-600 dark:text-slate-400">Progression:</span>
+                  <span className="font-medium dark:text-white">{course.progress}%</span>
                 </div>
               </div>
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 mb-2">Description</h3>
-              <p className="text-slate-600 text-sm">{course.description}</p>
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-2">Description</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">{course.description}</p>
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 mb-2">Prochaine échéance</h3>
-              <p className="text-slate-600">{course.nextDeadline}</p>
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-2">Prochaine échéance</h3>
+              <p className="text-slate-600 dark:text-slate-400">{course.nextDeadline}</p>
             </div>
           </div>
         </div>
 
         {/* Videos */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200">
-          <h3 className="font-semibold text-slate-900 mb-4">Vidéos de cours</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Vidéos de cours</h3>
           
           {/* Video Player */}
           {selectedVideo && supports.videos && supports.videos[selectedVideo - 1] && (
@@ -875,10 +875,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 </video>
               </div>
               <div className="mt-2 flex items-center justify-between">
-                <h4 className="font-medium text-slate-900">{supports.videos[selectedVideo - 1].title}</h4>
+                <h4 className="font-medium text-slate-900 dark:text-white">{supports.videos[selectedVideo - 1].title}</h4>
                 <button 
                   onClick={() => setSelectedVideo(null)}
-                  className="text-sm text-slate-600 hover:text-slate-900"
+                  className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 >
                   Fermer
                 </button>
@@ -894,24 +894,24 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               return (
                 <div key={video.id} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
                   isUnlocked 
-                    ? 'border-slate-200 hover:bg-slate-50' 
-                    : 'border-slate-100 bg-slate-50'
+                    ? 'border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700' 
+                    : 'border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
                 }`}>
                   <div className="flex items-center space-x-3">
                     <div className={`w-3 h-3 rounded-full ${
                       isWatched ? 'bg-green-500' : 
-                      isUnlocked ? 'bg-slate-300' : 'bg-slate-200'
+                      isUnlocked ? 'bg-slate-300 dark:bg-slate-500' : 'bg-slate-200 dark:bg-slate-600'
                     }`}></div>
                     <div>
                       <p className={`font-medium ${
-                        isUnlocked ? 'text-slate-900' : 'text-slate-500'
+                        isUnlocked ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
                       }`}>
                         {video.title}
                         {!isUnlocked && (
-                          <span className="ml-2 text-xs text-slate-400">(Vidéo précédente requise)</span>
+                          <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">(Vidéo précédente requise)</span>
                         )}
                       </p>
-                      <p className="text-sm text-slate-600">{video.duration}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">{video.duration}</p>
                     </div>
                   </div>
                   <button 
@@ -1012,9 +1012,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   const AssignmentCard: React.FC<{ assignment: Assignment }> = ({ assignment }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between min-h-[160px]">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between min-h-[160px]">
         <div>
-        <h3 className="font-semibold text-slate-900 text-lg mb-2">Devoir - {assignment.course}</h3>
+        <h3 className="font-semibold text-slate-900 dark:text-white text-lg mb-2">Devoir - {assignment.course}</h3>
         </div>
       <button
         onClick={() => handleSubmitAssignment(assignment)}
@@ -1026,16 +1026,16 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   );
 
   const AssignmentItem: React.FC<AssignmentItemProps> = ({ assignment }) => (
-    <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:shadow-sm transition-all duration-200">
+    <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all duration-200">
       <div className="flex items-center space-x-3">
         <div className={`w-2 h-2 rounded-full ${getPriorityColor(assignment.priority)}`}></div>
         <div>
-          <h4 className="font-medium text-slate-900">{assignment.title}</h4>
-          <p className="text-sm text-slate-600">{assignment.course}</p>
+          <h4 className="font-medium text-slate-900 dark:text-white">{assignment.title}</h4>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{assignment.course}</p>
         </div>
       </div>
       <div className="text-right">
-        <p className="text-sm text-slate-900">{assignment.dueDate}</p>
+        <p className="text-sm text-slate-900 dark:text-white">{assignment.dueDate}</p>
         <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(assignment.status)}`}>
           {assignment.status}
         </span>
@@ -1073,24 +1073,24 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   const ResultCard: React.FC<{ result: Result }> = ({ result }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
-            <div className="flex items-center space-x-1 text-slate-500">
+            <div className="flex items-center space-x-1 text-slate-500 dark:text-slate-400">
               {getTypeIcon(result.type)}
               <span className="text-xs">{result.type}</span>
             </div>
-            <span className="text-xs text-slate-500">{result.course}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{result.course}</span>
           </div>
-          <h3 className="font-semibold text-slate-900 mb-1">{result.title}</h3>
-          <p className="text-sm text-slate-600 mb-2">Rendu le {result.date}</p>
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-1">{result.title}</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Rendu le {result.date}</p>
         </div>
         <div className="text-right">
           <div className={`text-2xl font-bold ${getGradeColor(result.score, result.maxScore)}`}>
             {result.score}/{result.maxScore}
           </div>
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-500 dark:text-slate-400">
             {Math.round((result.score / result.maxScore) * 100)}%
           </div>
           <div className="text-lg">{getGradeEmoji(result.score, result.maxScore)}</div>
@@ -1098,15 +1098,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       </div>
 
       {result.feedback && (
-        <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-          <p className="text-xs text-slate-500 mb-1">Feedback</p>
-          <p className="text-sm text-slate-700">{result.feedback}</p>
+        <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Feedback</p>
+          <p className="text-sm text-slate-700 dark:text-slate-300">{result.feedback}</p>
         </div>
       )}
 
       <div className="flex items-center justify-between">
         <div className="flex space-x-2">
-          <span className="text-xs text-slate-500">Poids: {result.weight}x</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Poids: {result.weight}x</span>
         </div>
         <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
           Voir détails
@@ -1323,11 +1323,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Photo de profil */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6 border border-slate-200">
-              <h3 className="font-semibold text-slate-900 mb-4">Photo de profil</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Photo de profil</h3>
               <div className="text-center">
                 <div className="relative inline-block">
-                  <div className="w-32 h-32 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden mx-auto mb-4">
+                  <div className="w-32 h-32 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden mx-auto mb-4">
                     {profilePhoto ? (
                       <img 
                         src={profilePhoto} 
@@ -1335,7 +1335,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <User className="w-16 h-16 text-slate-400" />
+                      <User className="w-16 h-16 text-slate-400 dark:text-slate-500" />
                     )}
                   </div>
                   {isEditingProfile && (
@@ -1352,7 +1352,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     </label>
                   )}
                 </div>
-                <p className="text-sm text-slate-600 mt-2">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
                   {profilePhoto ? 'Photo personnalisée' : 'Aucune photo'}
                 </p>
               </div>
@@ -1361,20 +1361,20 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
           {/* Informations personnelles */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 mb-6">
-              <h3 className="font-semibold text-slate-900 mb-4">Informations personnelles</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 mb-6">
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Informations personnelles</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Prénom</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Prénom</label>
                   {isEditingProfile ? (
                     <input
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                   ) : (
-                    <p className="text-slate-900">{formData.firstName}</p>
+                    <p className="text-slate-900 dark:text-white">{formData.firstName}</p>
                   )}
                 </div>
                 <div>
@@ -1477,11 +1477,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Paramètres</h2>
-            <p className="text-slate-600">Personnalisez votre expérience utilisateur</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Paramètres</h2>
+            <p className="text-slate-600 dark:text-slate-400">Personnalisez votre expérience utilisateur</p>
           </div>
           <div className="flex space-x-2">
-            <button className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+            <button className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
               Réinitialiser
             </button>
             <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
@@ -1492,8 +1492,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Apparence */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200">
-            <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
               </svg>
@@ -1502,43 +1502,43 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Thème</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Thème</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => handleThemeChange('light')}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       settings.theme === 'light'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 hover:border-slate-300'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
                     }`}
                   >
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 bg-yellow-400 rounded-full"></div>
-                      <span className="font-medium">Clair</span>
+                      <span className="font-medium dark:text-white">Clair</span>
                     </div>
                   </button>
                   <button
                     onClick={() => handleThemeChange('dark')}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       settings.theme === 'dark'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 hover:border-slate-300'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
                     }`}
                   >
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 bg-slate-700 rounded-full"></div>
-                      <span className="font-medium">Sombre</span>
+                      <span className="font-medium dark:text-white">Sombre</span>
                     </div>
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Langue</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Langue</label>
                 <select
                   value={settings.language}
                   onChange={(e) => setSettings(prev => ({ ...prev, language: e.target.value as 'fr' | 'en' }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 >
                   <option value="fr">Français</option>
                   <option value="en">English</option>
@@ -1546,11 +1546,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Taille de police</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Taille de police</label>
                 <select
                   value={settings.accessibility.fontSize}
                   onChange={(e) => handleSettingChange('accessibility', 'fontSize', e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 >
                   <option value="small">Petite</option>
                   <option value="medium">Moyenne</option>
@@ -1560,67 +1560,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             </div>
           </div>
 
-          {/* Notifications */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200">
-            <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
-              <Bell className="w-5 h-5 mr-2" />
-              Notifications
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-900">Notifications par email</p>
-                  <p className="text-sm text-slate-600">Recevoir les notifications par email</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.email}
-                    onChange={(e) => handleSettingChange('notifications', 'email', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-900">Notifications push</p>
-                  <p className="text-sm text-slate-600">Recevoir les notifications sur le navigateur</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.push}
-                    onChange={(e) => handleSettingChange('notifications', 'push', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-900">Notifications SMS</p>
-                  <p className="text-sm text-slate-600">Recevoir les notifications par SMS</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications.sms}
-                    onChange={(e) => handleSettingChange('notifications', 'sms', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-            </div>
-          </div>
 
           {/* Confidentialité */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200">
-            <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
@@ -1630,8 +1574,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-slate-900">Profil public</p>
-                  <p className="text-sm text-slate-600">Permettre aux autres de voir votre profil</p>
+                  <p className="font-medium text-slate-900 dark:text-white">Profil public</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Permettre aux autres de voir votre profil</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -1646,8 +1590,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-slate-900">Progression visible</p>
-                  <p className="text-sm text-slate-600">Afficher votre progression aux autres</p>
+                  <p className="font-medium text-slate-900 dark:text-white">Progression visible</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Afficher votre progression aux autres</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -1662,8 +1606,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-slate-900">Autoriser les contacts</p>
-                  <p className="text-sm text-slate-600">Permettre aux autres de vous contacter</p>
+                  <p className="font-medium text-slate-900 dark:text-white">Autoriser les contacts</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Permettre aux autres de vous contacter</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -1678,56 +1622,14 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             </div>
           </div>
 
-          {/* Accessibilité */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200">
-            <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Accessibilité
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-900">Contraste élevé</p>
-                  <p className="text-sm text-slate-600">Améliorer la lisibilité</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.accessibility.highContrast}
-                    onChange={(e) => handleSettingChange('accessibility', 'highContrast', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-900">Réduire les animations</p>
-                  <p className="text-sm text-slate-600">Désactiver les animations</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.accessibility.reduceMotion}
-                    onChange={(e) => handleSettingChange('accessibility', 'reduceMotion', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-            </div>
-          </div>
         </div>
 
                  {/* Actions avancées */}
-         <div className="mt-6 bg-white rounded-2xl p-6 border border-slate-200">
-           <h3 className="font-semibold text-slate-900 mb-4">Actions avancées</h3>
+         <div className="mt-6 bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+           <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Actions avancées</h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <button className="p-4 text-left border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+             <button className="p-4 text-left border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                <div className="flex items-center space-x-3">
                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -1735,13 +1637,13 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                    </svg>
                  </div>
                  <div>
-                   <p className="font-medium text-slate-900">Exporter mes données</p>
-                   <p className="text-sm text-slate-600">Télécharger mes informations</p>
+                   <p className="font-medium text-slate-900 dark:text-white">Exporter mes données</p>
+                   <p className="text-sm text-slate-600 dark:text-slate-400">Télécharger mes informations</p>
                  </div>
                </div>
              </button>
 
-             <div className="p-4 text-left border border-slate-200 rounded-lg">
+             <div className="p-4 text-left border border-slate-200 dark:border-slate-600 rounded-lg">
                <div className="flex items-center space-x-3 mb-3">
                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -1749,8 +1651,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                    </svg>
                  </div>
                  <div>
-                   <p className="font-medium text-slate-900">Signaler un problème</p>
-                   <p className="text-sm text-slate-600">Nous aider à améliorer</p>
+                   <p className="font-medium text-slate-900 dark:text-white">Signaler un problème</p>
+                   <p className="text-sm text-slate-600 dark:text-slate-400">Nous aider à améliorer</p>
                  </div>
                </div>
                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -1788,7 +1690,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
             </div>
             <div>
-              <h1 className="font-bold text-slate-900 dark:text-white">ENSET-MASTERS</h1>
+              <h1 className="font-bold text-slate-900 dark:text-white">MR-MRTDDEFTP</h1>
               <p className="text-xs text-slate-600 dark:text-slate-400">Espace Master ENSET-MASTERS</p>
             </div>
           </div>
@@ -1864,8 +1766,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
               </div>
               <div>
-                <h1 className="font-bold text-slate-900">ENSET-MASTERS</h1>
-                <p className="text-xs text-slate-600">Espace Master ENSET-MASTERS</p>
+                <h1 className="font-bold text-slate-900 dark:text-white">MR-MRTDDEFTP</h1>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Espace Master ENSET-MASTERS</p>
               </div>
             </div>
             <nav className="space-y-3">
@@ -1876,7 +1778,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   className={`w-full flex items-center space-x-3 px-4 py-4 rounded-xl transition-all duration-200 font-medium ${
                     activeTab === item.id
                       ? 'bg-slate-900 text-white shadow-lg'
-                      : 'text-slate-700 hover:bg-slate-100 hover:shadow-md'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'
                   }`}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -1884,21 +1786,21 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 </button>
               ))}
             </nav>
-            <div className="mt-8 border-t pt-6">
+            <div className="mt-8 border-t border-slate-200 dark:border-slate-700 pt-6">
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-slate-600" />
+                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-slate-900 dark:text-white">
                     {studentInfo?.nom_complet || studentName}
                   </p>
-                  <p className="text-xs text-slate-600">Étudiant Master</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Étudiant Master</p>
                 </div>
               </div>
               <button
                 onClick={() => { setIsMobileMenuOpen(false); onLogout(); }}
-                className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-all duration-200"
+                className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all duration-200"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Déconnexion</span>
@@ -1917,20 +1819,20 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-slate-900">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
                   {activeTab === 'dashboard' ? 'Tableau de bord' :
                    activeTab === 'courses' ? 'Mes cours' :
                    activeTab === 'assignments' ? 'Devoirs' :
                    activeTab === 'profile' ? 'Profil' : 'Paramètres'}
                 </h1>
-                <p className="text-slate-600 mt-1">
+                <p className="text-slate-600 dark:text-slate-400 mt-1">
                   Bienvenue, {studentInfo?.nom_complet || studentName}
                 </p>
               </div>
               <div className="flex items-center space-x-4">
                 <button 
                   onClick={() => setShowNotifications(true)}
-                  className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl relative"
+                  className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl relative"
                 >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
@@ -1939,7 +1841,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     </span>
                   )}
                 </button>
-                <button onClick={onLogout} className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl">
+                <button onClick={onLogout} className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">
                   <LogOut className="w-5 h-5" />
                 </button>
               </div>
@@ -1986,21 +1888,21 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   <div>
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h2 className="text-2xl font-bold text-slate-900">Mes cours</h2>
-                        <p className="text-slate-600">Téléchargez vos cours par semestre</p>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Mes cours</h2>
+                        <p className="text-slate-600 dark:text-slate-400">Téléchargez vos cours par semestre</p>
                       </div>
                     </div>
                     <div className="space-y-8">
                       {coursParSemestre.map((semestre) => (
                         <div key={semestre.semestre}>
-                          <h3 className="text-xl font-semibold text-slate-900 mb-4">{semestre.semestre}</h3>
+                          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">{semestre.semestre}</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {semestre.cours.map((cours) => (
-                              <div key={cours.fichier} className="bg-white rounded-xl p-4 border border-slate-200 flex items-center justify-between">
+                              <div key={cours.fichier} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                                 <div>
-                                  <p className="font-medium text-slate-900">{cours.nom}</p>
+                                  <p className="font-medium text-slate-900 dark:text-white">{cours.nom}</p>
                                   {cours.professeur && (
-                                    <p className="text-xs text-slate-600">{cours.professeur}</p>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400">{cours.professeur}</p>
                                   )}
                                 </div>
                                 <a
@@ -2023,11 +1925,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   <div>
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h2 className="text-2xl font-bold text-slate-900">Mes devoirs</h2>
-                        <p className="text-slate-600">Gérez vos devoirs et suivez vos rendus</p>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Mes devoirs</h2>
+                        <p className="text-slate-600 dark:text-slate-400">Gérez vos devoirs et suivez vos rendus</p>
                       </div>
                       <div className="flex space-x-2">
-                        <button className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                        <button className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                           Rechercher
                         </button>
                         <button className="px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors">
@@ -2037,14 +1939,14 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     </div>
 
                     {/* Filtres */}
-                    <div className="bg-white rounded-2xl p-4 border border-slate-200 mb-6">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 mb-6">
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => setAssignmentFilter('all')}
                           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             assignmentFilter === 'all'
                               ? 'bg-slate-900 text-white'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                           }`}
                         >
                           Tous ({assignments.length})
@@ -2054,7 +1956,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             assignmentFilter === 'pending'
                               ? 'bg-red-600 text-white'
-                              : 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/30'
                           }`}
                         >
                           À rendre ({assignments.filter(a => a.status === 'À rendre').length})
@@ -2064,7 +1966,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             assignmentFilter === 'submitted'
                               ? 'bg-blue-600 text-white'
-                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/30'
                           }`}
                         >
                           Rendus ({assignments.filter(a => a.status === 'Rendu').length})
@@ -2074,7 +1976,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             assignmentFilter === 'graded'
                               ? 'bg-green-600 text-white'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
                           }`}
                         >
                           Notés ({assignments.filter(a => a.status === 'Noté').length})
@@ -2084,7 +1986,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
                     {/* Statistiques */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-white rounded-2xl p-4 border border-slate-200">
+                      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-600">Total</p>
@@ -2254,20 +2156,20 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         {/* Modal des notifications */}
         {showNotifications && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center">
+                    <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900">Notifications</h3>
-                    <p className="text-sm text-slate-600">{notifications.length} message(s)</p>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Notifications</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{notifications.length} message(s)</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setShowNotifications(false)} 
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -2277,8 +2179,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
               {notifications.length === 0 ? (
                 <div className="text-center py-12">
-                  <Bell className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-                  <p className="text-slate-500">Aucune notification pour le moment</p>
+                  <Bell className="w-16 h-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                  <p className="text-slate-500 dark:text-slate-400">Aucune notification pour le moment</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -2287,27 +2189,27 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                       key={notification.id} 
                       className={`p-4 rounded-xl border transition-all cursor-pointer hover:shadow-md ${
                         notification.is_read 
-                          ? 'bg-slate-50 border-slate-200' 
-                          : 'bg-blue-50 border-blue-200'
+                          ? 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600' 
+                          : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-600'
                       }`}
                       onClick={() => handleViewNotification(notification)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="font-semibold text-slate-900">
+                            <h4 className="font-semibold text-slate-900 dark:text-white">
                               {notification.teacher_messages.message_title}
                             </h4>
                             {!notification.is_read && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
                                 Nouveau
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-slate-600 mb-2">
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
                             Cours : {notification.teacher_messages.course_name}
                           </p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             {new Date(notification.created_at).toLocaleDateString('fr-FR', {
                               day: 'numeric',
                               month: 'long',
@@ -2317,7 +2219,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                             })}
                           </p>
                         </div>
-                        <button className="text-blue-600 hover:text-blue-700">
+                        <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
                           <Eye className="w-4 h-4" />
                         </button>
                       </div>
@@ -2332,15 +2234,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         {/* Modal détail notification */}
         {showNotificationDetail && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-2xl">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900">Message de l'enseignant</h3>
-                    <p className="text-sm text-slate-600">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Message de l'enseignant</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                       {new Date(showNotificationDetail.created_at).toLocaleDateString('fr-FR', {
                         day: 'numeric',
                         month: 'long',
@@ -2353,7 +2255,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 </div>
                 <button 
                   onClick={() => setShowNotificationDetail(null)} 
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -2362,17 +2264,17 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               </div>
 
               <div className="space-y-4">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <h4 className="font-semibold text-slate-900 mb-2">
+                <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-4">
+                  <h4 className="font-semibold text-slate-900 dark:text-white mb-2">
                     {showNotificationDetail.teacher_messages.message_title}
                   </h4>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Cours : {showNotificationDetail.teacher_messages.course_name}
                   </p>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <p className="text-slate-900 whitespace-pre-wrap">
+                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                  <p className="text-slate-900 dark:text-white whitespace-pre-wrap">
                     {showNotificationDetail.teacher_messages.message_content}
                   </p>
                 </div>

@@ -44,11 +44,11 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
         {/* Header */}
         <div className="text-center mb-12">
           <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-24 h-24 mx-auto mb-6" />
-          <h1 className="text-3xl font-bold text-slate-900 mb-3">
-            <SplitText 
-              text="ENSET-MASTERS"
-              splitType="chars"
-              delay={80}
+                           <h1 className="text-3xl font-bold text-slate-900 mb-3">
+                   <SplitText 
+                     text="ENSET-MASTERS"
+                     splitType="chars"
+                     delay={80}
               duration={0.8}
               from={{ opacity: 0, y: 50, rotationX: -90, scale: 0.8 }}
               to={{ opacity: 1, y: 0, rotationX: 0, scale: 1 }}

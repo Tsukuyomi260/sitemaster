@@ -49,7 +49,7 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
           <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-20 h-20 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-900 mb-2">
             <SplitText 
-              text="ENSET-MASTERS"
+              text="MR-MRTDDEFTP"
               splitType="chars"
               delay={80}
               duration={0.8}

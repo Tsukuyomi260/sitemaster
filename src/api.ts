@@ -6,7 +6,39 @@ export async function loginUser(email: string, password: string) {
     password,
   });
   if (error) throw error;
-  return data.user;
+  
+  // Vérifier si l'utilisateur est bloqué
+  const user = data.user;
+  if (user) {
+    console.log('Vérification du blocage lors de la connexion pour:', email);
+    
+    // Vérifier d'abord directement dans la table students par email
+    const { data: student, error: studentError } = await supabase
+      .from('students')
+      .select('blocked')
+      .eq('email', email)
+      .single();
+    
+    console.log('Vérification student par email:', student);
+    
+    if (student && student.blocked) {
+      console.log('Étudiant bloqué détecté lors de la connexion');
+      // Déconnecter l'utilisateur s'il est bloqué
+      await supabase.auth.signOut();
+      throw new Error('Votre compte a été bloqué par un administrateur. Veuillez contacter l\'administration.');
+    }
+    
+    // Vérifier aussi avec la fonction checkIfUserIsBlocked
+    const isBlocked = await checkIfUserIsBlocked(user.id);
+    if (isBlocked) {
+      console.log('Utilisateur bloqué détecté par checkIfUserIsBlocked');
+      // Déconnecter l'utilisateur s'il est bloqué
+      await supabase.auth.signOut();
+      throw new Error('Votre compte a été bloqué par un administrateur. Veuillez contacter l\'administration.');
+    }
+  }
+  
+  return user;
 }
 
 export async function loginStudent(email: string, password: string) {
@@ -23,6 +55,17 @@ export async function loginAdmin(email: string, password: string) {
 
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
+  
+  // Vérifier si l'utilisateur est bloqué
+  if (user) {
+    const isBlocked = await checkIfUserIsBlocked(user.id);
+    if (isBlocked) {
+      // Déconnecter l'utilisateur s'il est bloqué
+      await supabase.auth.signOut();
+      throw new Error('Votre compte a été bloqué par un administrateur. Veuillez contacter l\'administration.');
+    }
+  }
+  
   return user;
 }
 
@@ -86,7 +129,9 @@ export async function getUserRole(userId: string) {
 
 export async function getStudentInfo(email: string) {
   try {
-    // Récupérer les informations de l'étudiant depuis la table students
+    console.log('getStudentInfo appelé pour email:', email);
+    
+    // Vérifier si l'étudiant est bloqué directement par email
     const { data: student, error } = await supabase
       .from('students')
       .select('*')
@@ -95,6 +140,21 @@ export async function getStudentInfo(email: string) {
     
     if (error && error.code !== 'PGRST116') {
       console.error('Erreur lors de la récupération des infos étudiant:', error);
+    }
+    
+    // Si l'étudiant est bloqué, lancer une erreur
+    if (student && student.blocked) {
+      console.log('Étudiant bloqué détecté dans getStudentInfo');
+      throw new Error('Votre compte a été bloqué par un administrateur. Veuillez contacter l\'administration.');
+    }
+    
+    // Vérifier aussi si l'utilisateur actuel est bloqué
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const isBlocked = await checkIfUserIsBlocked(user.id);
+      if (isBlocked) {
+        throw new Error('Votre compte a été bloqué par un administrateur. Veuillez contacter l\'administration.');
+      }
     }
     
     return student;
@@ -518,13 +578,21 @@ export async function getAllTeachers() {
 // Récupérer tous les cours assignés par master
 export async function getAllCoursesByMaster() {
   try {
+    console.log('Récupération des cours assignés...');
+    
     const { data: courses, error } = await supabase
       .from('course_assignments')
       .select(`
-        *,
-        teachers:profiles(email, role)
+        id,
+        teacher_email,
+        course_name,
+        created_at,
+        is_active
       `)
       .order('course_name', { ascending: true });
+    
+    console.log('Cours assignés récupérés:', courses);
+    console.log('Erreur éventuelle:', error);
     
     if (error) {
       throw error;
@@ -681,14 +749,116 @@ export async function removeCourseAssignment(assignmentId: number) {
   }
 }
 
+// Vérifier si un utilisateur est bloqué
+export async function checkIfUserIsBlocked(userId: string): Promise<boolean> {
+  try {
+    console.log('Vérification du blocage pour userId:', userId);
+    
+    // D'abord, récupérer l'email de l'utilisateur depuis profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, blocked')
+      .eq('id', userId)
+      .single();
+    
+    console.log('Profil trouvé:', profile);
+    
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error('Erreur lors de la récupération du profil:', profileError);
+    }
+    
+    // Si on a trouvé le profil et qu'il est bloqué
+    if (profile && profile.blocked) {
+      console.log('Utilisateur bloqué dans profiles');
+      return true;
+    }
+    
+    // Si on a l'email, vérifier aussi dans la table students
+    if (profile && profile.email) {
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .select('blocked')
+        .eq('email', profile.email)
+        .single();
+      
+      console.log('Étudiant trouvé:', student);
+      
+      if (student && student.blocked) {
+        console.log('Étudiant bloqué dans students');
+        return true;
+      }
+    }
+    
+    // Vérifier aussi directement dans students si on a l'email
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && user.email) {
+      const { data: studentByEmail, error: studentEmailError } = await supabase
+        .from('students')
+        .select('blocked')
+        .eq('email', user.email)
+        .single();
+      
+      console.log('Étudiant trouvé par email:', studentByEmail);
+      
+      if (studentByEmail && studentByEmail.blocked) {
+        console.log('Étudiant bloqué par email');
+        return true;
+      }
+    }
+    
+    console.log('Utilisateur non bloqué');
+    return false;
+  } catch (error) {
+    console.error('Erreur lors de la vérification du statut de blocage:', error);
+    return false;
+  }
+}
+
 // Bloquer/Débloquer un utilisateur
 export async function toggleUserBlock(userId: string, blocked: boolean) {
   try {
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
+    console.log('toggleUserBlock appelé avec:', { userId, blocked });
+    
+    // Essayer d'abord de mettre à jour dans la table students (car l'ID vient de là)
+    const { data: studentData, error: studentError } = await supabase
+      .from('students')
+      .update({ blocked })
+      .eq('id', userId)
+      .select();
+
+    console.log('Résultat de la mise à jour students:', { studentData, error: studentError });
+
+    if (!studentError) {
+      console.log('Mise à jour réussie dans la table students');
+      return true;
+    }
+
+    // Si ça ne marche pas, essayer dans la table profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .update({ blocked })
+      .eq('id', userId)
+      .select();
+
+    console.log('Résultat de la mise à jour profiles:', { profileData, error: profileError });
+
+    if (!profileError) {
+      console.log('Mise à jour réussie dans la table profiles');
+      return true;
+    }
+
+    // Si les deux échouent, essayer avec les métadonnées auth
+    console.log('Tentative avec les métadonnées auth...');
+    const { error: authError } = await supabase.auth.admin.updateUserById(userId, {
       user_metadata: { blocked }
     });
-
-    if (error) throw error;
+    
+    if (authError) {
+      console.error('Toutes les méthodes ont échoué:', { studentError, profileError, authError });
+      throw new Error('Impossible de mettre à jour le statut de blocage');
+    }
+    
+    console.log('toggleUserBlock réussi avec les métadonnées auth');
     return true;
   } catch (error) {
     console.error('Erreur lors du changement de statut utilisateur:', error);
@@ -913,12 +1083,27 @@ export async function getSubmissionsForTeacher(teacherEmail: string) {
       throw assignmentsDetailsError;
     }
 
-    // Combiner les soumissions avec les détails des devoirs
+    // Récupérer les informations des étudiants
+    const studentIds = submissions?.map(s => s.student_id) || [];
+    const { data: studentsInfo, error: studentsError } = await supabase
+      .from('students')
+      .select('id, nom_complet, matricule, email')
+      .in('id', studentIds);
+
+    console.log('getSubmissionsForTeacher - Informations étudiants:', studentsInfo);
+
+    if (studentsError) {
+      console.error('Erreur lors de la récupération des informations étudiants:', studentsError);
+    }
+
+    // Combiner les soumissions avec les détails des devoirs et des étudiants
     const submissionsWithDetails = submissions?.map(submission => {
       const assignment = assignmentsDetails?.find(a => a.id === submission.assignment_id);
+      const student = studentsInfo?.find(s => s.id === submission.student_id);
       return {
         ...submission,
-        assignments: assignment
+        assignments: assignment,
+        student: student
       };
     });
 
@@ -961,6 +1146,9 @@ export async function getAllSubmissionsForTeacher() {
 // Fonction pour récupérer toutes les soumissions (pour les admins)
 export async function getAllSubmissions() {
   try {
+    console.log('getAllSubmissions - Début de la récupération...');
+    
+    // Récupérer d'abord toutes les soumissions avec les détails des devoirs
     const { data: submissions, error } = await supabase
       .from('assignment_submissions')
       .select(`
@@ -974,11 +1162,41 @@ export async function getAllSubmissions() {
       `)
       .order('submitted_at', { ascending: false });
 
+    console.log('getAllSubmissions - Soumissions récupérées:', submissions);
+    console.log('getAllSubmissions - Erreur éventuelle:', error);
+
     if (error) {
       throw error;
     }
 
-    return submissions;
+    // Récupérer les informations des étudiants
+    const studentIds = submissions?.map(s => s.student_id) || [];
+    console.log('getAllSubmissions - IDs étudiants à récupérer:', studentIds);
+    
+    const { data: studentsInfo, error: studentsError } = await supabase
+      .from('students')
+      .select('id, nom_complet, matricule, email')
+      .in('id', studentIds);
+
+    console.log('getAllSubmissions - Informations étudiants:', studentsInfo);
+    console.log('getAllSubmissions - Erreur étudiants:', studentsError);
+
+    if (studentsError) {
+      console.error('Erreur lors de la récupération des informations étudiants:', studentsError);
+    }
+
+    // Combiner les soumissions avec les détails des étudiants
+    const submissionsWithDetails = submissions?.map(submission => {
+      const student = studentsInfo?.find(s => s.id === submission.student_id);
+      return {
+        ...submission,
+        students: student
+      };
+    });
+
+    console.log('getAllSubmissions - Soumissions avec détails:', submissionsWithDetails);
+
+    return submissionsWithDetails || [];
   } catch (error) {
     console.error('Erreur lors de la récupération de toutes les soumissions:', error);
     throw error;

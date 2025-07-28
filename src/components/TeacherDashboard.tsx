@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, BookOpen, Users, Download, Upload, Settings, LogOut, ChevronUp, MessageSquare, Send } from 'lucide-react';
+import { User, BookOpen, Users, Download, Upload, Settings, LogOut, ChevronUp, MessageSquare, Send, Search, X } from 'lucide-react';
 import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents, getSubmissionsByCourse, getAllSubmissionsForTeacher, getSubmissionsForTeacher } from '../api';
 
 interface TeacherDashboardProps {
@@ -42,6 +42,12 @@ interface Submission {
     due_date: string;
     points: number;
   };
+  student?: {
+    id: string;
+    nom_complet: string;
+    matricule: string;
+    email: string;
+  };
 }
 
 function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
@@ -65,6 +71,8 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedCourseForSubmissions, setSelectedCourseForSubmissions] = useState<string>('');
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [studentSearchTerm, setStudentSearchTerm] = useState<string>('');
+  const [submissionSearchTerm, setSubmissionSearchTerm] = useState<string>('');
 
   // Charger les cours assignés au montage du composant
   useEffect(() => {
@@ -250,17 +258,51 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
     document.body.removeChild(link);
   };
 
+  const truncateFileName = (fileName: string, maxLength: number = 30) => {
+    if (fileName.length <= maxLength) return fileName;
+    
+    const extension = fileName.split('.').pop();
+    const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+    const truncatedName = nameWithoutExt.substring(0, maxLength - 3) + '...';
+    
+    return extension ? `${truncatedName}.${extension}` : truncatedName;
+  };
+
+  // Filtrer les étudiants selon le terme de recherche
+  const filteredStudents = students.filter(student => {
+    const searchTerm = studentSearchTerm.toLowerCase();
+    return (
+      student.nom_complet.toLowerCase().includes(searchTerm) ||
+      student.matricule.toLowerCase().includes(searchTerm) ||
+      student.email.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  // Filtrer les soumissions selon le terme de recherche
+  const filteredSubmissions = submissions.filter(submission => {
+    const searchTerm = submissionSearchTerm.toLowerCase();
+    return (
+      (submission.student?.nom_complet || '').toLowerCase().includes(searchTerm) ||
+      (submission.student?.matricule || '').toLowerCase().includes(searchTerm) ||
+      (submission.student?.email || '').toLowerCase().includes(searchTerm) ||
+      (submission.submission_title || '').toLowerCase().includes(searchTerm) ||
+      (submission.assignments?.title || '').toLowerCase().includes(searchTerm) ||
+      (submission.assignments?.course || '').toLowerCase().includes(searchTerm) ||
+      (submission.file_name || '').toLowerCase().includes(searchTerm)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col md:flex-row">
-      {/* Sidebar navigation */}
-      <div className="w-64 bg-white dark:bg-slate-800 shadow-lg border-r border-slate-200 dark:border-slate-700 flex-col justify-between hidden md:flex">
+      {/* Sidebar navigation - Fixed */}
+      <div className="w-64 bg-white dark:bg-slate-800 shadow-lg border-r border-slate-200 dark:border-slate-700 flex-col justify-between hidden md:flex fixed left-0 top-0 h-full z-30">
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-8">
             <div className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center bg-white shadow-lg border border-slate-200">
               <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
             </div>
             <div>
-              <h1 className="font-bold text-slate-900 dark:text-white text-lg">ENSET-MASTERS</h1>
+              <h1 className="font-bold text-slate-900 dark:text-white text-lg">MR-MRTDDEFTP</h1>
               <div className="flex items-center space-x-2">
                 <p className="text-xs text-slate-600 dark:text-slate-400">Espace</p>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
@@ -270,7 +312,7 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
             </div>
           </div>
           
-          <nav className="space-y-2">
+          <nav className="space-y-3">
             <button onClick={() => setActiveTab('courses')} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium ${activeTab === 'courses' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'}`}>
               <BookOpen className="w-5 h-5" />
               <span>Mes cours</span>
@@ -287,7 +329,7 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
           </nav>
           
           {/* Raccourcis rapides */}
-          <div className="mt-6 space-y-2">
+          <div className="mt-3 space-y-3">
             <button 
               onClick={handleOpenGeneralMessageModal}
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 font-medium"
@@ -329,8 +371,10 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
         </div>
       </div>
 
-      {/* Top nav mobile */}
-      <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 md:px-8 py-3 shadow-sm md:hidden">
+      {/* Main content - Adjusted for fixed sidebar */}
+      <div className="flex-1 md:ml-64 min-h-screen">
+        {/* Top nav mobile */}
+        <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 md:px-8 py-3 shadow-sm md:hidden">
         <div className="flex items-center gap-2 md:gap-6">
           <button onClick={() => setActiveTab('courses')} className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === 'courses' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-slate-700 hover:bg-slate-100'}`}>Cours</button>
           <button onClick={() => setActiveTab('students')} className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === 'students' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-slate-700 hover:bg-slate-100'}`}>Étudiants</button>
@@ -363,7 +407,7 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
         </div>
       </nav>
 
-      <div className="flex-1 p-4 md:p-8">
+        <div className="p-4 md:p-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -433,7 +477,31 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <Users className="w-4 h-4 text-blue-600" />
                     </div>
-                    <span className="text-lg font-bold text-blue-600">{students.length}</span>
+                    <span className="text-lg font-bold text-blue-600">{filteredStudents.length}</span>
+                  </div>
+                </div>
+
+                {/* Barre de recherche */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Rechercher par nom, matricule ou email..."
+                      value={studentSearchTerm}
+                      onChange={(e) => setStudentSearchTerm(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50 hover:bg-white transition-colors"
+                    />
+                    {studentSearchTerm && (
+                      <button
+                        onClick={() => setStudentSearchTerm('')}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      >
+                        <X className="h-5 w-5 text-slate-400 hover:text-slate-600" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 
@@ -457,7 +525,7 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {students.map((student, index) => (
+                        {filteredStudents.map((student, index) => (
                           <tr 
                             key={student.id} 
                             className={`hover:bg-slate-50 transition-colors duration-200 ${
@@ -483,17 +551,22 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
                   </div>
                 )}
                 
-                {!loading && students.length === 0 && (
+                {!loading && filteredStudents.length === 0 && (
                   <div className="text-center py-12 text-slate-500">
                     <Users className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-                    <p>Aucun étudiant Master 2 trouvé.</p>
+                    <p>
+                      {studentSearchTerm 
+                        ? `Aucun étudiant trouvé pour "${studentSearchTerm}"` 
+                        : 'Aucun étudiant Master 2 trouvé.'
+                      }
+                    </p>
                   </div>
                 )}
               </div>
             )}
 
             {activeTab === 'submissions' && (
-              <div className="bg-white rounded-2xl p-6 border border-slate-200 mb-8 shadow-sm">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 mb-8 shadow-sm max-w-full overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-xl font-semibold text-slate-900">Devoirs rendus par mes étudiants</h2>
@@ -503,7 +576,31 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <Upload className="w-4 h-4 text-blue-600" />
                     </div>
-                    <span className="text-lg font-bold text-blue-600">{submissions.length}</span>
+                    <span className="text-lg font-bold text-blue-600">{filteredSubmissions.length}</span>
+                  </div>
+                </div>
+
+                {/* Barre de recherche pour les soumissions */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Rechercher par nom d'étudiant, titre du devoir, cours ou nom de fichier..."
+                      value={submissionSearchTerm}
+                      onChange={(e) => setSubmissionSearchTerm(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50 hover:bg-white transition-colors"
+                    />
+                    {submissionSearchTerm && (
+                      <button
+                        onClick={() => setSubmissionSearchTerm('')}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      >
+                        <X className="h-5 w-5 text-slate-400 hover:text-slate-600" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -539,72 +636,123 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
                     <p className="mt-2 text-slate-600">Chargement des soumissions...</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-xl border border-slate-200">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b-2 border-slate-200 bg-slate-50 rounded-t-xl">
-                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Étudiant</th>
-                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Devoir</th>
-                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Cours</th>
-                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Fichier</th>
-                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Date de soumission</th>
-                          <th className="text-left py-4 px-6 font-semibold text-slate-700 text-sm uppercase tracking-wide">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {submissions.map((submission, index) => (
-                          <tr 
-                            key={submission.id} 
-                            className={`hover:bg-slate-50 transition-colors duration-200 ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
-                            }`}
-                          >
-                            <td className="py-4 px-6">
-                              <div>
-                                <div className="font-medium text-slate-900">{submission.student_id}</div>
-                                <div className="text-xs text-slate-500">ID: {submission.student_id}</div>
+                  <div className="space-y-4">
+                    {filteredSubmissions.map((submission, index) => (
+                      <div 
+                        key={submission.id} 
+                        className={`bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-all duration-200 ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
+                        }`}
+                      >
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
+                                                     {/* Informations de l'étudiant */}
+                           <div className="space-y-2 min-w-0">
+                             <div className="flex items-center space-x-3 min-w-0">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                                <User className="w-5 h-5 text-white" />
                               </div>
-                            </td>
-                            <td className="py-4 px-6">
-                              <div>
-                                <div className="font-medium text-slate-900">{submission.submission_title}</div>
-                                <div className="text-xs text-slate-500">{submission.assignments?.title}</div>
-                              </div>
-                            </td>
-                            <td className="py-4 px-6 text-sm text-slate-600">{submission.assignments?.course}</td>
-                            <td className="py-4 px-6 text-sm text-slate-600">{submission.file_name}</td>
-                            <td className="py-4 px-6 text-sm text-slate-600">
-                              {new Date(submission.submitted_at).toLocaleDateString('fr-FR')}
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="flex gap-2">
-                                <button 
-                                  onClick={() => handleDownloadSubmission(submission.file_url, submission.file_name)}
-                                  className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-                                >
-                                  Télécharger
-                                </button>
-                                {submission.comments && (
-                                  <button 
-                                    onClick={() => alert(`Commentaires: ${submission.comments}`)}
-                                    className="text-xs bg-slate-600 text-white px-3 py-1 rounded hover:bg-slate-700 transition-colors"
-                                  >
-                                    Voir commentaires
-                                  </button>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-semibold text-slate-900 truncate" title={submission.student?.nom_complet || submission.student_id}>
+                                  {submission.student?.nom_complet || submission.student_id}
+                                </div>
+                                <div className="text-sm text-slate-500 truncate" title={`Matricule: ${submission.student?.matricule || submission.student_id}`}>
+                                  Matricule: {submission.student?.matricule || submission.student_id}
+                                </div>
+                                {submission.student?.email && (
+                                  <div className="text-xs text-slate-400 truncate" title={submission.student.email}>
+                                    {submission.student.email}
+                                  </div>
                                 )}
                               </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </div>
+                          </div>
+
+                                                     {/* Informations du devoir */}
+                           <div className="space-y-2 min-w-0">
+                             <div className="min-w-0 flex-1">
+                               <div className="font-semibold text-slate-900 text-lg truncate" title={submission.submission_title}>
+                                 {submission.submission_title}
+                               </div>
+                               <div className="text-sm text-slate-600 truncate" title={submission.assignments?.title}>
+                                 {submission.assignments?.title}
+                               </div>
+                             </div>
+                                                         <div className="text-sm text-slate-500 truncate" title={submission.assignments?.course}>
+                               Cours: {submission.assignments?.course}
+                             </div>
+                          </div>
+
+                                                     {/* Informations du fichier et date */}
+                           <div className="space-y-2 min-w-0">
+                             <div className="flex items-center space-x-2 min-w-0">
+                              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <Download className="w-4 h-4 text-green-600" />
+                              </div>
+                                                             <div className="min-w-0 flex-1">
+                                 <div className="font-medium text-slate-900 text-sm truncate" title={submission.file_name}>
+                                   {truncateFileName(submission.file_name)}
+                                 </div>
+                                <div className="text-xs text-slate-500">
+                                  {new Date(submission.submitted_at).toLocaleDateString('fr-FR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap gap-2">
+                          <button 
+                            onClick={() => handleDownloadSubmission(submission.file_url, submission.file_name)}
+                            className="inline-flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Télécharger</span>
+                          </button>
+                          
+                          {submission.comments && (
+                            <button 
+                              onClick={() => {
+                                const modal = document.createElement('div');
+                                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+                                modal.innerHTML = `
+                                  <div class="bg-white rounded-2xl p-6 max-w-md w-full">
+                                    <h3 class="text-lg font-semibold mb-4">Commentaires de l'étudiant</h3>
+                                    <p class="text-slate-700 mb-4">${submission.comments}</p>
+                                    <button onclick="this.parentElement.parentElement.remove()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                      Fermer
+                                    </button>
+                                  </div>
+                                `;
+                                document.body.appendChild(modal);
+                              }}
+                              className="inline-flex items-center space-x-2 bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                              <span>Voir commentaires</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
-                {!submissionsLoading && submissions.length === 0 && (
+                {!submissionsLoading && filteredSubmissions.length === 0 && (
                   <div className="text-center py-12 text-slate-500">
                     <Upload className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-                    <p>Aucun devoir rendu trouvé pour ce cours.</p>
+                    <p>
+                      {submissionSearchTerm 
+                        ? `Aucun devoir trouvé pour "${submissionSearchTerm}"` 
+                        : 'Aucun devoir rendu trouvé pour ce cours.'
+                      }
+                    </p>
                   </div>
                 )}
               </div>
@@ -969,6 +1117,7 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -39,8 +39,13 @@ function App() {
           setStudentInfo(info);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de la vérification de l\'utilisateur:', error);
+      
+      // Si l'utilisateur est bloqué, afficher un message spécifique
+      if (error.message && error.message.includes('bloqué')) {
+        alert('Votre compte a été bloqué par un administrateur. Veuillez contacter l\'administration.');
+      }
     } finally {
       setLoading(false);
     }
@@ -78,6 +83,12 @@ function App() {
       return true;
     } catch (error: any) {
       console.error('Erreur de connexion:', error);
+      
+      // Si l'utilisateur est bloqué, afficher un message spécifique
+      if (error.message && error.message.includes('bloqué')) {
+        alert('Votre compte a été bloqué par un administrateur. Veuillez contacter l\'administration.');
+      }
+      
       return false;
     } finally {
       setLoading(false);
