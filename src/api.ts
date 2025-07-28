@@ -788,6 +788,152 @@ export async function getAssignmentsByCourse(courseName: string) {
 // Fonction pour récupérer les soumissions de devoirs par cours (pour les enseignants)
 export async function getSubmissionsByCourse(courseName: string) {
   try {
+    console.log('getSubmissionsByCourse - Recherche pour le cours:', courseName);
+    
+    // D'abord, récupérer les IDs des devoirs pour ce cours
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from('assignments')
+      .select('id')
+      .eq('course', courseName);
+
+    console.log('getSubmissionsByCourse - Devoirs trouvés:', assignments);
+
+    if (assignmentsError) {
+      throw assignmentsError;
+    }
+
+    if (!assignments || assignments.length === 0) {
+      console.log('getSubmissionsByCourse - Aucun devoir trouvé pour ce cours');
+      return [];
+    }
+
+    // Extraire les IDs des devoirs
+    const assignmentIds = assignments.map(assignment => assignment.id);
+    console.log('getSubmissionsByCourse - IDs des devoirs:', assignmentIds);
+
+    // Ensuite, récupérer les soumissions pour ces devoirs
+    const { data: submissions, error: submissionsError } = await supabase
+      .from('assignment_submissions')
+      .select(`
+        *,
+        assignments (
+          title,
+          course,
+          due_date,
+          points
+        )
+      `)
+      .in('assignment_id', assignmentIds)
+      .order('submitted_at', { ascending: false });
+
+    console.log('getSubmissionsByCourse - Soumissions trouvées:', submissions);
+
+    if (submissionsError) {
+      throw submissionsError;
+    }
+
+    return submissions;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des soumissions par cours:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer les soumissions des cours assignés à un enseignant
+export async function getSubmissionsForTeacher(teacherEmail: string) {
+  try {
+    console.log('getSubmissionsForTeacher - Recherche pour:', teacherEmail);
+    
+    // D'abord, récupérer les cours assignés à l'enseignant
+    const { data: assignedCourses, error: coursesError } = await supabase
+      .from('course_assignments')
+      .select('course_name')
+      .eq('teacher_email', teacherEmail)
+      .eq('is_active', true);
+
+    console.log('getSubmissionsForTeacher - Cours assignés:', assignedCourses);
+    console.log('getSubmissionsForTeacher - Erreur cours:', coursesError);
+
+    if (coursesError) {
+      throw coursesError;
+    }
+
+    if (!assignedCourses || assignedCourses.length === 0) {
+      console.log('getSubmissionsForTeacher - Aucun cours assigné');
+      return [];
+    }
+
+    // Extraire les noms des cours
+    const courseNames = assignedCourses.map(course => course.course_name);
+    console.log('getSubmissionsForTeacher - Noms des cours:', courseNames);
+
+    // Ensuite, récupérer les IDs des devoirs pour ces cours
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from('assignments')
+      .select('id')
+      .in('course', courseNames);
+
+    console.log('getSubmissionsForTeacher - Devoirs trouvés:', assignments);
+
+    if (assignmentsError) {
+      throw assignmentsError;
+    }
+
+    if (!assignments || assignments.length === 0) {
+      console.log('getSubmissionsForTeacher - Aucun devoir trouvé pour ces cours');
+      return [];
+    }
+
+    // Extraire les IDs des devoirs
+    const assignmentIds = assignments.map(assignment => assignment.id);
+    console.log('getSubmissionsForTeacher - IDs des devoirs:', assignmentIds);
+
+    // Ensuite, récupérer les soumissions pour ces devoirs
+    const { data: submissions, error: submissionsError } = await supabase
+      .from('assignment_submissions')
+      .select('*')
+      .in('assignment_id', assignmentIds)
+      .order('submitted_at', { ascending: false });
+
+    console.log('getSubmissionsForTeacher - Soumissions trouvées:', submissions);
+
+    if (submissionsError) {
+      throw submissionsError;
+    }
+
+    // Récupérer les détails des devoirs séparément
+    const { data: assignmentsDetails, error: assignmentsDetailsError } = await supabase
+      .from('assignments')
+      .select('*')
+      .in('id', assignmentIds);
+
+    console.log('getSubmissionsForTeacher - Détails des devoirs:', assignmentsDetails);
+
+    if (assignmentsDetailsError) {
+      throw assignmentsDetailsError;
+    }
+
+    // Combiner les soumissions avec les détails des devoirs
+    const submissionsWithDetails = submissions?.map(submission => {
+      const assignment = assignmentsDetails?.find(a => a.id === submission.assignment_id);
+      return {
+        ...submission,
+        assignments: assignment
+      };
+    });
+
+    console.log('getSubmissionsForTeacher - Soumissions avec détails:', submissionsWithDetails);
+
+    return submissionsWithDetails || [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des soumissions pour l\'enseignant:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer toutes les soumissions pour un enseignant (tous cours confondus)
+export async function getAllSubmissionsForTeacher() {
+  try {
     const { data: submissions, error } = await supabase
       .from('assignment_submissions')
       .select(`
@@ -799,7 +945,6 @@ export async function getSubmissionsByCourse(courseName: string) {
           points
         )
       `)
-      .eq('assignments.course', courseName)
       .order('submitted_at', { ascending: false });
 
     if (error) {
@@ -808,7 +953,7 @@ export async function getSubmissionsByCourse(courseName: string) {
 
     return submissions;
   } catch (error) {
-    console.error('Erreur lors de la récupération des soumissions par cours:', error);
+    console.error('Erreur lors de la récupération de toutes les soumissions:', error);
     throw error;
   }
 }

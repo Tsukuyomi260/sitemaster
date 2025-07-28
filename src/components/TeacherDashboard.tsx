@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, BookOpen, Users, Download, Upload, Settings, LogOut, ChevronUp, MessageSquare, Send } from 'lucide-react';
-import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents, getSubmissionsByCourse } from '../api';
+import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents, getSubmissionsByCourse, getAllSubmissionsForTeacher, getSubmissionsForTeacher } from '../api';
 
 interface TeacherDashboardProps {
   teacherName: string;
@@ -78,6 +78,12 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
         // Charger tous les étudiants Master 2 par défaut
         const studentsData = await getStudentsByCourse('01 S3 Collaboration interdisciplinaire dans l\'EFTP');
         setStudents(studentsData || []);
+        
+        // Charger les soumissions des cours assignés à cet enseignant
+        console.log('TeacherDashboard - Chargement des soumissions pour:', teacherName);
+        const submissionsData = await getSubmissionsForTeacher(teacherName);
+        console.log('TeacherDashboard - Soumissions récupérées:', submissionsData);
+        setSubmissions(submissionsData || []);
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
       } finally {
@@ -215,6 +221,19 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
       setSubmissions(submissionsData || []);
     } catch (error) {
       console.error('Erreur lors du chargement des soumissions:', error);
+      setSubmissions([]);
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  };
+
+  const loadAllSubmissions = async () => {
+    try {
+      setSubmissionsLoading(true);
+      const submissionsData = await getSubmissionsForTeacher(teacherName);
+      setSubmissions(submissionsData || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des soumissions de l\'enseignant:', error);
       setSubmissions([]);
     } finally {
       setSubmissionsLoading(false);
@@ -500,7 +519,7 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
                       if (e.target.value) {
                         loadSubmissionsForCourse(e.target.value);
                       } else {
-                        setSubmissions([]);
+                        loadAllSubmissions();
                       }
                     }}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
