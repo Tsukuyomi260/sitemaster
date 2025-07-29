@@ -21,11 +21,12 @@ import {
   Search,
   RefreshCw,
   Crown,
-  FileText
+  FileText,
+  X
 } from 'lucide-react';
 import { 
   getAllStudents, 
-  getAllAssignmentSubmissions, 
+  getAllSubmissions, 
   getAllAdmins,
   getAllTeachers,
   getAllCoursesByMaster,
@@ -36,7 +37,7 @@ import {
   removeCourseAssignment,
   toggleUserBlock,
   sendMessageToAllUsers,
-  getAllSubmissions
+  sendIndividualMessage
 } from '../api';
 
 interface AdminDashboardProps {
@@ -181,6 +182,10 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const [messageTitle, setMessageTitle] = useState('');
   const [messageContent, setMessageContent] = useState('');
   const [messageTarget, setMessageTarget] = useState('all');
+  const [messageRecipientSearch, setMessageRecipientSearch] = useState('');
+  const [showRecipientSuggestions, setShowRecipientSuggestions] = useState(false);
+  const [selectedRecipient, setSelectedRecipient] = useState<null | { email: string; name: string; role: string }>(null);
+  const [messageType, setMessageType] = useState<'broadcast' | 'individual'>('broadcast');
 
   // Charger toutes les données au montage du composant
   useEffect(() => {
@@ -210,7 +215,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         
         // Charger les soumissions de devoirs
         console.log('Chargement des soumissions de devoirs...');
-        const submissionsData = await getAllAssignmentSubmissions();
+        const submissionsData = await getAllSubmissions();
         console.log('Données des soumissions reçues:', submissionsData);
         setSubmissions(submissionsData || []);
         console.log('État submissions mis à jour:', submissionsData || []);
@@ -230,6 +235,21 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     console.log('État courseAssignments mis à jour:', courseAssignments);
     console.log('Nombre de cours assignés:', courseAssignments.length);
   }, [courseAssignments]);
+
+  // Effet pour fermer les suggestions quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.recipient-search-container')) {
+        setShowRecipientSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Fonctions de rechargement spécifiques
   const reloadStudents = async () => {
@@ -287,7 +307,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     try {
       setSubmissionsLoading(true);
       console.log('Rechargement des soumissions...');
-      const submissionsData = await getAllAssignmentSubmissions();
+      const submissionsData = await getAllSubmissions();
       console.log('Données des soumissions reçues:', submissionsData);
       setSubmissions(submissionsData || []);
     } catch (error) {
@@ -407,13 +427,45 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
 
   const handleSendMessage = async () => {
     try {
-      await sendMessageToAllUsers(adminName, messageTitle, messageContent, messageTarget);
+      console.log('handleSendMessage appelé avec:', {
+        messageType,
+        messageTitle,
+        messageContent,
+        messageTarget,
+        selectedRecipient
+      });
+
+      if (messageType === 'broadcast') {
+        // Message de diffusion
+        console.log('Envoi de message de diffusion...');
+        await sendMessageToAllUsers(adminName, messageTitle, messageContent, messageTarget);
+        console.log('Message de diffusion envoyé avec succès');
+      } else {
+        // Message individuel
+        console.log('Envoi de message individuel...');
+        if (!selectedRecipient) {
+          alert('Veuillez sélectionner un destinataire');
+          return;
+        }
+        // Pour les messages individuels, nous utiliserons une fonction différente
+        // qui enverra le message à un utilisateur spécifique
+        await sendIndividualMessage(adminName, selectedRecipient.email, messageTitle, messageContent);
+        console.log('Message individuel envoyé avec succès');
+      }
+      
+      // Réinitialiser le formulaire
       setMessageTitle('');
       setMessageContent('');
       setMessageTarget('all');
+      setMessageType('broadcast');
+      setSelectedRecipient(null);
+      setMessageRecipientSearch('');
       setShowMessageModal(false);
+      
+      alert('Message envoyé avec succès !');
     } catch (error) {
       console.error('Erreur lors de l\'envoi du message:', error);
+      alert('Erreur lors de l\'envoi du message: ' + error);
     }
   };
 
@@ -437,7 +489,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const loadSubmissions = async () => {
     try {
       setSubmissionsLoading(true);
-      const submissionsData = await getAllAssignmentSubmissions();
+      const submissionsData = await getAllSubmissions();
       setSubmissions(submissionsData || []);
     } catch (error) {
       console.error('Erreur lors du chargement des soumissions:', error);
@@ -496,6 +548,66 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     const truncatedName = nameWithoutExtension.substring(0, maxLength - 3);
     return `${truncatedName}...${extension ? '.' + extension : ''}`;
   };
+
+  // Fonction pour obtenir tous les destinataires possibles
+  const getAllRecipients = () => {
+    const recipients: { email: string; name: string; role: string }[] = [];
+    
+    // Ajouter les étudiants
+    students.forEach(student => {
+      recipients.push({
+        email: student.email,
+        name: student.nom_complet,
+        role: 'Étudiant'
+      });
+    });
+    
+    // Ajouter les enseignants
+    teachers.forEach(teacher => {
+      recipients.push({
+        email: teacher.email,
+        name: teacher.email, // Les enseignants n'ont que l'email
+        role: 'Enseignant'
+      });
+    });
+    
+    // Ajouter les administrateurs
+    admins.forEach(admin => {
+      recipients.push({
+        email: admin.email,
+        name: admin.email, // Les admins n'ont que l'email
+        role: 'Administrateur'
+      });
+    });
+    
+    return recipients;
+  };
+
+  // Filtrer les destinataires selon la recherche
+  const filteredRecipients = getAllRecipients().filter(recipient =>
+    recipient.email.toLowerCase().includes(messageRecipientSearch.toLowerCase()) ||
+    recipient.name.toLowerCase().includes(messageRecipientSearch.toLowerCase())
+  );
+
+  // Fonction pour sélectionner un destinataire
+  const selectRecipient = (recipient: { email: string; name: string; role: string }) => {
+    setSelectedRecipient(recipient);
+    setMessageRecipientSearch(recipient.email);
+    setShowRecipientSuggestions(false);
+  };
+
+  // Gérer la fermeture des suggestions quand on clique à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.recipient-search-container')) {
+        setShowRecipientSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [notificationStudentSearch, setNotificationStudentSearch] = useState('');
   const [showStudentSuggestions, setShowStudentSuggestions] = useState(false);
@@ -771,12 +883,19 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                     <span className="text-sm font-medium">Assigner un cours</span>
                   </button>
                   <button
-                    onClick={() => setShowMessageModal(true)}
+                    onClick={() => {
+                      console.log('Bouton Messages cliqué, ouverture du modal...');
+                      console.log('État showMessageModal avant:', showMessageModal);
+                      setShowMessageModal(true);
+                      console.log('État showMessageModal après setShowMessageModal(true)');
+                    }}
                     className="w-full flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
                   >
                     <Send className="w-5 h-5 text-green-600" />
                     <span className="text-sm font-medium">Envoyer un message</span>
                   </button>
+                  
+
                   <button
                     onClick={() => setActiveTab('submissions')}
                     className="w-full flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
@@ -1678,6 +1797,150 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
           </div>
         )}
 
+        {/* Section Messages */}
+        {activeTab === 'messages' && (
+          <div className="space-y-6">
+            {/* En-tête avec titre et actions */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                  <Send className="w-6 h-6 lg:w-8 lg:h-8 text-orange-600" />
+                  Gestion des Messages
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400 mt-1">
+                  Envoyer des messages aux étudiants, enseignants et administrateurs
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowMessageModal(true)}
+                  className="px-4 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 transition-all duration-200 font-medium flex items-center gap-2 text-sm lg:text-base shadow-lg hover:shadow-xl"
+                >
+                  <Send className="w-4 h-4" />
+                  Nouveau Message
+                </button>
+              </div>
+            </div>
+
+            {/* Statistiques des messages */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 lg:p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs lg:text-sm font-medium text-slate-600 dark:text-slate-400">Messages envoyés</p>
+                    <p className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                      {students.length + teachers.length + admins.length}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
+                    <Send className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 lg:p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs lg:text-sm font-medium text-slate-600 dark:text-slate-400">Destinataires étudiants</p>
+                    <p className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                      {students.length}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 lg:p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs lg:text-sm font-medium text-slate-600 dark:text-slate-400">Destinataires enseignants</p>
+                    <p className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                      {teachers.length}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                    <GraduationCap className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 lg:p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs lg:text-sm font-medium text-slate-600 dark:text-slate-400">Destinataires admins</p>
+                    <p className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                      {admins.length}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Shield className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Guide d'utilisation */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <Send className="w-5 h-5 text-orange-600" />
+                Comment envoyer des messages
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-orange-600">1</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900 dark:text-white">Messages de diffusion</h4>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Envoyez des messages à tous les utilisateurs, tous les étudiants, tous les enseignants ou tous les administrateurs.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-orange-600">2</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900 dark:text-white">Messages individuels</h4>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Recherchez et sélectionnez un utilisateur spécifique pour lui envoyer un message personnalisé.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-orange-600">3</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900 dark:text-white">Notifications automatiques</h4>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Les destinataires recevront automatiquement les messages dans leur espace personnel.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-orange-600">4</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900 dark:text-white">Suivi des messages</h4>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Tous les messages envoyés sont enregistrés et peuvent être consultés ultérieurement.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal de création d'administrateur */}
         {showCreateAdminModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1895,7 +2158,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         {/* Modal d'envoi de messages */}
         {showMessageModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-lg relative">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
               <button 
                 onClick={() => setShowMessageModal(false)} 
                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-white text-xl font-bold"
@@ -1903,72 +2166,164 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                 ×
               </button>
               
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Send className="w-8 h-8 text-white" />
+              <div className="text-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                  <Send className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Envoyer un Message</h3>
-                <p className="text-slate-600 dark:text-slate-400 mt-1">Envoyer un message aux utilisateurs</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Envoyer un Message</h3>
+                <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">Diffusion ou message individuel</p>
               </div>
               
               <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="space-y-4">
+                {/* Type de message */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Destinataires
+                    Type de message
                   </label>
-                  <select
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMessageType('broadcast')}
+                      className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
+                        messageType === 'broadcast'
+                          ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      Diffusion
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMessageType('individual')}
+                      className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
+                        messageType === 'individual'
+                          ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      Individuel
+                    </button>
+                  </div>
+                </div>
+
+                {/* Destinataire */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    {messageType === 'broadcast' ? 'Destinataires' : 'Destinataire'}
+                  </label>
+                  
+                  {messageType === 'broadcast' ? (
+                                      <select
                     value={messageTarget}
                     onChange={(e) => setMessageTarget(e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm"
                     required
                   >
-                    <option value="all">Tous les utilisateurs</option>
-                    <option value="students">Tous les étudiants</option>
-                    <option value="teachers">Tous les enseignants</option>
-                  </select>
+                      <option value="">Sélectionner les destinataires</option>
+                      <option value="all_students">Tous les étudiants</option>
+                      <option value="all_teachers">Tous les enseignants</option>
+                      <option value="all_admins">Tous les administrateurs</option>
+                      <option value="all_users">Tous les utilisateurs</option>
+                    </select>
+                                     ) : (
+                     <div className="space-y-3 recipient-search-container">
+                       <input
+                         type="text"
+                         placeholder="Rechercher un destinataire par email..."
+                         value={messageRecipientSearch}
+                         onChange={(e) => setMessageRecipientSearch(e.target.value)}
+                         className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm"
+                         required
+                       />
+                      
+                                             {/* Suggestions de destinataires */}
+                       {messageRecipientSearch && filteredRecipients.length > 0 && (
+                         <div className="relative">
+                           <div className="absolute z-10 w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                             {filteredRecipients.map((recipient, index) => (
+                               <button
+                                 key={index}
+                                 type="button"
+                                 onClick={() => selectRecipient(recipient)}
+                                 className="w-full px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors border-b border-slate-200 dark:border-slate-600 last:border-b-0 text-sm"
+                               >
+                                <div className="font-medium text-slate-900 dark:text-white">{recipient.name}</div>
+                                <div className="text-sm text-slate-600 dark:text-slate-400">{recipient.email}</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-500 capitalize">{recipient.role}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                                             {/* Destinataire sélectionné */}
+                       {selectedRecipient && (
+                         <div className="p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-green-900 dark:text-green-100">{selectedRecipient.name}</div>
+                              <div className="text-sm text-green-700 dark:text-green-300">{selectedRecipient.email}</div>
+                              <div className="text-xs text-green-600 dark:text-green-400 capitalize">{selectedRecipient.role}</div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRecipient(null)}
+                              className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Titre du message
-                  </label>
-                  <input
-                    type="text"
-                    value={messageTitle}
-                    onChange={(e) => setMessageTitle(e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                    placeholder="Titre du message"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Contenu du message
-                  </label>
-                  <textarea
-                    value={messageContent}
-                    onChange={(e) => setMessageContent(e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                    placeholder="Contenu du message..."
-                    rows={4}
-                    required
-                  />
-                </div>
-                
-                <div className="flex gap-3 pt-4">
+
+                {/* Titre du message */}
+                                 <div>
+                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                     Titre du message
+                   </label>
+                   <input
+                     type="text"
+                     value={messageTitle}
+                     onChange={(e) => setMessageTitle(e.target.value)}
+                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm"
+                     placeholder="Titre du message..."
+                     required
+                   />
+                 </div>
+
+                {/* Contenu du message */}
+                                 <div>
+                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                     Contenu du message
+                   </label>
+                   <textarea
+                     value={messageContent}
+                     onChange={(e) => setMessageContent(e.target.value)}
+                     rows={3}
+                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none text-sm"
+                     placeholder="Contenu du message..."
+                     required
+                   />
+                 </div>
+
+                {/* Boutons d'action */}
+                <div className="flex gap-2 pt-3">
                   <button
                     type="button"
                     onClick={() => setShowMessageModal(false)}
-                    className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium"
+                    className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium text-sm"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
                   >
-                    Envoyer le Message
+                    <Send className="w-4 h-4 inline mr-2" />
+                    Envoyer
                   </button>
                 </div>
               </form>

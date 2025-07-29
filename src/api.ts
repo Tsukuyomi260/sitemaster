@@ -869,6 +869,8 @@ export async function toggleUserBlock(userId: string, blocked: boolean) {
 // Envoyer un message à tous les utilisateurs (fonctionnalité admin)
 export async function sendMessageToAllUsers(adminEmail: string, messageTitle: string, messageContent: string, targetRole?: string) {
   try {
+    console.log('sendMessageToAllUsers appelé avec:', { adminEmail, messageTitle, messageContent, targetRole });
+    
     // 1. Créer le message
     const { data: message, error: messageError } = await supabase
       .from('teacher_messages')
@@ -876,24 +878,90 @@ export async function sendMessageToAllUsers(adminEmail: string, messageTitle: st
         teacher_email: adminEmail,
         course_name: 'Message administratif',
         message_title: messageTitle,
-        message_content: messageContent
+        message_content: messageContent,
+        target_type: 'broadcast'
       })
       .select()
       .single();
 
-    if (messageError) throw messageError;
-
-    // 2. Récupérer les utilisateurs cibles
-    let usersQuery = supabase.from('students').select('email');
-    
-    if (targetRole) {
-      usersQuery = supabase.from('profiles').select('email').eq('role', targetRole);
+    if (messageError) {
+      console.error('Erreur lors de la création du message:', messageError);
+      throw messageError;
     }
 
-    const { data: users, error: usersError } = await usersQuery;
-    if (usersError) throw usersError;
+    console.log('Message créé avec succès:', message);
 
-    // 3. Créer les notifications
+    // 2. Récupérer les utilisateurs cibles selon le rôle
+    let users: any[] = [];
+    
+    if (targetRole === 'all_students' || !targetRole) {
+      // Récupérer tous les étudiants
+      const { data: students, error: studentsError } = await supabase
+        .from('students')
+        .select('email');
+      
+      if (studentsError) {
+        console.error('Erreur lors de la récupération des étudiants:', studentsError);
+        throw studentsError;
+      }
+      users = users.concat(students || []);
+    }
+    
+    if (targetRole === 'all_teachers') {
+      // Récupérer tous les enseignants
+      const { data: teachers, error: teachersError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('role', 'teacher');
+      
+      if (teachersError) {
+        console.error('Erreur lors de la récupération des enseignants:', teachersError);
+        throw teachersError;
+      }
+      users = users.concat(teachers || []);
+    }
+    
+    if (targetRole === 'all_admins') {
+      // Récupérer tous les administrateurs
+      const { data: admins, error: adminsError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('role', 'admin');
+      
+      if (adminsError) {
+        console.error('Erreur lors de la récupération des administrateurs:', adminsError);
+        throw adminsError;
+      }
+      users = users.concat(admins || []);
+    }
+    
+    if (targetRole === 'all_users') {
+      // Récupérer tous les utilisateurs (étudiants + enseignants + admins)
+      const { data: students, error: studentsError } = await supabase
+        .from('students')
+        .select('email');
+      
+      const { data: teachers, error: teachersError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('role', 'teacher');
+      
+      const { data: admins, error: adminsError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('role', 'admin');
+      
+      if (studentsError || teachersError || adminsError) {
+        console.error('Erreur lors de la récupération des utilisateurs:', { studentsError, teachersError, adminsError });
+        throw studentsError || teachersError || adminsError;
+      }
+      
+      users = users.concat(students || [], teachers || [], admins || []);
+    }
+
+    console.log('Utilisateurs cibles trouvés:', users);
+
+    // 3. Créer les notifications pour les étudiants
     if (users && users.length > 0) {
       const notifications = users.map(user => ({
         student_email: user.email,
@@ -904,10 +972,14 @@ export async function sendMessageToAllUsers(adminEmail: string, messageTitle: st
         .from('student_notifications')
         .insert(notifications);
 
-      if (notificationError) throw notificationError;
+      if (notificationError) {
+        console.error('Erreur lors de la création des notifications:', notificationError);
+        throw notificationError;
+      }
     }
 
-    return { success: true, messageId: message.id, usersCount: users?.length || 0 };
+    console.log('Message envoyé avec succès à', users.length, 'utilisateurs');
+    return { success: true, messageId: message.id, usersCount: users.length };
   } catch (error) {
     console.error('Erreur lors de l\'envoi du message à tous les utilisateurs:', error);
     throw error;
@@ -1139,6 +1211,82 @@ export async function getAllSubmissionsForTeacher() {
     return submissions;
   } catch (error) {
     console.error('Erreur lors de la récupération de toutes les soumissions:', error);
+    throw error;
+  }
+}
+
+// Fonction pour envoyer un message individuel à un utilisateur spécifique
+export async function sendIndividualMessage(adminEmail: string, recipientEmail: string, messageTitle: string, messageContent: string) {
+  try {
+    console.log('Envoi de message individuel:', { adminEmail, recipientEmail, messageTitle, messageContent });
+    
+    // Vérifier d'abord si le destinataire existe
+    const { data: recipient, error: recipientError } = await supabase
+      .from('profiles')
+      .select('id, email, role')
+      .eq('email', recipientEmail)
+      .single();
+    
+    if (recipientError && recipientError.code !== 'PGRST116') {
+      console.error('Erreur lors de la vérification du destinataire:', recipientError);
+      throw new Error('Destinataire non trouvé');
+    }
+    
+    // Si le destinataire n'est pas dans profiles, vérifier dans students
+    if (!recipient) {
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .select('id, email')
+        .eq('email', recipientEmail)
+        .single();
+      
+      if (studentError && studentError.code !== 'PGRST116') {
+        console.error('Erreur lors de la vérification de l\'étudiant:', studentError);
+        throw new Error('Destinataire non trouvé');
+      }
+      
+      if (!student) {
+        throw new Error('Destinataire non trouvé');
+      }
+    }
+    
+    // Insérer le message dans la table teacher_messages
+    const { data: message, error: messageError } = await supabase
+      .from('teacher_messages')
+      .insert({
+        teacher_email: adminEmail,
+        course_name: null, // null pour les messages individuels
+        message_title: messageTitle,
+        message_content: messageContent,
+        target_type: 'individual',
+        target_email: recipientEmail,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (messageError) {
+      console.error('Erreur lors de l\'insertion du message:', messageError);
+      throw messageError;
+    }
+    
+    // Créer une notification pour le destinataire
+    const { error: notificationError } = await supabase
+      .from('student_notifications')
+      .insert({
+        student_email: recipientEmail,
+        message_id: message.id
+      });
+    
+    if (notificationError) {
+      console.error('Erreur lors de la création de la notification:', notificationError);
+      // Ne pas faire échouer l'envoi du message si la notification échoue
+    }
+    
+    console.log('Message individuel envoyé avec succès:', message);
+    return message;
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du message individuel:', error);
     throw error;
   }
 }
