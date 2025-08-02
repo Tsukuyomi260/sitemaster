@@ -10,7 +10,7 @@ export async function loginUser(email: string, password: string) {
   // Vérifier si l'utilisateur est bloqué
   const user = data.user;
   if (user) {
-    console.log('Vérification du blocage lors de la connexion pour:', email);
+    console.log('Vérification du blocage lors de la connexion');
     
     // Vérifier d'abord directement dans la table students par email
     const { data: student, error: studentError } = await supabase
@@ -19,10 +19,8 @@ export async function loginUser(email: string, password: string) {
       .eq('email', email)
       .single();
     
-    console.log('Vérification student par email:', student);
-    
     if (student && student.blocked) {
-      console.log('Étudiant bloqué détecté lors de la connexion');
+      console.log('Utilisateur bloqué détecté lors de la connexion');
       // Déconnecter l'utilisateur s'il est bloqué
       await supabase.auth.signOut();
       throw new Error('Votre compte a été bloqué par un administrateur. Veuillez contacter l\'administration.');
@@ -86,29 +84,27 @@ export async function getUserProfile(userId: string) {
 
 export async function getUserRoles(userId: string): Promise<string[]> {
   try {
-    console.log('Recherche des rôles pour userId:', userId);
+    console.log('Recherche des rôles pour utilisateur');
     
     // Essayer de récupérer les rôles depuis la table profiles
     const profile = await getUserProfile(userId);
-    console.log('Profil trouvé:', profile);
     
     if (profile && profile.roles && Array.isArray(profile.roles)) {
-      console.log('Rôles trouvés dans profiles:', profile.roles);
+      console.log('Rôles multiples trouvés dans profiles');
       return profile.roles;
     }
     
     // Fallback vers l'ancien système avec un seul rôle
     if (profile && profile.role) {
-      console.log('Rôle unique trouvé dans profiles:', profile.role);
+      console.log('Rôle unique trouvé dans profiles');
       return [profile.role];
     }
     
     // Si pas de profil, essayer de récupérer depuis les métadonnées
     const { data: { user } } = await supabase.auth.getUser();
-    console.log('User auth:', user);
     
     if (user && user.user_metadata && user.user_metadata.role) {
-      console.log('Rôle trouvé dans metadata:', user.user_metadata.role);
+      console.log('Rôle trouvé dans metadata');
       return [user.user_metadata.role];
     }
     
@@ -129,7 +125,7 @@ export async function getUserRole(userId: string) {
 
 export async function getStudentInfo(email: string) {
   try {
-    console.log('getStudentInfo appelé pour email:', email);
+    console.log('Récupération des informations étudiant');
     
     // Vérifier si l'étudiant est bloqué directement par email
     const { data: student, error } = await supabase
@@ -192,7 +188,7 @@ export async function submitAssignment(assignmentId: number, studentId: string, 
       .from('assignment_submissions')
       .insert({
         assignment_id: assignmentId,
-        student_id: studentId, // Utiliser directement le string
+        student_id: studentId,
         file_url: publicUrl,
         file_name: file.name,
         submission_title: title,
@@ -317,7 +313,7 @@ export async function getStudentsByCourse(courseName: string) {
     const { data: students, error } = await supabase
       .from('students')
       .select('*')
-      .eq('niveau', 'MR-TDDEFTP-2') // Correction: utiliser le bon niveau
+      .eq('niveau', 'MR-TDDEFTP-2')
       .order('nom_complet', { ascending: true });
 
     if (error) {
@@ -501,12 +497,12 @@ export async function sendMessageToAllStudents(teacherEmail: string, messageTitl
       throw messageError;
     }
 
-                 // 2. Récupérer tous les étudiants Master 2
-             const { data: students, error: studentsError } = await supabase
-               .from('students')
-               .select('*')
-               .eq('niveau', 'MR-TDDEFTP-2')
-               .order('nom_complet', { ascending: true });
+    // 2. Récupérer tous les étudiants Master 2
+    const { data: students, error: studentsError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('niveau', 'MR-TDDEFTP-2')
+      .order('nom_complet', { ascending: true });
 
     if (studentsError) {
       throw studentsError;
@@ -533,7 +529,7 @@ export async function sendMessageToAllStudents(teacherEmail: string, messageTitl
     console.error('Erreur lors de l\'envoi du message à tous les étudiants:', error);
     throw error;
   }
-} 
+}
 
 // Nouvelles fonctions pour le Super Admin Dashboard
 
@@ -590,9 +586,6 @@ export async function getAllCoursesByMaster() {
         is_active
       `)
       .order('course_name', { ascending: true });
-    
-    console.log('Cours assignés récupérés:', courses);
-    console.log('Erreur éventuelle:', error);
     
     if (error) {
       throw error;
@@ -752,7 +745,7 @@ export async function removeCourseAssignment(assignmentId: number) {
 // Vérifier si un utilisateur est bloqué
 export async function checkIfUserIsBlocked(userId: string): Promise<boolean> {
   try {
-    console.log('Vérification du blocage pour userId:', userId);
+    console.log('Vérification du blocage pour utilisateur');
     
     // D'abord, récupérer l'email de l'utilisateur depuis profiles
     const { data: profile, error: profileError } = await supabase
@@ -760,8 +753,6 @@ export async function checkIfUserIsBlocked(userId: string): Promise<boolean> {
       .select('email, blocked')
       .eq('id', userId)
       .single();
-    
-    console.log('Profil trouvé:', profile);
     
     if (profileError && profileError.code !== 'PGRST116') {
       console.error('Erreur lors de la récupération du profil:', profileError);
@@ -781,8 +772,6 @@ export async function checkIfUserIsBlocked(userId: string): Promise<boolean> {
         .eq('email', profile.email)
         .single();
       
-      console.log('Étudiant trouvé:', student);
-      
       if (student && student.blocked) {
         console.log('Étudiant bloqué dans students');
         return true;
@@ -797,8 +786,6 @@ export async function checkIfUserIsBlocked(userId: string): Promise<boolean> {
         .select('blocked')
         .eq('email', user.email)
         .single();
-      
-      console.log('Étudiant trouvé par email:', studentByEmail);
       
       if (studentByEmail && studentByEmail.blocked) {
         console.log('Étudiant bloqué par email');
@@ -817,16 +804,14 @@ export async function checkIfUserIsBlocked(userId: string): Promise<boolean> {
 // Bloquer/Débloquer un utilisateur
 export async function toggleUserBlock(userId: string, blocked: boolean) {
   try {
-    console.log('toggleUserBlock appelé avec:', { userId, blocked });
+    console.log('Changement de statut utilisateur');
     
-    // Essayer d'abord de mettre à jour dans la table students (car l'ID vient de là)
+    // Essayer d'abord de mettre à jour dans la table students
     const { data: studentData, error: studentError } = await supabase
       .from('students')
       .update({ blocked })
       .eq('id', userId)
       .select();
-
-    console.log('Résultat de la mise à jour students:', { studentData, error: studentError });
 
     if (!studentError) {
       console.log('Mise à jour réussie dans la table students');
@@ -840,8 +825,6 @@ export async function toggleUserBlock(userId: string, blocked: boolean) {
       .eq('id', userId)
       .select();
 
-    console.log('Résultat de la mise à jour profiles:', { profileData, error: profileError });
-
     if (!profileError) {
       console.log('Mise à jour réussie dans la table profiles');
       return true;
@@ -854,11 +837,11 @@ export async function toggleUserBlock(userId: string, blocked: boolean) {
     });
     
     if (authError) {
-      console.error('Toutes les méthodes ont échoué:', { studentError, profileError, authError });
+      console.error('Toutes les méthodes ont échoué');
       throw new Error('Impossible de mettre à jour le statut de blocage');
     }
     
-    console.log('toggleUserBlock réussi avec les métadonnées auth');
+    console.log('Changement de statut réussi avec les métadonnées auth');
     return true;
   } catch (error) {
     console.error('Erreur lors du changement de statut utilisateur:', error);
@@ -869,7 +852,7 @@ export async function toggleUserBlock(userId: string, blocked: boolean) {
 // Envoyer un message à tous les utilisateurs (fonctionnalité admin)
 export async function sendMessageToAllUsers(adminEmail: string, messageTitle: string, messageContent: string, targetRole?: string) {
   try {
-    console.log('sendMessageToAllUsers appelé avec:', { adminEmail, messageTitle, messageContent, targetRole });
+    console.log('Envoi de message à tous les utilisateurs');
     
     // 1. Créer le message
     const { data: message, error: messageError } = await supabase
@@ -889,7 +872,7 @@ export async function sendMessageToAllUsers(adminEmail: string, messageTitle: st
       throw messageError;
     }
 
-    console.log('Message créé avec succès:', message);
+    console.log('Message créé avec succès');
 
     // 2. Récupérer les utilisateurs cibles selon le rôle
     let users: any[] = [];
@@ -952,16 +935,16 @@ export async function sendMessageToAllUsers(adminEmail: string, messageTitle: st
         .eq('role', 'admin');
       
       if (studentsError || teachersError || adminsError) {
-        console.error('Erreur lors de la récupération des utilisateurs:', { studentsError, teachersError, adminsError });
+        console.error('Erreur lors de la récupération des utilisateurs');
         throw studentsError || teachersError || adminsError;
       }
       
       users = users.concat(students || [], teachers || [], admins || []);
     }
 
-    console.log('Utilisateurs cibles trouvés:', users);
+    console.log('Utilisateurs cibles trouvés:', users.length);
 
-    // 3. Créer les notifications pour les étudiants
+    // 3. Créer les notifications pour les utilisateurs
     if (users && users.length > 0) {
       const notifications = users.map(user => ({
         student_email: user.email,
@@ -984,7 +967,7 @@ export async function sendMessageToAllUsers(adminEmail: string, messageTitle: st
     console.error('Erreur lors de l\'envoi du message à tous les utilisateurs:', error);
     throw error;
   }
-} 
+}
 
 // Fonction pour récupérer tous les devoirs disponibles
 export async function getAllAssignments() {
@@ -1025,12 +1008,12 @@ export async function getAssignmentsByCourse(courseName: string) {
     console.error('Erreur lors de la récupération des devoirs du cours:', error);
     throw error;
   }
-} 
+}
 
 // Fonction pour récupérer les soumissions de devoirs par cours (pour les enseignants)
 export async function getSubmissionsByCourse(courseName: string) {
   try {
-    console.log('getSubmissionsByCourse - Recherche pour le cours:', courseName);
+    console.log('Recherche des soumissions pour le cours');
     
     // D'abord, récupérer les IDs des devoirs pour ce cours
     const { data: assignments, error: assignmentsError } = await supabase
@@ -1038,20 +1021,17 @@ export async function getSubmissionsByCourse(courseName: string) {
       .select('id')
       .eq('course', courseName);
 
-    console.log('getSubmissionsByCourse - Devoirs trouvés:', assignments);
-
     if (assignmentsError) {
       throw assignmentsError;
     }
 
     if (!assignments || assignments.length === 0) {
-      console.log('getSubmissionsByCourse - Aucun devoir trouvé pour ce cours');
+      console.log('Aucun devoir trouvé pour ce cours');
       return [];
     }
 
     // Extraire les IDs des devoirs
     const assignmentIds = assignments.map(assignment => assignment.id);
-    console.log('getSubmissionsByCourse - IDs des devoirs:', assignmentIds);
 
     // Ensuite, récupérer les soumissions pour ces devoirs
     const { data: submissions, error: submissionsError } = await supabase
@@ -1068,8 +1048,6 @@ export async function getSubmissionsByCourse(courseName: string) {
       .in('assignment_id', assignmentIds)
       .order('submitted_at', { ascending: false });
 
-    console.log('getSubmissionsByCourse - Soumissions trouvées:', submissions);
-
     if (submissionsError) {
       throw submissionsError;
     }
@@ -1084,7 +1062,7 @@ export async function getSubmissionsByCourse(courseName: string) {
 // Fonction pour récupérer les soumissions des cours assignés à un enseignant
 export async function getSubmissionsForTeacher(teacherEmail: string) {
   try {
-    console.log('getSubmissionsForTeacher - Recherche pour:', teacherEmail);
+    console.log('Recherche des soumissions pour l\'enseignant');
     
     // D'abord, récupérer les cours assignés à l'enseignant
     const { data: assignedCourses, error: coursesError } = await supabase
@@ -1093,21 +1071,17 @@ export async function getSubmissionsForTeacher(teacherEmail: string) {
       .eq('teacher_email', teacherEmail)
       .eq('is_active', true);
 
-    console.log('getSubmissionsForTeacher - Cours assignés:', assignedCourses);
-    console.log('getSubmissionsForTeacher - Erreur cours:', coursesError);
-
     if (coursesError) {
       throw coursesError;
     }
 
     if (!assignedCourses || assignedCourses.length === 0) {
-      console.log('getSubmissionsForTeacher - Aucun cours assigné');
+      console.log('Aucun cours assigné');
       return [];
     }
 
     // Extraire les noms des cours
     const courseNames = assignedCourses.map(course => course.course_name);
-    console.log('getSubmissionsForTeacher - Noms des cours:', courseNames);
 
     // Ensuite, récupérer les IDs des devoirs pour ces cours
     const { data: assignments, error: assignmentsError } = await supabase
@@ -1115,20 +1089,17 @@ export async function getSubmissionsForTeacher(teacherEmail: string) {
       .select('id')
       .in('course', courseNames);
 
-    console.log('getSubmissionsForTeacher - Devoirs trouvés:', assignments);
-
     if (assignmentsError) {
       throw assignmentsError;
     }
 
     if (!assignments || assignments.length === 0) {
-      console.log('getSubmissionsForTeacher - Aucun devoir trouvé pour ces cours');
+      console.log('Aucun devoir trouvé pour ces cours');
       return [];
     }
 
     // Extraire les IDs des devoirs
     const assignmentIds = assignments.map(assignment => assignment.id);
-    console.log('getSubmissionsForTeacher - IDs des devoirs:', assignmentIds);
 
     // Ensuite, récupérer les soumissions pour ces devoirs
     const { data: submissions, error: submissionsError } = await supabase
@@ -1136,8 +1107,6 @@ export async function getSubmissionsForTeacher(teacherEmail: string) {
       .select('*')
       .in('assignment_id', assignmentIds)
       .order('submitted_at', { ascending: false });
-
-    console.log('getSubmissionsForTeacher - Soumissions trouvées:', submissions);
 
     if (submissionsError) {
       throw submissionsError;
@@ -1149,8 +1118,6 @@ export async function getSubmissionsForTeacher(teacherEmail: string) {
       .select('*')
       .in('id', assignmentIds);
 
-    console.log('getSubmissionsForTeacher - Détails des devoirs:', assignmentsDetails);
-
     if (assignmentsDetailsError) {
       throw assignmentsDetailsError;
     }
@@ -1161,8 +1128,6 @@ export async function getSubmissionsForTeacher(teacherEmail: string) {
       .from('students')
       .select('id, nom_complet, matricule, email')
       .in('id', studentIds);
-
-    console.log('getSubmissionsForTeacher - Informations étudiants:', studentsInfo);
 
     if (studentsError) {
       console.error('Erreur lors de la récupération des informations étudiants:', studentsError);
@@ -1178,8 +1143,6 @@ export async function getSubmissionsForTeacher(teacherEmail: string) {
         student: student
       };
     });
-
-    console.log('getSubmissionsForTeacher - Soumissions avec détails:', submissionsWithDetails);
 
     return submissionsWithDetails || [];
   } catch (error) {
@@ -1218,7 +1181,7 @@ export async function getAllSubmissionsForTeacher() {
 // Fonction pour envoyer un message individuel à un utilisateur spécifique
 export async function sendIndividualMessage(adminEmail: string, recipientEmail: string, messageTitle: string, messageContent: string) {
   try {
-    console.log('Envoi de message individuel:', { adminEmail, recipientEmail, messageTitle, messageContent });
+    console.log('Envoi de message individuel');
     
     // Vérifier d'abord si le destinataire existe
     const { data: recipient, error: recipientError } = await supabase
@@ -1283,7 +1246,7 @@ export async function sendIndividualMessage(adminEmail: string, recipientEmail: 
       // Ne pas faire échouer l'envoi du message si la notification échoue
     }
     
-    console.log('Message individuel envoyé avec succès:', message);
+    console.log('Message individuel envoyé avec succès');
     return message;
   } catch (error) {
     console.error('Erreur lors de l\'envoi du message individuel:', error);
@@ -1294,7 +1257,7 @@ export async function sendIndividualMessage(adminEmail: string, recipientEmail: 
 // Fonction pour récupérer toutes les soumissions (pour les admins)
 export async function getAllSubmissions() {
   try {
-    console.log('getAllSubmissions - Début de la récupération...');
+    console.log('Début de la récupération des soumissions...');
     
     // Récupérer d'abord toutes les soumissions avec les détails des devoirs
     const { data: submissions, error } = await supabase
@@ -1310,24 +1273,17 @@ export async function getAllSubmissions() {
       `)
       .order('submitted_at', { ascending: false });
 
-    console.log('getAllSubmissions - Soumissions récupérées:', submissions);
-    console.log('getAllSubmissions - Erreur éventuelle:', error);
-
     if (error) {
       throw error;
     }
 
     // Récupérer les informations des étudiants
     const studentIds = submissions?.map(s => s.student_id) || [];
-    console.log('getAllSubmissions - IDs étudiants à récupérer:', studentIds);
     
     const { data: studentsInfo, error: studentsError } = await supabase
       .from('students')
       .select('id, nom_complet, matricule, email')
       .in('id', studentIds);
-
-    console.log('getAllSubmissions - Informations étudiants:', studentsInfo);
-    console.log('getAllSubmissions - Erreur étudiants:', studentsError);
 
     if (studentsError) {
       console.error('Erreur lors de la récupération des informations étudiants:', studentsError);
@@ -1341,8 +1297,6 @@ export async function getAllSubmissions() {
         students: student
       };
     });
-
-    console.log('getAllSubmissions - Soumissions avec détails:', submissionsWithDetails);
 
     return submissionsWithDetails || [];
   } catch (error) {
