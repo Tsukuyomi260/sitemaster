@@ -96,6 +96,7 @@ interface StudentProfile {
   phone: string;
   matricule: string;
   yearOfStudy: string;
+  studyYear: number; // Année d'étude numérique (1 ou 2)
   program: string;
   department: string;
   advisor: string;
@@ -150,9 +151,44 @@ interface Notification {
 }
 
 // AJOUTER APRÈS LES IMPORTS
-const coursParSemestre: { semestre: string; cours: CoursItem[] }[] = [
+const coursParSemestre: { semestre: string; cours: CoursItem[]; accessible_annee: number[] }[] = [
+  {
+    semestre: 'Semestre 1',
+    accessible_annee: [1, 2], // Accessible en 1ère et 2ème année
+    cours: [
+      { nom: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT", fichier: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT.pdf" },
+      { nom: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE", fichier: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE.pdf" },
+      { nom: "03 S1 Administration des etablissements eftp et gpec en eftp", fichier: "03 S1 Administration des etablissements eftp et gpec en eftp.pdf" },
+      { nom: "04 S1 Etude des Textes Fondamentaux de l'EFTP", fichier: "04 S1 Etude des Textes Fondamentaux de l'EFTP.pdf" },
+      { nom: "05 S1 GEOGRAPHIE DE L'EFTP", fichier: "05 S1 GEOGRAPHIE DE L'EFTP.pdf" },
+      { nom: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP", fichier: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP.pdf" },
+      { nom: "07 S1 Théorie didactique", fichier: "07 S1 Théorie didactique.pdf" },
+      { nom: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP", fichier: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP.pdf" },
+      { nom: "09 S1 Anglais Technique", fichier: "09 S1 Anglais Technique.pdf" },
+      { nom: "10 S1 Communication scientifique en anglais", fichier: "10 S1 Communication scientifique en anglais.pdf" },
+      { nom: "11 S1 Projet apprenant", fichier: "11 S1 Projet apprenant.pdf" }
+    ]
+  },
+  {
+    semestre: 'Semestre 2',
+    accessible_annee: [1, 2], // Accessible en 1ère et 2ème année
+    cours: [
+      { nom: "01 S2 Délinquance Juvénile", fichier: "01 S2 Délinquance Juvénile.pdf" },
+      { nom: "02 S2 Epistomologie et science de l'education et de la formation", fichier: "02 S2 Epistomologie et science de l'education et de la formation.pdf" },
+      { nom: "03 S2 Gestion de classes en situation formelle dans l'EFTP", fichier: "03 S2 Gestion de classes en situation formelle dans l'EFTP.pdf" },
+      { nom: "04 S2 Gestion de classes de contexte de formation professionnelle", fichier: "04 S2 Gestion de classes de contexte de formation professionnelle.pdf" },
+      { nom: "05 S2 Didactique de la matière en EFTP", fichier: "05 S2 Didactique de la matière en EFTP.pdf" },
+      { nom: "06 S2 Docimologie", fichier: "06 S2 Docimologie.pdf" },
+      { nom: "07 - 08 S2 Pedagogie et Andragogie", fichier: "07 - 08 S2 Pedagogie et Andragogie.pdf" },
+      { nom: "09 S2 Sociologie de l'Education et Réalité de l'EFTP", fichier: "09 S2 Sociologie de l'Education et Réalité de l'EFTP.pdf" },
+      { nom: "10 S2 Education des apprenants à besoin spécifiques", fichier: "10 S2 Education des apprenants à besoin spécifiques.pdf" },
+      { nom: "11 S2 Ethique et déontologie de la profession enseignante", fichier: "11 S2 Ethique et déontologie de la profession enseignante.pdf" },
+      { nom: "12 S2 Enseignement et formation en entreprise", fichier: "12 S2 Enseignement et formation en entreprise.pdf" }
+    ]
+  },
   {
     semestre: 'Semestre 3',
+    accessible_annee: [2], // Accessible uniquement en 2ème année
     cours: [
       { nom: "01 S3 Collaboration interdisciplinaire dans l'EFTP", fichier: "01 S3 Collaboration interdisciplinaire dans l'EFTP.pdf" },
       { nom: "02 S3 Projet transverseaux dans l'EFTP", fichier: "02 S3 Projet transverseaux dans l'EFTP.pdf" },
@@ -276,8 +312,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     phone: studentInfo?.telephone || '+229 90 12 34 56',
     matricule: studentInfo?.matricule || 'Matricule',
     yearOfStudy: studentInfo?.niveau || '2ème année',
-    program: studentInfo?.formation || 'Master en Sciences et Technologies de l\'Information',
-    department: studentInfo?.departement || 'Informatique et Télécommunications',
+    studyYear: studentInfo?.study_year || 1, // Valeur par défaut à 1 si non définie
+    program: studentInfo?.formation || 'Master MR-MRTDDEFTP',
+    department: studentInfo?.departement || 'EFTP',
     advisor: studentInfo?.encadreur || 'Dr. GNONLONFOUN Jean Marc',
     enrollmentDate: studentInfo?.date_inscription || '2023-09-15',
     address: studentInfo?.adresse || '123 Rue de l\'Université, Cotonou, Bénin',
@@ -285,6 +322,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     emergencyPhone: studentInfo?.telephone_urgence || '+229 90 98 76 54'
   };
 
+  // Fonction pour filtrer les cours selon l'année d'étude
+  const getAccessibleCourses = () => {
+    return coursParSemestre.filter(semestre => 
+      semestre.accessible_annee.includes(studentProfile.studyYear)
+    );
+  };
+
+  // Obtenir les cours accessibles à l'étudiant
+  const accessibleCourses = getAccessibleCourses();
   // Données fictives - Tous les cours du semestre 3
   const courses: Course[] = [
     {
@@ -1430,7 +1476,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Année d'étude</label>
-                  <p className="text-slate-900">{formData.yearOfStudy}</p>
+                  <div className="flex items-center space-x-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      formData.studyYear === 1 ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                    }`}>
+                      {formData.studyYear === 1 ? '1ère année' : '2ème année'}
+                    </span>
+                    <span className="text-slate-600 text-sm">Master MR-MRTDDEFTP</span>
+                  </div>
+                </div>
                 </div>
 
               </div>
@@ -1851,12 +1905,12 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             {activeTab === 'dashboard' && (
               <div className="space-y-8">
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <StatCard
                     icon={BookOpen}
-                    title="Cours actifs"
-                    value={coursParSemestre.find(s => s.semestre === 'Semestre 3')?.cours.length.toString() || "0"}
-                    subtitle="Semestre 3"
+                    title="Cours disponibles"
+                    value={accessibleCourses.reduce((total, semestre) => total + semestre.cours.length, 0).toString()}
+                    subtitle={studentProfile.studyYear === 1 ? "1ère année (S1 + S2)" : "2ème année (S1 + S2 + S3)"}
                     color="bg-blue-500"
                   />
                   <StatCard
@@ -1866,20 +1920,104 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     subtitle="Cette semaine"
                     color="bg-orange-500"
                   />
+                  <StatCard
+                    icon={Award}
+                    title="Année d'étude"
+                    value={studentProfile.studyYear === 1 ? "1ère année" : "2ème année"}
+                    subtitle="Master MR-MRTDDEFTP"
+                    color="bg-purple-500"
+                  />
                 </div>
 
                 {/* Courses Overview */}
                 <div>
-                  <h2 className="text-xl font-semibold text-slate-900 mb-4">Mes cours</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {courses.map(course => (
-                      <CourseCard key={course.id} course={course} />
-                    ))}
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Mes cours</h2>
+                  <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-blue-900 dark:text-blue-300">
+                          {studentProfile.studyYear === 1 ? "Étudiant de 1ère année" : "Étudiant de 2ème année"}
+                        </h3>
+                        <p className="text-sm text-blue-700 dark:text-blue-400">
+                          {studentProfile.studyYear === 1 
+                            ? "Vous avez accès aux cours du Semestre 1 et 2. Une fois promu en 2ème year, vous aurez également accès au Semestre 3."
+                            : "Vous avez accès à tous les cours : Semestre 1, 2 et 3. Félicitations pour votre progression !"
+                          }
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                  {/* Cours accessibles par semestre */}
+                  {accessibleCourses.length > 0 ? (
+                    <div className="space-y-6">
+                      {accessibleCourses.map((semestre, index) => (
+                        <div key={semestre.semestre}>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              semestre.semestre === 'Semestre 1' ? 'bg-blue-500' :
+                              semestre.semestre === 'Semestre 2' ? 'bg-green-500' :
+                              'bg-purple-500'
+                            }`}></div>
+                            {semestre.semestre}
+                            <span className="text-sm px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-400">
+                              {semestre.cours.length} cours
+                            </span>
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {semestre.cours.slice(0, 6).map((cours) => (
+                                  <div key={cours.fichier} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div className="flex-1">
+                                        <p className="font-medium text-slate-900 dark:text-white text-sm leading-relaxed">{cours.nom}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                                        PDF disponible
+                                      </span>
+                                      <a
+                                        href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${cours.fichier}`}
+                                        download
+                                        className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors font-medium"
+                                      >
+                                        Télécharger
+                                      </a>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              {semestre.cours.length > 6 && (
+                                <p className="text-center mt-3 text-sm text-slate-600 dark:text-slate-400">
+                                  <a 
+                                    href="#courses" 
+                                    onClick={() => setActiveTab('courses')}
+                                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                                  >
+                                    Voir tous les {semestre.cours.length} cours du {semestre.semestre}
+                                  </a>
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <BookOpen className="w-8 h-8 text-slate-400" />
+                          </div>
+                          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Aucun cours disponible</h3>
+                          <p className="text-slate-600 dark:text-slate-400">
+                            Contactez l'administration si vous pensez que cela est une erreur.
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
-              </div>
-            )}
+                  </div>
+                )}
 
             {/* Other tabs content */}
             {activeTab !== 'dashboard' && (
@@ -1889,34 +2027,93 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     <div className="flex items-center justify-between mb-6">
                       <div>
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Mes cours</h2>
-                        <p className="text-slate-600 dark:text-slate-400">Téléchargez vos cours par semestre</p>
+                        <p className="text-slate-600 dark:text-slate-400">
+                          Téléchargez vos cours par semestre - Année {studentProfile.studyYear === 1 ? "1 (S1 + S2)" : "2 (S1 + S2 + S3)"}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl">
+                          <span className="text-sm font-medium">
+                            {studentProfile.studyYear === 1 ? "1ère année du Master" : "2ème année du Master"}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Message pour les étudiants de 1ère année */}
+                    {studentProfile.studyYear === 1 && (
+                      <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">!</span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">Attention</h3>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                              Vous êtes en 1ère année. Les cours du Semestre 3 ne seront accessibles qu'après votre promotion en 2ème année par l'administration.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-8">
-                      {coursParSemestre.map((semestre) => (
+                      {accessibleCourses.map((semestre) => (
                         <div key={semestre.semestre}>
-                          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">{semestre.semestre}</h3>
+                          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-3">
+                            <div className={`w-8 h-8 bg-gradient-to-r ${
+                              semestre.semestre === 'Semestre 1' ? 'from-blue-500 to-blue-600' :
+                              semestre.semestre === 'Semestre 2' ? 'from-green-500 to-green-600' :
+                              'from-purple-500 to-purple-600'
+                            } rounded-lg flex items-center justify-center`}>
+                              <BookOpen className="w-4 h-4 text-white" />
+                            </div>
+                            {semestre.semestre}
+                            <span className="text-sm px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-400">
+                              {semestre.cours.length} cours
+                            </span>
+                          </h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {semestre.cours.map((cours) => (
-                              <div key={cours.fichier} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                                <div>
-                                  <p className="font-medium text-slate-900 dark:text-white">{cours.nom}</p>
-                                  {cours.professeur && (
-                                    <p className="text-xs text-slate-600 dark:text-slate-400">{cours.professeur}</p>
-                                  )}
+                              <div key={cours.fichier} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex-1">
+                                    <p className="font-medium text-slate-900 dark:text-white text-sm leading-relaxed">{cours.nom}</p>
+                                    {cours.professeur && (
+                                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{cours.professeur}</p>
+                                    )}
+                                  </div>
                                 </div>
-                                <a
-                                  href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${cours.fichier}`}
-                                  download
-                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                >
-                                  Télécharger
-                                </a>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    Fichier PDF disponible
+                                  </span>
+                                  <a
+                                    href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${cours.fichier}`}
+                                    download
+                                    className="px-3 py-2 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors font-medium"
+                                  >
+                                    Télécharger
+                                  </a>
+                                </div>
                               </div>
                             ))}
                           </div>
                         </div>
                       ))}
+
+                      {/* Message si aucun cours accessible (cas d'erreur) */}
+                      {accessibleCourses.length === 0 && (
+                        <div className="text-center py-12">
+                          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <BookOpen className="w-8 h-8 text-slate-400" />
+                          </div>
+                          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Aucun cours disponible</h3>
+                          <p className="text-slate-600 dark:text-slate-400">
+                            Contactez l'administration si vous pensez que cela est une erreur.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

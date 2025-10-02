@@ -1303,4 +1303,101 @@ export async function getAllSubmissions() {
     console.error('Erreur lors de la récupération de toutes les soumissions:', error);
     throw error;
   }
+}
+
+// ===== FONCTIONS POUR LA GESTION DE LA PROGRESSION ACADÉMIQUE =====
+
+// Fonction pour promouvoir un étudiant en année supérieure
+export async function promoteStudent(studentEmail: string) {
+  try {
+    console.log('Promotion de l\'étudiant:', studentEmail);
+    
+    // Appeler la fonction PostgreSQL pour promouvoir l'étudiant
+    const { data, error } = await supabase.rpc('promote_student', {
+      student_email: studentEmail
+    });
+    
+    if (error) {
+      console.error('Erreur lors de la promotion:', error);
+      throw error;
+    }
+    
+    console.log('Promotion réussie:', data);
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de la promotion de l\'étudiant:', error);
+    throw error;
+  }
+}
+
+// Fonction pour rétrograder un étudiant (utilisée pour les erreurs)
+export async function demoteStudent(studentEmail: string) {
+  try {
+    console.log('Rétrogradation de l\'étudiant:', studentEmail);
+    
+    // Appeler la fonction PostgreSQL pour rétrograder l'étudiant
+    const { data, error } = await supabase.rpc('demote_student', {
+      student_email: studentEmail
+    });
+    
+    if (error) {
+      console.error('Erreur lors de la rétrogradation:', error);
+      throw error;
+    }
+    
+    console.log('Rétrogradation réussie:', data);
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de la rétrogradation de l\'étudiant:', error);
+    throw error;
+  }
+}
+
+// Fonction pour récupérer les étudiants avec leurs années d'étude
+export async function getStudentsWithStudyYear() {
+  try {
+    console.log('Récupération des étudiants avec année d\'étude...');
+    
+    const { data: students, error } = await supabase
+      .from('students')
+      .select('*')
+      .order('nom_complet', { ascending: true });
+    
+    if (error) {
+      throw error;
+    }
+    
+    console.log('Étudiants récupérés:', students?.length || 0);
+    return students || [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des étudiants avec année d\'étude:', error);
+    throw error;
+  }
+}
+
+// Fonction pour promouvoir plusieurs étudiants en lot
+export async function promoteStudents(studentEmails: string[]) {
+  try {
+    console.log('Promotion en lot de', studentEmails.length, 'étudiants');
+    
+    const results = [];
+    for (const email of studentEmails) {
+      try {
+        const result = await promoteStudent(email);
+        results.push({ email, success: true, message: result });
+      } catch (error) {
+        results.push({ 
+          email, 
+          success: false, 
+          message: `Erreur: ${error}` 
+        });
+      }
+    }
+    
+    console.log('Résultats de la promotion en lot:', results);
+    return results;
+  } catch (error) {
+    console.error('Erreur lors de la promotion en lot:', error);
+    throw error;
+  }
 } 

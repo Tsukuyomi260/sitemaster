@@ -37,7 +37,10 @@ import {
   removeCourseAssignment,
   toggleUserBlock,
   sendMessageToAllUsers,
-  sendIndividualMessage
+  sendIndividualMessage,
+  promoteStudent,
+  demoteStudent,
+  getStudentsWithStudyYear
 } from '../api';
 
 interface AdminDashboardProps {
@@ -54,6 +57,7 @@ interface Student {
   sexe: string;
   niveau: string;
   annee_academique: string;
+  study_year?: number; // Année d'étude (1 pour 1ère année, 2 pour 2ème année)
   blocked?: boolean;
 }
 
@@ -187,6 +191,11 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const [selectedRecipient, setSelectedRecipient] = useState<null | { email: string; name: string; role: string }>(null);
   const [messageType, setMessageType] = useState<'broadcast' | 'individual'>('broadcast');
 
+  // États pour la gestion de la promotion
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const [selectedStudentForPromotion, setSelectedStudentForPromotion] = useState<Student | null>(null);
+  const [promotionLoading, setPromotionLoading] = useState(false);
+  const [promotionInBatch, setPromotionInBatch] = useState<string[]>([]);
   // Charger toutes les données au montage du composant
   useEffect(() => {
     const loadAllData = async () => {
@@ -197,8 +206,8 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         const stats = await getGlobalStats();
         setGlobalStats(stats);
         
-        // Charger les étudiants
-        const studentsData = await getAllStudents();
+        // Charger les étudiants avec année d'étude
+        const studentsData = await getStudentsWithStudyYear();
         setStudents(studentsData || []);
         
         // Charger les administrateurs
@@ -255,7 +264,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const reloadStudents = async () => {
     try {
       setStudentsLoading(true);
-      const studentsData = await getAllStudents();
+      const studentsData = await getStudentsWithStudyYear();
       setStudents(studentsData || []);
     } catch (error) {
       console.error('Erreur lors du rechargement des étudiants:', error);
@@ -507,6 +516,57 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     document.body.removeChild(link);
   };
 
+  // Fonctions de gestion de la promotion
+  const handlePromoteStudent = async (student: Student) => {
+    try {
+      setPromotionLoading(true);
+      const result = await promoteStudent(student.email);
+      alert(result);
+      reloadStudents(); // Recharger la liste des étudiants
+    } catch (error) {
+      console.error('Erreur lors de la promotion:', error);
+      alert('Erreur lors de la promotion: ' + error);
+    } finally {
+      setPromotionLoading(false);
+    }
+  };
+
+  const handleDemoteStudent = async (student: Student) => {
+    try {
+      setPromotionLoading(true);
+      const result = await demoteStudent(student.email);
+      alert(result);
+      reloadStudents(); // Recharger la liste des étudiants
+    } catch (error) {
+      console.error('Erreur lors de la rétrogradation:', error);
+      alert('Erreur lors de la rétrogradation: ' + error);
+    } finally {
+      setPromotionLoading(false);
+    }
+  };
+
+  const handlePromoteSelectedStudents = async () => {
+    if (promotionInBatch.length === 0) {
+      alert('Veuillez sélectionner au moins un étudiant à promouvoir');
+      return;
+    }
+
+    try {
+      setPromotionLoading(true);
+      const results = await Promise.all(
+        promotionInBatch.map(email => promoteStudent(email))
+      );
+      
+      alert(`Promotion effectuée pour ${promotionInBatch.length} étudiant(s)`);
+      reloadStudents();
+      setPromotionInBatch([]);
+    } catch (error) {
+      console.error('Erreur lors de la promotion en lot:', error);
+      alert('Erreur lors de la promotion en lot: ' + error);
+    } finally {
+      setPromotionLoading(false);
+    }
+  };
   // Gestion du scroll pour le bouton "retour en haut"
   useEffect(() => {
     const handleScroll = () => {
