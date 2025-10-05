@@ -48,7 +48,7 @@ const ContactLinks: React.FC<ContactLinksProps> = ({
         className={`${sizeClasses[size]} text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1`}
       >
         <WhatsAppIcon />
-        +229 96 11 32 46
+        +229 01 96 11 32 46
       </a>
     </div>
   );

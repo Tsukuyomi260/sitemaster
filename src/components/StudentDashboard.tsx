@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { submitAssignment, getStudentNotifications, markNotificationAsRead, recordCourseDownload } from '../api';
+import ClickSpark from './ClickSpark';
 import {
   BookOpen,
   Award,
@@ -47,6 +48,7 @@ interface Assignment {
   grade?: number;
   maxGrade?: number;
   feedback?: string;
+  semester?: string; // Semestre du cours (S1, S2, S3)
 }
 
 interface Result {
@@ -495,128 +497,34 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     }
   ];
 
-  const assignments: Assignment[] = [
-    {
-      id: 1,
-      title: "01 S3 Collaboration interdisciplinaire dans l'EFTP",
-      course: "01 S3 Collaboration interdisciplinaire dans l'EFTP",
-      courseId: 1,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 2,
-      title: "02 S3 Projet transverseaux dans l'EFTP",
-      course: "02 S3 Projet transverseaux dans l'EFTP",
-      courseId: 2,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 3,
-      title: "03 S3 Conception et mise en oeuvre de projet de recherche action",
-      course: "03 S3 Conception et mise en oeuvre de projet de recherche action",
-      courseId: 3,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 4,
-      title: "04 S3 Amélioration des pratiques pédagogiques dans les etablissements d'EFTP",
-      course: "04 S3 Amélioration des pratiques pédagogiques dans les etablissements d'EFTP",
-      courseId: 4,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 5,
-      title: "05 S3 Appropriation des programmes d'études",
-      course: "05 S3 Appropriation des programmes d'études",
-      courseId: 5,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 6,
-      title: "06 S3 Evaluation des programmes d'etude",
-      course: "06 S3 Evaluation des programmes d'etude",
-      courseId: 6,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 7,
-      title: "07 - 08 S3 Conception et redaction des curricula dans l'EFTP",
-      course: "07 - 08 S3 Conception et redaction des curricula dans l'EFTP",
-      courseId: 7,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 8,
-      title: "09 S3 Tice et innovation pédagogique en EFTP",
-      course: "09 S3 Tice et innovation pédagogique en EFTP",
-      courseId: 8,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 9,
-      title: "10 S3 Anglais scientifique",
-      course: "10 S3 Anglais scientifique",
-      courseId: 9,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    },
-    {
-      id: 10,
-      title: "11 S3 Montage d'évènement scientifique et culturels",
-      course: "11 S3 Montage d'évènement scientifique et culturels",
-      courseId: 10,
-      dueDate: '',
-      status: 'À rendre',
-      priority: 'medium',
-      description: '',
-      type: 'Devoir',
-      points: 0
-    }
-  ];
+  // Fonction pour générer tous les devoirs basés sur les cours accessibles
+  const generateAllAssignments = (): Assignment[] => {
+    const allAssignments: Assignment[] = [];
+    let assignmentId = 1;
+
+    coursParSemestre.forEach(semestre => {
+      semestre.cours.forEach(cours => {
+        allAssignments.push({
+          id: assignmentId++,
+          title: `Devoir - ${cours.nom}`,
+          course: cours.nom,
+          courseId: assignmentId - 1,
+          dueDate: '',
+          status: 'À rendre',
+          priority: 'medium',
+          description: `Rendez le devoir du cours ${cours.nom}`,
+          type: 'Devoir',
+          points: 20,
+          semester: semestre.semestre
+        });
+      });
+    });
+
+    return allAssignments;
+  };
+
+  // Générer tous les devoirs
+  const allAssignments = generateAllAssignments();
 
   const recentResults: Result[] = [];
 
@@ -652,16 +560,33 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     return watchedVideos.has(videoKey);
   };
 
+  // Fonction pour obtenir les devoirs accessibles selon l'année d'étude
+  const getAccessibleAssignments = () => {
+    return allAssignments.filter(assignment => {
+      // Trouver le semestre du cours
+      const semestre = coursParSemestre.find(s => 
+        s.cours.some(c => c.nom === assignment.course)
+      );
+      
+      if (!semestre) return false;
+      
+      // Vérifier si l'étudiant a accès à ce semestre
+      return semestre.accessible_annee.includes(studentProfile.studyYear);
+    });
+  };
+
   const getFilteredAssignments = () => {
+    const accessibleAssignments = getAccessibleAssignments();
+    
     switch (assignmentFilter) {
       case 'pending':
-        return assignments.filter(a => a.status === 'À rendre');
+        return accessibleAssignments.filter(a => a.status === 'À rendre');
       case 'submitted':
-        return assignments.filter(a => a.status === 'Rendu');
+        return accessibleAssignments.filter(a => a.status === 'Rendu');
       case 'graded':
-        return assignments.filter(a => a.status === 'Noté');
+        return accessibleAssignments.filter(a => a.status === 'Noté');
       default:
-        return assignments;
+        return accessibleAssignments;
     }
   };
 
@@ -811,18 +736,22 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
           <p className="text-sm font-medium text-slate-900 dark:text-white">{course.nextDeadline}</p>
         </div>
         <div className="flex space-x-2">
-          <button 
-            onClick={() => handleViewCourse(course)}
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
-          >
-            Voir le cours
-          </button>
-          <button
-            onClick={() => course.pdf && handleCourseDownload(course.title, course.pdf)}
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
-          >
-            Télécharger
-          </button>
+          <ClickSpark sparkColor="#ffffff" sparkSize={6} sparkRadius={15} sparkCount={8}>
+            <button 
+              onClick={() => handleViewCourse(course)}
+              className="text-sm font-medium px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
+            >
+              Voir le cours
+            </button>
+          </ClickSpark>
+          <ClickSpark sparkColor="#ffffff" sparkSize={6} sparkRadius={15} sparkCount={8}>
+            <button
+              onClick={() => course.pdf && handleCourseDownload(course.title, course.pdf)}
+              className="text-sm font-medium px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
+            >
+              Télécharger
+            </button>
+          </ClickSpark>
         </div>
       </div>
       {course.pdf && (
@@ -992,9 +921,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     <p className="text-sm text-slate-600">{doc.size}</p>
                   </div>
                 </div>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  Télécharger
-                </button>
+                <ClickSpark sparkColor="#ffffff" sparkSize={6} sparkRadius={15} sparkCount={8}>
+                  <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Télécharger
+                  </button>
+                </ClickSpark>
               </div>
             ))}
           </div>
@@ -1045,9 +976,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   }`}>
                     {tp.status}
                   </span>
-                  <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                    Commencer
-                  </button>
+                  <ClickSpark sparkColor="#ffffff" sparkSize={6} sparkRadius={15} sparkCount={8}>
+                    <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                      Commencer
+                    </button>
+                  </ClickSpark>
                 </div>
               </div>
             ))}
@@ -1341,26 +1274,32 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
           </div>
           <div className="flex space-x-2">
             {!isEditingProfile ? (
-              <button 
-                onClick={() => setIsEditingProfile(true)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Modifier
-              </button>
+              <ClickSpark sparkColor="#ffffff" sparkSize={6} sparkRadius={15} sparkCount={8}>
+                <button 
+                  onClick={() => setIsEditingProfile(true)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Modifier
+                </button>
+              </ClickSpark>
             ) : (
               <>
-                <button 
-                  onClick={() => setIsEditingProfile(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button 
-                  onClick={handleSaveProfile}
-                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Sauvegarder
-                </button>
+                <ClickSpark sparkColor="#374151" sparkSize={6} sparkRadius={15} sparkCount={8}>
+                  <button 
+                    onClick={() => setIsEditingProfile(false)}
+                    className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </ClickSpark>
+                <ClickSpark sparkColor="#ffffff" sparkSize={6} sparkRadius={15} sparkCount={8}>
+                  <button 
+                    onClick={handleSaveProfile}
+                    className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Sauvegarder
+                  </button>
+                </ClickSpark>
               </>
             )}
           </div>
@@ -1485,12 +1424,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     <span className="text-slate-600 text-sm">Master MR-MRTDDEFTP</span>
                   </div>
                 </div>
-                </div>
-
               </div>
             </div>
-
-
           </div>
         </div>
       </div>
@@ -1724,7 +1659,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                    className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
                  >
                    <WhatsAppIcon />
-                   +229 96 11 32 46
+                   +229 01 96 11 32 46
                  </a>
                </div>
              </div>
@@ -1916,8 +1851,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   <StatCard
                     icon={ClipboardCheck}
                     title="Devoirs à rendre"
-                    value="10"
-                    subtitle="Cette semaine"
+                    value={getAccessibleAssignments().filter(a => a.status === 'À rendre').length.toString()}
+                    subtitle={studentProfile.studyYear === 1 ? "S1 + S2" : "S1 + S2 + S3"}
                     color="bg-orange-500"
                   />
                   <StatCard
@@ -2135,49 +2070,75 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                       </div>
                     </div>
 
+                    {/* Message informatif sur les devoirs accessibles */}
+                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                          <ClipboardCheck className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-blue-800 dark:text-blue-200">Devoirs accessibles</h3>
+                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                            {studentProfile.studyYear === 1 
+                              ? "Vous êtes en 1ère année. Vous pouvez rendre les devoirs des Semestres 1 et 2 uniquement."
+                              : "Vous êtes en 2ème année. Vous avez accès à tous les devoirs : Semestres 1, 2 et 3."
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Filtres */}
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 mb-6">
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => setAssignmentFilter('all')}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            assignmentFilter === 'all'
-                              ? 'bg-slate-900 text-white'
-                              : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                          }`}
-                        >
-                          Tous ({assignments.length})
-                        </button>
-                        <button
-                          onClick={() => setAssignmentFilter('pending')}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            assignmentFilter === 'pending'
-                              ? 'bg-red-600 text-white'
-                              : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/30'
-                          }`}
-                        >
-                          À rendre ({assignments.filter(a => a.status === 'À rendre').length})
-                        </button>
-                        <button
-                          onClick={() => setAssignmentFilter('submitted')}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            assignmentFilter === 'submitted'
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/30'
-                          }`}
-                        >
-                          Rendus ({assignments.filter(a => a.status === 'Rendu').length})
-                        </button>
-                        <button
-                          onClick={() => setAssignmentFilter('graded')}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            assignmentFilter === 'graded'
-                              ? 'bg-green-600 text-white'
-                              : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
-                          }`}
-                        >
-                          Notés ({assignments.filter(a => a.status === 'Noté').length})
-                        </button>
+                        <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+                          <button
+                            onClick={() => setAssignmentFilter('all')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              assignmentFilter === 'all'
+                                ? 'bg-slate-900 text-white'
+                                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                            }`}
+                          >
+                            Tous ({getAccessibleAssignments().length})
+                          </button>
+                        </ClickSpark>
+                        <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+                          <button
+                            onClick={() => setAssignmentFilter('pending')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              assignmentFilter === 'pending'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/30'
+                            }`}
+                          >
+                            À rendre ({getAccessibleAssignments().filter(a => a.status === 'À rendre').length})
+                          </button>
+                        </ClickSpark>
+                        <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+                          <button
+                            onClick={() => setAssignmentFilter('submitted')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              assignmentFilter === 'submitted'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/30'
+                            }`}
+                          >
+                            Rendus ({getAccessibleAssignments().filter(a => a.status === 'Rendu').length})
+                          </button>
+                        </ClickSpark>
+                        <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+                          <button
+                            onClick={() => setAssignmentFilter('graded')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              assignmentFilter === 'graded'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
+                            }`}
+                          >
+                            Notés ({getAccessibleAssignments().filter(a => a.status === 'Noté').length})
+                          </button>
+                        </ClickSpark>
                       </div>
                     </div>
 
@@ -2187,7 +2148,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-600">Total</p>
-                            <p className="text-2xl font-bold text-slate-900">{assignments.length}</p>
+                            <p className="text-2xl font-bold text-slate-900">{getAccessibleAssignments().length}</p>
                           </div>
                           <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
                             <FileText className="w-5 h-5 text-slate-600" />

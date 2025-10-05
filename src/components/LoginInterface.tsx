@@ -1,5 +1,6 @@
 import React, { useState, MouseEvent, ChangeEvent } from 'react';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
+import ClickSpark from './ClickSpark';
 import { EmailIcon, WhatsAppIcon } from './ContactIcons';
 import SplitText from './SplitText';
 
@@ -70,27 +71,33 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-200">
           {/* User Type Toggle */}
           <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
-            <button
-              type="button"
-              onClick={() => setUserType('student')}
-              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'student' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Étudiant
-            </button>
-            <button
-              type="button"
-              onClick={() => setUserType('teacher')}
-              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'teacher' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Enseignant
-            </button>
-            <button
-              type="button"
-              onClick={() => setUserType('admin')}
-              className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'admin' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Administrateur
-            </button>
+            <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+              <button
+                type="button"
+                onClick={() => setUserType('student')}
+                className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'student' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                Étudiant
+              </button>
+            </ClickSpark>
+            <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+              <button
+                type="button"
+                onClick={() => setUserType('teacher')}
+                className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'teacher' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                Enseignant
+              </button>
+            </ClickSpark>
+            <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+              <button
+                type="button"
+                onClick={() => setUserType('admin')}
+                className={`flex-1 py-2 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium whitespace-normal transition-all duration-200 ${userType === 'admin' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                Administrateur
+              </button>
+            </ClickSpark>
           </div>
 
           <div className="space-y-6">
@@ -164,28 +171,30 @@ const LoginInterface: React.FC<LoginInterfaceProps> = ({ onLogin }) => {
                     className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
                   >
                     <WhatsAppIcon />
-                    +229 96 11 32 46
+                    +229 01 96 11 32 46
                   </a>
                 </div>
               </div>
             )}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              onClick={handleSubmit}
-              disabled={loading || !formData.username || !formData.password}
-              className="w-full bg-slate-900 text-white py-3 px-6 rounded-xl font-medium hover:bg-slate-800 focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Connexion en cours...
-                </div>
-              ) : (
-                'Se connecter'
-              )}
-            </button>
+            <ClickSpark sparkColor="#ffffff" sparkSize={8} sparkRadius={20} sparkCount={12}>
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                disabled={loading || !formData.username || !formData.password}
+                className="w-full bg-slate-900 text-white py-3 px-6 rounded-xl font-medium hover:bg-slate-800 focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Connexion en cours...
+                  </div>
+                ) : (
+                  'Se connecter'
+                )}
+              </button>
+            </ClickSpark>
           </div>
 
           {/* Additional Info */}

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import SplitText from './SplitText';
+import ClickSpark from './ClickSpark';
+import RollingGallery from './RollingGallery';
 import { EmailIcon, WhatsAppIcon } from './ContactIcons';
 import { Menu, X, Info, Phone, Mail, Globe, BookOpen, Users, Settings, Calendar, GraduationCap } from 'lucide-react';
 
@@ -37,7 +39,7 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
       name: 'MR-MRTDDEFTP',
       description: 'Master de Recherche en Technopédagogie et Didactique des Disciplines de l\'Enseignementde de la Formation Technique et Professionnel',
       color: 'from-slate-700 to-slate-800',
-      icon: '📖'
+      icon: '📚'
     }
   ];
 
@@ -98,29 +100,31 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative">
       {/* Burger Menu Button - Fixed Position */}
       <div className="fixed top-6 right-6 z-50">
-        <button
-          onClick={toggleMenu}
-          className="relative w-12 h-12 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 flex items-center justify-center hover:bg-white hover:shadow-xl transition-all duration-300 group"
-          aria-label="Menu principal"
-        >
-          <div className="relative w-6 h-6">
-            <span 
-              className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
-                isMenuOpen ? 'rotate-45 translate-y-0' : '-translate-y-1'
-              }`}
-            />
-            <span 
-              className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
-                isMenuOpen ? 'opacity-0' : 'opacity-100'
-              }`}
-            />
-            <span 
-              className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
-                isMenuOpen ? '-rotate-45 translate-y-0' : 'translate-y-1'
-              }`}
-            />
-          </div>
-        </button>
+        <ClickSpark sparkColor="#ffffff" sparkSize={6} sparkRadius={15} sparkCount={8}>
+          <button
+            onClick={toggleMenu}
+            className="relative w-12 h-12 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 flex items-center justify-center hover:bg-white hover:shadow-xl transition-all duration-300 group"
+            aria-label="Menu principal"
+          >
+            <div className="relative w-6 h-6">
+              <span 
+                className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
+                  isMenuOpen ? 'rotate-45 translate-y-0' : '-translate-y-1'
+                }`}
+              />
+              <span 
+                className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
+                  isMenuOpen ? 'opacity-0' : 'opacity-100'
+                }`}
+              />
+              <span 
+                className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
+                  isMenuOpen ? '-rotate-45 translate-y-0' : 'translate-y-1'
+                }`}
+              />
+            </div>
+          </button>
+        </ClickSpark>
       </div>
 
       {/* Overlay */}
@@ -146,13 +150,15 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
               <p className="text-xs text-slate-500">Menu principal</p>
             </div>
           </div>
-          <button
-            onClick={closeMenu}
-            className="absolute top-6 right-6 p-2 rounded-xl hover:bg-slate-100 transition-colors duration-200"
-            aria-label="Fermer le menu"
-          >
-            <X className="w-5 h-5 text-slate-600" />
-          </button>
+          <ClickSpark sparkColor="#374151" sparkSize={4} sparkRadius={12} sparkCount={6}>
+            <button
+              onClick={closeMenu}
+              className="absolute top-6 right-6 p-2 rounded-xl hover:bg-slate-100 transition-colors duration-200"
+              aria-label="Fermer le menu"
+            >
+              <X className="w-5 h-5 text-slate-600" />
+            </button>
+          </ClickSpark>
         </div>
 
         {/* Menu Items - Scrollable Area */}
@@ -211,7 +217,7 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 group-hover:text-slate-700">Téléphone</p>
-                <p className="text-xs text-slate-600">+229 96 11 32 46</p>
+                <p className="text-xs text-slate-600">+229 01 96 11 32 46</p>
               </div>
             </a>
           </div>
@@ -222,9 +228,9 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
       <div className="flex items-center justify-center p-4">
         <div className="w-full max-w-4xl">
           {/* Header */}
-          <div className="text-center mb-12">
-            <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-24 h-24 mx-auto mb-6" />
-            <h1 className="text-3xl font-bold text-slate-900 mb-3">
+          <div className="text-center mb-6 sm:mb-8 lg:mb-12 px-4">
+            <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 sm:mb-3">
               <SplitText 
                 text="ENSET-MASTERS"
                 splitType="chars"
@@ -235,68 +241,53 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
                 ease="back.out(1.7)"
                 threshold={0}
                 rootMargin="0px"
-                className="text-3xl font-bold text-slate-900"
+                className="text-2xl sm:text-3xl font-bold text-slate-900"
               />
             </h1>
-            <p className="text-slate-600 text-lg">
+            <p className="text-slate-600 text-base sm:text-lg">
               Sélectionnez votre programme Master
             </p>
           </div>
 
           {/* Masters Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
             {masters.map((master) => (
               <div
                 key={master.id}
                 onClick={() => onMasterSelect(master.id)}
                 className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.03] h-full"
               >
-                <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200 hover:shadow-xl transition-all duration-300 h-full flex flex-col min-h-[260px] max-h-[320px] min-w-[180px] max-w-[260px] mx-auto">
+                <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl shadow-md p-3 sm:p-4 lg:p-5 border border-slate-200 hover:shadow-xl transition-all duration-300 h-full flex flex-col min-h-[180px] sm:min-h-[200px] lg:min-h-[260px] max-h-[200px] sm:max-h-[280px] lg:max-h-[320px] w-full mx-auto">
                   {/* Master Icon */}
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${master.color} flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform duration-300 flex-shrink-0`}>
-                    <span className="text-xl">{master.icon}</span>
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-md sm:rounded-lg lg:rounded-xl bg-gradient-to-br ${master.color} flex items-center justify-center mx-auto mb-2 sm:mb-3 lg:mb-4 group-hover:scale-105 transition-transform duration-300 flex-shrink-0`}>
+                    <span className="text-sm sm:text-lg lg:text-xl">{master.icon}</span>
                   </div>
 
                   {/* Master Name */}
-                  <h3 className="text-lg font-semibold text-slate-900 text-center mb-2 group-hover:text-slate-700 transition-colors duration-300 flex-shrink-0">
+                  <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-slate-900 text-center mb-1 sm:mb-2 group-hover:text-slate-700 transition-colors duration-300 flex-shrink-0">
                     {master.name}
                   </h3>
 
                   {/* Master Description */}
-                  <p className="text-slate-500 text-center text-xs leading-snug flex-grow">
+                  <p className="text-slate-500 text-center text-xs leading-tight sm:leading-snug flex-grow px-1">
                     {master.description}
                   </p>
 
                   {/* Selection Indicator */}
-                  <div className="mt-4 flex justify-center flex-shrink-0">
-                    <div className={`w-2 h-2 rounded-full bg-gradient-to-br ${master.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div className="mt-2 sm:mt-3 lg:mt-4 flex justify-center flex-shrink-0">
+                    <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-br ${master.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Footer */}
-          <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a 
-                href="mailto:gnonlonfoun@ensetmasters.org" 
-                className="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
-              >
-                <EmailIcon />
-                gnonlonfoun@ensetmasters.org
-              </a>
-              <a 
-                href="https://wa.me/22996113246" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
-              >
-                <WhatsAppIcon />
-                +229 96 11 32 46
-              </a>
-            </div>
-          </footer>
+          {/* Rolling Gallery */}
+          <RollingGallery 
+            autoplay={true}
+            pauseOnHover={true}
+          />
+
         </div>
       </div>
     </div>

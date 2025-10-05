@@ -5,6 +5,7 @@ import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import RoleSelection from './components/RoleSelection';
+import ClickSpark from './components/ClickSpark';
 import { EmailIcon, WhatsAppIcon } from './components/ContactIcons';
 import { loginUser, getCurrentUser, signOut, getUserRole, getUserRoles, getStudentInfo } from './api';
 
@@ -153,7 +154,7 @@ function App() {
               className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
             >
               <WhatsAppIcon />
-              +229 96 11 32 46
+              +229 01 96 11 32 46
             </a>
           </div>
         </div>
@@ -207,16 +208,18 @@ function App() {
                       className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
                     >
                       <WhatsAppIcon />
-                      +229 96 11 32 46
+                      +229 01 96 11 32 46
                     </a>
                   </div>
                   
-                  <button
-                    onClick={handleLogout}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-                  >
-                    Se déconnecter
-                  </button>
+                  <ClickSpark sparkColor="#ffffff" sparkSize={8} sparkRadius={20} sparkCount={12}>
+                    <button
+                      onClick={handleLogout}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+                    >
+                      Se déconnecter
+                    </button>
+                  </ClickSpark>
                 </div>
               </div>
             </div>
@@ -247,7 +250,7 @@ function App() {
               className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
             >
               <WhatsAppIcon />
-              +229 96 11 32 46
+              +229 01 96 11 32 46
             </a>
           </div>
           <div className="text-xs text-slate-400 text-center">© {new Date().getFullYear()} ENSET-MASTERS. Tous droits réservés.</div>
