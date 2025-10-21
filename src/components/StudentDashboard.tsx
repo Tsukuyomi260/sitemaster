@@ -165,7 +165,7 @@ const coursParSemestre: { semestre: string; cours: CoursItem[]; accessible_annee
       { nom: "05 S1 GEOGRAPHIE DE L'EFTP", fichier: "05 S1 GEOGRAPHIE DE L'EFTP.pdf" },
       { nom: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP", fichier: "06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP.pdf" },
       { nom: "07 S1 Théorie didactique", fichier: "07 S1 Théorie didactique.pdf" },
-      { nom: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP", fichier: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP.pdf" },
+      { nom: "08 S1 Fondements de la Didactique des Disciplines de l'EFTP", fichier: "08 S1 Fondements de la Didactique des Disciplines de l EFTP.pdf" },
       { nom: "09 S1 Anglais Technique", fichier: "09 S1 Anglais Technique.pdf" },
       { nom: "10 S1 Communication scientifique en anglais", fichier: "10 S1 Communication scientifique en anglais.pdf" },
       { nom: "11 S1 Projet apprenant", fichier: "11 S1 Projet apprenant.pdf" }
@@ -1217,18 +1217,31 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   // Fonction pour gérer le téléchargement d'un cours
   const handleCourseDownload = async (courseName: string, pdfPath: string) => {
     try {
+      // Encoder l'URL pour gérer les espaces et caractères spéciaux
+      const encodedPath = encodeURI(pdfPath);
+      
+      // Vérifier d'abord si le fichier existe
+      const response = await fetch(encodedPath, { method: 'HEAD' });
+      
+      if (!response.ok) {
+        throw new Error(`Fichier non trouvé: ${courseName}`);
+      }
+      
       // Enregistrer le téléchargement dans la base de données
       await recordCourseDownload(studentName, courseName);
       
       // Télécharger le fichier
       const link = document.createElement('a');
-      link.href = pdfPath;
+      link.href = encodedPath;
       link.download = courseName + '.pdf';
+      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (error) {
       console.error('Erreur lors du téléchargement:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors du téléchargement';
+      alert(`Erreur: ${errorMessage}`);
     }
   };
 
@@ -2024,7 +2037,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                                     Fichier PDF disponible
                                   </span>
                                   <a
-                                    href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${cours.fichier}`}
+                                    href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${encodeURIComponent(cours.fichier)}`}
                                     download
                                     className="px-3 py-2 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors font-medium"
                                   >
