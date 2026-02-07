@@ -1454,7 +1454,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     );
   };
 
-  const handleSettingChange = (category: keyof Settings, field: string, value: any) => {
+  const handleSettingChange = (category: keyof DashboardSettings, field: string, value: any) => {
     setSettings(prev => {
       const newSettings = { ...prev };
       if (category === 'notifications') {
