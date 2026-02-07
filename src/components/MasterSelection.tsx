@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import SplitText from './SplitText';
 import ClickSpark from './ClickSpark';
 import RollingGallery from './RollingGallery';
-import { EmailIcon, WhatsAppIcon } from './ContactIcons';
-import { Menu, X, Info, Phone, Mail, Globe, BookOpen, Users, Settings, Calendar, GraduationCap } from 'lucide-react';
+import { X, Info, Phone, Mail, Globe, BookOpen, Users, Settings, Calendar, GraduationCap } from 'lucide-react';
 
 interface MasterSelectionProps {
   onMasterSelect: (master: string) => void;

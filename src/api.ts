@@ -13,7 +13,7 @@ export async function loginUser(email: string, password: string) {
     console.log('Vérification du blocage lors de la connexion');
     
     // Vérifier d'abord directement dans la table students par email
-    const { data: student, error: studentError } = await supabase
+    const { data: student } = await supabase
       .from('students')
       .select('blocked')
       .eq('email', email)
@@ -170,7 +170,7 @@ export async function submitAssignment(assignmentId: number, studentId: string, 
   try {
     // Upload du fichier vers Supabase Storage
     const fileName = `${studentId}_assignment_${assignmentId}_${Date.now()}.${file.name.split('.').pop()}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('assignments')
       .upload(fileName, file);
 
@@ -766,7 +766,7 @@ export async function checkIfUserIsBlocked(userId: string): Promise<boolean> {
     
     // Si on a l'email, vérifier aussi dans la table students
     if (profile && profile.email) {
-      const { data: student, error: studentError } = await supabase
+      const { data: student } = await supabase
         .from('students')
         .select('blocked')
         .eq('email', profile.email)
@@ -781,7 +781,7 @@ export async function checkIfUserIsBlocked(userId: string): Promise<boolean> {
     // Vérifier aussi directement dans students si on a l'email
     const { data: { user } } = await supabase.auth.getUser();
     if (user && user.email) {
-      const { data: studentByEmail, error: studentEmailError } = await supabase
+      const { data: studentByEmail } = await supabase
         .from('students')
         .select('blocked')
         .eq('email', user.email)
@@ -807,7 +807,7 @@ export async function toggleUserBlock(userId: string, blocked: boolean) {
     console.log('Changement de statut utilisateur');
     
     // Essayer d'abord de mettre à jour dans la table students
-    const { data: studentData, error: studentError } = await supabase
+    const { error: studentError } = await supabase
       .from('students')
       .update({ blocked })
       .eq('id', userId)
@@ -819,7 +819,7 @@ export async function toggleUserBlock(userId: string, blocked: boolean) {
     }
 
     // Si ça ne marche pas, essayer dans la table profiles
-    const { data: profileData, error: profileError } = await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .update({ blocked })
       .eq('id', userId)
