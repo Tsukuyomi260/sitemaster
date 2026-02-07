@@ -54,7 +54,7 @@ const RollingGallery: React.FC<RollingGalleryProps> = ({ autoplay = true, pauseO
     setIsPlaying(!isPlaying);
   };
 
-  const handleDragEnd = (event: any, info: any) => {
+  const _handleDragEnd = (event: any, info: any) => {
     setIsDragging(false);
     const threshold = 50;
     

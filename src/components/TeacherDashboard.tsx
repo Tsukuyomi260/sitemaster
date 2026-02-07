@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, BookOpen, Users, Download, Upload, Settings, LogOut, ChevronUp, MessageSquare, Send, Search, X } from 'lucide-react';
-import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents, getSubmissionsByCourse, getAllSubmissionsForTeacher, getSubmissionsForTeacher } from '../api';
+import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents, getSubmissionsByCourse, getSubmissionsForTeacher } from '../api';
 
 interface TeacherDashboardProps {
   teacherName: string;

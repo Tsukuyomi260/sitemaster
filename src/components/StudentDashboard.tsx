@@ -109,7 +109,7 @@ interface StudentProfile {
   emergencyPhone: string;
 }
 
-interface Settings {
+interface DashboardSettings {
   theme: 'light' | 'dark';
   language: 'fr' | 'en';
   notifications: {
@@ -211,8 +211,8 @@ function normalizeFileNameForUrl(fileName: string): string {
   return fileName.replace(/\u2019/g, "'");
 }
 
-// Fonction de fabrique pour Assignment
-function createAssignment(
+// Fonction de fabrique pour Assignment (réservée pour usage futur)
+function _createAssignment(
   id: number,
   title: string,
   course: string,
@@ -276,6 +276,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     console.log('Student Info:', studentInfo);
     console.log('Student ID:', studentInfo?.id);
     console.log('==========================');
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- studentName suffit pour le chargement des notifications
   }, [studentName]);
 
   // Appliquer le thème au chargement
@@ -290,7 +291,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       }
     }
   }, []);
-  const [settings, setSettings] = useState<Settings>({
+  const [settings, setSettings] = useState<DashboardSettings>({
     theme: 'light',
     language: 'fr',
     notifications: {
@@ -338,8 +339,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
   // Obtenir les cours accessibles à l'étudiant
   const accessibleCourses = getAccessibleCourses();
-  // Données fictives - Tous les cours du semestre 3
-  const courses: Course[] = [
+  // Données fictives - Tous les cours du semestre 3 (réservé pour usage futur)
+  const _courses: Course[] = [
     {
       id: 1,
       title: "01 S3 Collaboration interdisciplinaire dans l'EFTP",
@@ -661,7 +662,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     </div>
   );
 
-  const CourseCard: React.FC<CourseCardProps> = ({ course }) => (
+  const _CourseCard: React.FC<CourseCardProps> = ({ course }) => (
     <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -692,7 +693,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     </div>
   );
 
-  const DetailedCourseCard: React.FC<{ course: Course }> = ({ course }) => (
+  const _DetailedCourseCard: React.FC<{ course: Course }> = ({ course }) => (
     <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -1009,7 +1010,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     </div>
   );
 
-  const AssignmentItem: React.FC<AssignmentItemProps> = ({ assignment }) => (
+  const _AssignmentItem: React.FC<AssignmentItemProps> = ({ assignment }) => (
     <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all duration-200">
       <div className="flex items-center space-x-3">
         <div className={`w-2 h-2 rounded-full ${getPriorityColor(assignment.priority)}`}></div>
@@ -1027,7 +1028,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     </div>
   );
 
-  const calculateAverage = () => {
+  const _calculateAverage = () => {
     if (recentResults.length === 0) return 0;
     
     let totalWeightedScore = 0;
@@ -1056,7 +1057,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     return '📝';
   };
 
-  const ResultCard: React.FC<{ result: Result }> = ({ result }) => (
+  const _ResultCard: React.FC<{ result: Result }> = ({ result }) => (
     <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -1099,7 +1100,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     </div>
   );
 
-  const ResultItem: React.FC<ResultItemProps> = ({ result }) => (
+  const _ResultItem: React.FC<ResultItemProps> = ({ result }) => (
     <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200">
       <div>
         <h4 className="font-medium text-slate-900">{result.title}</h4>
@@ -1337,7 +1338,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     {profilePhoto ? (
                       <img 
                         src={profilePhoto} 
-                        alt="Photo de profil" 
+                        alt="Profil utilisateur" 
                         className="w-full h-full object-cover"
                       />
                     ) : (

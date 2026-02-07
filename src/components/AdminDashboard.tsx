@@ -13,11 +13,9 @@ import {
   BarChart3, 
   Plus,
   Trash2,
-  Edit,
   Eye,
   Download,
   Send,
-  Filter,
   Search,
   RefreshCw,
   Crown,
@@ -25,7 +23,6 @@ import {
   X
 } from 'lucide-react';
 import { 
-  getAllStudents, 
   getAllSubmissions, 
   getAllAdmins,
   getAllTeachers,
@@ -122,16 +119,6 @@ interface GlobalStats {
   adminsCount: number;
   submissionsCount: number;
 }
-const fakeCourses = [
-  { id: 1, name: "01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT" },
-  { id: 2, name: "02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE" },
-  { id: 3, name: "03 S1 ADMINISTRATION DES ETABLISSEMENTS D'EFTP ET GPEC EN EFTP" },
-];
-const fakeNotifications = [
-  { id: 1, message: 'Réunion importante demain à 10h', target: 'all' },
-  { id: 2, message: 'Merci de rendre vos devoirs à temps', target: 'students' },
-];
-
 export default function AdminDashboard({ adminName, onLogout }: AdminDashboardProps) {
   // États principaux
   const [activeTab, setActiveTab] = useState('overview');
@@ -153,7 +140,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   });
 
   // États de chargement
-  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [, setStudentsLoading] = useState(false);
   const [adminsLoading, setAdminsLoading] = useState(false);
   const [teachersLoading, setTeachersLoading] = useState(false);
   const [coursesLoading, setCoursesLoading] = useState(false);
@@ -187,13 +174,13 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const [messageContent, setMessageContent] = useState('');
   const [messageTarget, setMessageTarget] = useState('all');
   const [messageRecipientSearch, setMessageRecipientSearch] = useState('');
-  const [showRecipientSuggestions, setShowRecipientSuggestions] = useState(false);
+  const [, setShowRecipientSuggestions] = useState(false);
   const [selectedRecipient, setSelectedRecipient] = useState<null | { email: string; name: string; role: string }>(null);
   const [messageType, setMessageType] = useState<'broadcast' | 'individual'>('broadcast');
 
   // États pour la gestion de la promotion
-  const [showPromotionModal, setShowPromotionModal] = useState(false);
-  const [selectedStudentForPromotion, setSelectedStudentForPromotion] = useState<Student | null>(null);
+  const [, setShowPromotionModal] = useState(false);
+  const [, setSelectedStudentForPromotion] = useState<Student | null>(null);
   const [promotionLoading, setPromotionLoading] = useState(false);
   const [promotionInBatch, setPromotionInBatch] = useState<string[]>([]);
   // Charger toutes les données au montage du composant
@@ -331,9 +318,6 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   
   // Obtenir les niveaux uniques
   const niveaux = Array.from(new Set(students.map(s => s.niveau))).filter(Boolean);
-
-  // Obtenir les cours uniques pour les soumissions
-  const submissionCourses = Array.from(new Set(submissions.map(s => s.assignments?.course))).filter(Boolean);
 
   // Filtrer les soumissions selon la recherche
   const filteredSubmissions = submissions.filter(submission => {
@@ -516,8 +500,8 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     document.body.removeChild(link);
   };
 
-  // Fonctions de gestion de la promotion
-  const handlePromoteStudent = async (student: Student) => {
+  // Fonctions de gestion de la promotion (utilisées par l'UI de promotion)
+  const _handlePromoteStudent = async (student: Student) => {
     try {
       setPromotionLoading(true);
       const result = await promoteStudent(student.email);
@@ -531,7 +515,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     }
   };
 
-  const handleDemoteStudent = async (student: Student) => {
+  const _handleDemoteStudent = async (student: Student) => {
     try {
       setPromotionLoading(true);
       const result = await demoteStudent(student.email);
@@ -545,7 +529,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     }
   };
 
-  const handlePromoteSelectedStudents = async () => {
+  const _handlePromoteSelectedStudents = async () => {
     if (promotionInBatch.length === 0) {
       alert('Veuillez sélectionner au moins un étudiant à promouvoir');
       return;
@@ -553,7 +537,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
 
     try {
       setPromotionLoading(true);
-      const results = await Promise.all(
+      await Promise.all(
         promotionInBatch.map(email => promoteStudent(email))
       );
       
@@ -583,20 +567,16 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
       behavior: 'smooth'
     });
   };
-  const handleDeleteCourse = (id: number) => {
-    // Cette fonction sera implémentée plus tard
+  const _handleDeleteCourse = (id: number) => {
     console.log('Suppression du cours:', id);
   };
-  const handleAddCourse = () => {
-    // Cette fonction sera implémentée plus tard
+  const _handleAddCourse = () => {
     console.log('Ajout du cours');
   };
   const handleAddNotification = () => {
-    // Cette fonction sera implémentée plus tard
     console.log('Ajout de notification');
   };
-  const handleDeleteNotification = (id: number) => {
-    // Cette fonction sera implémentée plus tard
+  const _handleDeleteNotification = (id: number) => {
     console.log('Suppression de notification:', id);
   };
 
