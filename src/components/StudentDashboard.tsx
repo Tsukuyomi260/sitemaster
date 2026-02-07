@@ -206,6 +206,11 @@ const coursParSemestre: { semestre: string; cours: CoursItem[]; accessible_annee
   }
 ];
 
+// Normalise le nom de fichier pour l'URL (apostrophe typographique Unicode → ASCII)
+function normalizeFileNameForUrl(fileName: string): string {
+  return fileName.replace(/\u2019/g, "'");
+}
+
 // Fonction de fabrique pour Assignment
 function createAssignment(
   id: number,
@@ -1217,8 +1222,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   // Fonction pour gérer le téléchargement d'un cours
   const handleCourseDownload = async (courseName: string, pdfPath: string) => {
     try {
-      // Encoder l'URL pour gérer les espaces et caractères spéciaux
-      const encodedPath = encodeURI(pdfPath);
+      // Encoder le nom de fichier (espaces, apostrophes, virgules) pour une URL valide
+      const lastSlash = pdfPath.lastIndexOf('/');
+      const basePath = lastSlash >= 0 ? pdfPath.slice(0, lastSlash + 1) : '/cours/';
+      const fileName = lastSlash >= 0 ? pdfPath.slice(lastSlash + 1) : pdfPath;
+      const encodedPath = basePath + encodeURIComponent(normalizeFileNameForUrl(fileName));
       
       // Vérifier d'abord si le fichier existe
       const response = await fetch(encodedPath, { method: 'HEAD' });
@@ -1927,8 +1935,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                                         PDF disponible
                                       </span>
                                       <a
-                                        href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${cours.fichier}`}
-                                        download
+                                        href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${encodeURIComponent(normalizeFileNameForUrl(cours.fichier))}`}
+                                        download={cours.fichier}
                                         className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors font-medium"
                                       >
                                         Télécharger
@@ -2037,8 +2045,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                                     Fichier PDF disponible
                                   </span>
                                   <a
-                                    href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${encodeURIComponent(cours.fichier)}`}
-                                    download
+                                    href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${encodeURIComponent(normalizeFileNameForUrl(cours.fichier))}`}
+                                    download={cours.fichier}
                                     className="px-3 py-2 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors font-medium"
                                   >
                                     Télécharger
