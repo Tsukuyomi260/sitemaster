@@ -648,15 +648,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   ];
 
   const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, subtitle, color }) => (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-200">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{title}</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-100 transition-all duration-200">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
+          <p className="text-xs text-slate-400 mt-1">{subtitle}</p>
         </div>
-        <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center`}>
-          <Icon className="w-6 h-6 text-white" />
+        <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center flex-shrink-0 ml-3`}>
+          <Icon className="w-5 h-5 text-white" />
         </div>
       </div>
     </div>
@@ -997,16 +997,23 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   const AssignmentCard: React.FC<{ assignment: Assignment }> = ({ assignment }) => (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between min-h-[160px]">
-        <div>
-        <h3 className="font-semibold text-slate-900 dark:text-white text-lg mb-2">Devoir - {assignment.course}</h3>
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-blue-200 hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+      <div>
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+            <FileText className="w-4 h-4 text-slate-500" />
+          </div>
+          <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">À rendre</span>
         </div>
+        <p className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-1">{assignment.semester || 'Devoir'}</p>
+        <h3 className="font-semibold text-slate-800 text-sm leading-snug">{assignment.course}</h3>
+      </div>
       <button
         onClick={() => handleSubmitAssignment(assignment)}
-        className="mt-6 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+        className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium"
       >
         Rendre le devoir
-            </button>
+      </button>
     </div>
   );
 
@@ -1692,51 +1699,55 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      {/* Sidebar desktop */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-800 shadow-lg border-r border-slate-200 dark:border-slate-700 z-10 hidden md:block">
-        <div className="p-6">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-              <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
-            </div>
-            <div>
-              <h1 className="font-bold text-slate-900 dark:text-white">MR-MRTDDEFTP</h1>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Espace Master ENSET-MASTERS</p>
+    <div className="min-h-screen bg-[#F8F7F4]">
+
+      {/* ── Sidebar desktop ── */}
+      <div className="fixed left-0 top-0 h-full w-60 bg-white border-r border-slate-200 z-10 hidden md:flex flex-col">
+        {/* Logo */}
+        <div className="px-5 py-5 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <img src="/logo-enset.png" alt="ENSET" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
+            <div className="flex flex-col leading-none">
+              <span className="font-bold text-slate-900 text-sm tracking-tight">ENSET-MASTERS</span>
+              <span className="text-[10px] text-slate-400">MR-MRTDDEFTP</span>
             </div>
           </div>
-          <nav className="space-y-3">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-4 rounded-xl transition-all duration-200 font-medium ${
-                  activeTab === item.id
-                    ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-lg'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'
-                }`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm">{item.label}</span>
-              </button>
-            ))}
-          </nav>
         </div>
-        <div className="absolute bottom-0 w-full p-6 border-t border-slate-200 dark:border-slate-700">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-slate-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium ${
+                activeTab === item.id
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <item.icon className="w-4 h-4 flex-shrink-0" />
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* User + logout */}
+        <div className="px-4 py-4 border-t border-slate-100">
+          <div className="flex items-center gap-2.5 mb-3 px-1">
+            <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 text-slate-500" />
             </div>
-            <div>
-              <p className="font-medium text-slate-900 dark:text-white">
+            <div className="flex flex-col leading-none min-w-0">
+              <span className="text-sm font-medium text-slate-800 truncate">
                 {studentInfo?.nom_complet || studentName}
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Étudiant Master</p>
+              </span>
+              <span className="text-[10px] text-slate-400">Étudiant Master</span>
             </div>
           </div>
           <button
             onClick={onLogout}
-            className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all duration-200"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
           >
             <LogOut className="w-4 h-4" />
             <span>Déconnexion</span>
@@ -1744,74 +1755,77 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         </div>
       </div>
 
-      {/* Burger menu mobile */}
-      <div className="md:hidden flex items-center p-4 bg-white shadow-sm sticky top-0 z-20">
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 rounded-md text-slate-700 hover:bg-slate-100 focus:outline-none"
-          aria-label="Ouvrir le menu"
-        >
-          {/* Icône burger */}
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-        </button>
-        <span className="ml-4 font-bold text-lg text-slate-900">ENSET-MASTERS</span>
+      {/* ── Mobile header ── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-20 bg-[#F8F7F4]/90 backdrop-blur-md border-b border-slate-200/60">
+        <div className="h-14 px-5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <img src="/logo-enset.png" alt="ENSET" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
+            <div className="flex flex-col leading-none">
+              <span className="font-bold text-slate-900 text-sm tracking-tight">ENSET-MASTERS</span>
+              <span className="text-[10px] text-slate-400">MR-MRTDDEFTP</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-[4px]"
+            aria-label="Menu"
+          >
+            <span className="w-4 h-[1.5px] bg-slate-600 rounded-full" />
+            <span className="w-4 h-[1.5px] bg-slate-600 rounded-full" />
+            <span className="w-4 h-[1.5px] bg-slate-600 rounded-full" />
+          </button>
+        </div>
       </div>
 
-      {/* Drawer mobile */}
+      {/* ── Drawer mobile ── */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 flex">
-          {/* Overlay */}
-          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setIsMobileMenuOpen(false)} />
-          {/* Drawer */}
-          <div className="relative w-64 bg-white h-full shadow-lg p-6 animate-slide-in-left">
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-md text-slate-700 hover:bg-slate-100"
-              aria-label="Fermer le menu"
-            >
-              {/* Icône croix */}
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-            <div className="flex items-center space-x-3 mb-8 mt-2">
-              <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-full h-full" />
+          <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px]" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="relative w-60 bg-white h-full shadow-xl flex flex-col border-r border-slate-200">
+            {/* Header drawer */}
+            <div className="px-5 py-5 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <img src="/logo-enset.png" alt="ENSET" className="w-7 h-7 rounded-md object-contain flex-shrink-0" />
+                <div className="flex flex-col leading-none">
+                  <span className="font-bold text-slate-800 text-sm">ENSET-MASTERS</span>
+                  <span className="text-[10px] text-slate-400">MR-MRTDDEFTP</span>
+                </div>
               </div>
-              <div>
-                <h1 className="font-bold text-slate-900 dark:text-white">MR-MRTDDEFTP</h1>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Espace Master ENSET-MASTERS</p>
-              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
-            <nav className="space-y-3">
+            {/* Nav */}
+            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
-                  className={`w-full flex items-center space-x-3 px-4 py-4 rounded-xl transition-all duration-200 font-medium ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium ${
                     activeTab === item.id
-                      ? 'bg-slate-900 text-white shadow-lg'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
-                  <item.icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm">{item.label}</span>
+                  <item.icon className="w-4 h-4 flex-shrink-0" />
+                  <span>{item.label}</span>
                 </button>
               ))}
             </nav>
-            <div className="mt-8 border-t border-slate-200 dark:border-slate-700 pt-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            {/* User + logout */}
+            <div className="px-4 py-4 border-t border-slate-100">
+              <div className="flex items-center gap-2.5 mb-3 px-1">
+                <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-slate-500" />
                 </div>
-                <div>
-                  <p className="font-medium text-slate-900 dark:text-white">
-                    {studentInfo?.nom_complet || studentName}
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Étudiant Master</p>
+                <div className="flex flex-col leading-none min-w-0">
+                  <span className="text-sm font-medium text-slate-800 truncate">{studentInfo?.nom_complet || studentName}</span>
+                  <span className="text-[10px] text-slate-400">Étudiant Master</span>
                 </div>
               </div>
               <button
                 onClick={() => { setIsMobileMenuOpen(false); onLogout(); }}
-                className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all duration-200"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Déconnexion</span>
@@ -1821,8 +1835,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="p-4 md:ml-64">
+      {/* ── Main Content ── */}
+      <div className="md:ml-60 pt-14 md:pt-0">
+        <div className="px-5 py-6 max-w-6xl">
         {selectedCourse ? (
           <CourseDetail course={selectedCourse} onBack={handleBackToDashboard} />
         ) : (
@@ -1830,30 +1845,34 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                <p className="text-[11px] font-semibold tracking-widest text-slate-400 uppercase mb-1">
                   {activeTab === 'dashboard' ? 'Tableau de bord' :
                    activeTab === 'courses' ? 'Mes cours' :
                    activeTab === 'assignments' ? 'Devoirs' :
                    activeTab === 'profile' ? 'Profil' : 'Paramètres'}
-                </h1>
-                <p className="text-slate-600 dark:text-slate-400 mt-1">
-                  Bienvenue, {studentInfo?.nom_complet || studentName}
                 </p>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Bonjour, {(studentInfo?.nom_complet || studentName).split(' ')[0]} 👋
+                </h1>
+                <p className="text-sm text-slate-400 mt-0.5">Master MR-MRTDDEFTP — {studentInfo?.niveau || 'Étudiant'}</p>
               </div>
-              <div className="flex items-center space-x-4">
-                <button 
+              <div className="flex items-center gap-2">
+                <button
                   onClick={() => setShowNotifications(true)}
-                  className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl relative"
+                  className="w-9 h-9 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center justify-center text-slate-500 hover:text-slate-800 hover:shadow-md transition-all relative"
                 >
-                  <Bell className="w-5 h-5" />
+                  <Bell className="w-4 h-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                       {unreadCount}
                     </span>
                   )}
                 </button>
-                <button onClick={onLogout} className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">
-                  <LogOut className="w-5 h-5" />
+                <button
+                  onClick={onLogout}
+                  className="hidden md:flex w-9 h-9 bg-white border border-slate-200 rounded-xl shadow-sm items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -1889,19 +1908,19 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 {/* Courses Overview */}
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Mes cours</h2>
-                  <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-white" />
+                  <div className="mb-5 p-4 bg-white rounded-2xl border border-blue-100 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <BookOpen className="w-4 h-4 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-blue-900 dark:text-blue-300">
-                          {studentProfile.studyYear === 1 ? "Étudiant de 1ère année" : "Étudiant de 2ème année"}
-                        </h3>
-                        <p className="text-sm text-blue-700 dark:text-blue-400">
-                          {studentProfile.studyYear === 1 
-                            ? "Vous avez accès aux cours du Semestre 1 et 2. Une fois promu en 2ème year, vous aurez également accès au Semestre 3."
-                            : "Vous avez accès à tous les cours : Semestre 1, 2 et 3. Félicitations pour votre progression !"
+                        <p className="text-sm font-semibold text-slate-800">
+                          {studentProfile.studyYear === 1 ? "1ère année" : "2ème année"}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {studentProfile.studyYear === 1
+                            ? "Accès aux Semestres 1 & 2. Le S3 sera disponible après promotion en 2ème année."
+                            : "Accès complet — Semestres 1, 2 et 3."
                           }
                         </p>
                       </div>
@@ -2216,6 +2235,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             )}
           </>
         )}
+        </div>
 
         {/* Modal de soumission de devoir */}
         {isSubmissionModalOpen && selectedAssignment && (

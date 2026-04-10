@@ -9,6 +9,9 @@ import ClickSpark from './components/ClickSpark';
 import { EmailIcon, WhatsAppIcon } from './components/ContactIcons';
 import { loginUser, getCurrentUser, signOut, getUserRole, getUserRoles, getStudentInfo } from './api';
 
+const SESSION_DURATION_MS = 60 * 60 * 1000; // 1 heure
+const LOGIN_TIME_KEY = 'enset_login_time';
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -18,6 +21,28 @@ function App() {
   const [selectedMaster, setSelectedMaster] = useState<string>('');
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
+
+  // Timer de session — déconnexion automatique après 1 heure
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const loginTime = parseInt(localStorage.getItem(LOGIN_TIME_KEY) || '0', 10);
+    const elapsed = Date.now() - loginTime;
+    const remaining = SESSION_DURATION_MS - elapsed;
+
+    if (remaining <= 0) {
+      handleLogout();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      alert('Votre session a expiré après 1 heure. Veuillez vous reconnecter.');
+      handleLogout();
+    }, remaining);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn]);
 
   // Vérifier si l'utilisateur est déjà connecté au chargement
   useEffect(() => {
@@ -98,9 +123,10 @@ function App() {
 
   const completeLogin = async (selectedRole: string, userData: any) => {
     console.log('Finalisation de la connexion avec le rôle:', selectedRole);
-      setIsLoggedIn(true);
+    localStorage.setItem(LOGIN_TIME_KEY, Date.now().toString());
+    setIsLoggedIn(true);
     setUserType(selectedRole);
-    
+
     // Si c'est un étudiant, récupérer ses informations
     if (selectedRole === 'student' && userData.email) {
       const info = await getStudentInfo(userData.email);
@@ -121,13 +147,15 @@ function App() {
   const handleLogout = async () => {
     try {
       await signOut();
-    setIsLoggedIn(false);
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    } finally {
+      localStorage.removeItem(LOGIN_TIME_KEY);
+      setIsLoggedIn(false);
       setUser(null);
       setUserType('');
       setStudentInfo(null);
       setSelectedMaster('');
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
     }
   };
 
