@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import SplitText from './SplitText';
 import ClickSpark from './ClickSpark';
 import RollingGallery from './RollingGallery';
-import { X, Info, Phone, Mail, Globe, BookOpen, Users, Settings, Calendar, GraduationCap } from 'lucide-react';
+import {
+  X, Mail, Phone, BookOpen, Users, Globe,
+  Settings, Calendar, GraduationCap, ArrowRight,
+  Clock, Layers, Hotel, FlaskConical
+} from 'lucide-react';
 
 interface MasterSelectionProps {
   onMasterSelect: (master: string) => void;
@@ -10,285 +14,275 @@ interface MasterSelectionProps {
 
 const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const masters = [
     {
-      id: 'mr-fib',
-      name: 'MR-FIB',
-      description: 'Master de recherche en Teintures Fibres et Bois',
-      color: 'from-blue-500 to-blue-600',
-      icon: '🪵'
+      id: 'mr-mrtddeftp',
+      name: 'MR-MRTDDEFTP',
+      fullName: 'Technopédagogie & Formation Technique',
+      description: "Master en Technopédagogie et Didactique des Disciplines de l'Enseignement Technique et Professionnel",
+      Icon: BookOpen,
+      available: true,
     },
     {
       id: 'mr-ip',
       name: 'MR-IP',
-      description: 'Master de Recherche en Ingénierie Pédagogique',
-      color: 'from-green-500 to-green-600',
-      icon: '🧑‍🏫'
+      fullName: 'Ingénierie Pédagogique',
+      description: 'Master de recherche en Ingénierie Pédagogique',
+      Icon: Layers,
+      available: false,
+    },
+    {
+      id: 'mr-fib',
+      name: 'MR-FIB',
+      fullName: 'Teintures, Fibres & Bois',
+      description: 'Master de recherche en Teintures, Fibres et Bois',
+      Icon: FlaskConical,
+      available: false,
     },
     {
       id: 'mr-mhrt',
       name: 'MR-MHRT',
-      description: "Master de Recherche en Management de l'Hôtellerie, de la Restauration et du Tourisme",
-      color: 'from-purple-500 to-purple-600',
-      icon: '🏨'
+      fullName: 'Hôtellerie, Restauration & Tourisme',
+      description: "Master en Management de l'Hôtellerie, de la Restauration et du Tourisme",
+      Icon: Hotel,
+      available: false,
     },
-    {
-      id: 'mr-mrtddeftp',
-      name: 'MR-MRTDDEFTP',
-      description: 'Master de Recherche en Technopédagogie et Didactique des Disciplines de l\'Enseignementde de la Formation Technique et Professionnel',
-      color: 'from-slate-700 to-slate-800',
-      icon: '📚'
-    }
   ];
 
   const menuItems = [
-    {
-      icon: <GraduationCap className="w-5 h-5" />,
-      label: 'Formations spéciales',
-      href: '#special-formations',
-      description: 'Programmes de formation personnalisés'
-    },
-    {
-      icon: <Calendar className="w-5 h-5" />,
-      label: 'Événements',
-      href: '#events',
-      description: 'Conférences, séminaires et rencontres'
-    },
-    {
-      icon: <Info className="w-5 h-5" />,
-      label: 'À propos',
-      href: '#about',
-      description: 'En savoir plus sur ENSET-MASTERS'
-    },
-    {
-      icon: <BookOpen className="w-5 h-5" />,
-      label: 'Programmes',
-      href: '#programs',
-      description: 'Découvrir nos formations'
-    },
-    {
-      icon: <Users className="w-5 h-5" />,
-      label: 'Équipe',
-      href: '#team',
-      description: 'Notre équipe pédagogique'
-    },
-    {
-      icon: <Globe className="w-5 h-5" />,
-      label: 'Campus',
-      href: '#campus',
-      description: 'Visiter notre campus'
-    },
-    {
-      icon: <Settings className="w-5 h-5" />,
-      label: 'Services',
-      href: '#services',
-      description: 'Nos services étudiants'
-    }
+    { icon: <GraduationCap className="w-4 h-4" />, label: 'Formations spéciales', description: 'Programmes personnalisés' },
+    { icon: <Calendar className="w-4 h-4" />, label: 'Événements', description: 'Conférences et séminaires' },
+    { icon: <BookOpen className="w-4 h-4" />, label: 'Programmes', description: 'Découvrir nos formations' },
+    { icon: <Users className="w-4 h-4" />, label: 'Équipe', description: 'Notre corps enseignant' },
+    { icon: <Globe className="w-4 h-4" />, label: 'Campus', description: 'Visiter notre campus' },
+    { icon: <Settings className="w-4 h-4" />, label: 'Services', description: 'Nos services étudiants' },
   ];
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative">
-      {/* Burger Menu Button - Fixed Position */}
-      <div className="fixed top-6 right-6 z-50">
-        <ClickSpark sparkColor="#ffffff" sparkSize={6} sparkRadius={15} sparkCount={8}>
-          <button
-            onClick={toggleMenu}
-            className="relative w-12 h-12 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 flex items-center justify-center hover:bg-white hover:shadow-xl transition-all duration-300 group"
-            aria-label="Menu principal"
-          >
-            <div className="relative w-6 h-6">
-              <span 
-                className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
-                  isMenuOpen ? 'rotate-45 translate-y-0' : '-translate-y-1'
-                }`}
-              />
-              <span 
-                className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
-                  isMenuOpen ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
-              <span 
-                className={`absolute top-1/2 left-0 w-6 h-0.5 bg-slate-700 transform transition-all duration-300 ${
-                  isMenuOpen ? '-rotate-45 translate-y-0' : 'translate-y-1'
-                }`}
-              />
+    <div className="min-h-screen bg-[#F8F7F4] relative overflow-x-hidden">
+
+      {/* ── Top Nav ── */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-[#F8F7F4]/90 backdrop-blur-md border-b border-slate-200/60">
+        <div className="h-14 px-5 flex items-center">
+          {/* Logo — extrême gauche */}
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo-enset.png"
+              alt="ENSET"
+              className="w-8 h-8 rounded-lg object-contain flex-shrink-0"
+            />
+            <div className="flex flex-col leading-none">
+              <span className="font-bold text-slate-900 text-sm tracking-tight whitespace-nowrap">ENSET-MASTERS</span>
+              <span className="text-[10px] text-slate-400 whitespace-nowrap hidden sm:block">Plateforme d'apprentissage</span>
             </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Burger — fixé au coin supérieur droit */}
+      <div className="fixed top-[11px] right-5 z-50">
+        <ClickSpark sparkColor="#64748b" sparkSize={5} sparkRadius={12} sparkCount={7}>
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-[4px] hover:shadow-md transition-all duration-200"
+            aria-label="Menu"
+          >
+            <span className={`w-4 h-[1.5px] bg-slate-600 rounded-full transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-[5.5px]' : ''}`} />
+            <span className={`w-4 h-[1.5px] bg-slate-600 rounded-full transition-all duration-200 ${isMenuOpen ? 'opacity-0' : ''}`} />
+            <span className={`w-4 h-[1.5px] bg-slate-600 rounded-full transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-[5.5px]' : ''}`} />
           </button>
         </ClickSpark>
       </div>
 
-      {/* Overlay */}
+      {/* ── Menu Overlay ── */}
       {isMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity duration-300"
-          onClick={closeMenu}
+        <div
+          className="fixed inset-0 bg-black/10 backdrop-blur-[2px] z-40"
+          onClick={() => setIsMenuOpen(false)}
         />
       )}
 
-      {/* Menu Panel */}
-      <div 
-        className={`fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-white/95 backdrop-blur-md shadow-2xl border-l border-slate-200 transform transition-transform duration-300 ease-out z-50 flex flex-col ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        {/* Menu Header */}
-        <div className="flex-shrink-0 p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3 mb-4">
-            <img src="/logo-enset.png" alt="Logo ENSET" className="w-10 h-10 rounded-lg" />
-            <div>
-              <h2 className="font-bold text-slate-900">ENSET-MASTERS</h2>
-              <p className="text-xs text-slate-500">Menu principal</p>
+      {/* ── Menu Drawer — depuis la droite ── */}
+      <div className={`fixed top-0 right-0 h-full w-72 bg-white border-l border-slate-200 shadow-xl z-50 flex flex-col transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <button onClick={() => setIsMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors flex-shrink-0">
+            <X className="w-4 h-4 text-slate-500" />
+          </button>
+          <div className="flex items-center gap-2">
+            <img src="/logo-enset.png" alt="ENSET" className="w-7 h-7 rounded-md object-contain flex-shrink-0" />
+            <div className="flex flex-col leading-none">
+              <span className="font-bold text-slate-800 text-sm whitespace-nowrap">ENSET-MASTERS</span>
+              <span className="text-[10px] text-slate-400">Plateforme d'apprentissage</span>
             </div>
           </div>
-          <ClickSpark sparkColor="#374151" sparkSize={4} sparkRadius={12} sparkCount={6}>
-            <button
-              onClick={closeMenu}
-              className="absolute top-6 right-6 p-2 rounded-xl hover:bg-slate-100 transition-colors duration-200"
-              aria-label="Fermer le menu"
-            >
-              <X className="w-5 h-5 text-slate-600" />
-            </button>
-          </ClickSpark>
         </div>
 
-        {/* Menu Items - Scrollable Area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4 space-y-3">
-            {menuItems.map((item, index) => (
-              <a
-                key={index}
-                href={item.href}
-                onClick={closeMenu}
-                className="group flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 transition-all duration-200 cursor-pointer border border-transparent hover:border-slate-200"
-              >
-                <div className="flex-shrink-0 w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center group-hover:bg-slate-200 transition-colors duration-200">
-                  {item.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 group-hover:text-slate-700 transition-colors duration-200 mb-1">
-                    {item.label}
-                  </h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              </a>
-            ))}
-          </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-1">
+          {menuItems.map((item, i) => (
+            <a
+              key={i}
+              href={`#${item.label.toLowerCase()}`}
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-slate-200 transition-colors flex-shrink-0">
+                {item.icon}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-800">{item.label}</p>
+                <p className="text-xs text-slate-400">{item.description}</p>
+              </div>
+            </a>
+          ))}
         </div>
 
-        {/* Contact Section - Fixed at Bottom */}
-        <div className="flex-shrink-0 p-6 border-t border-slate-200 bg-slate-50/80 backdrop-blur-sm">
-          <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Mail className="w-4 h-4 text-slate-600" />
-            Contact
-          </h3>
-          <div className="space-y-3">
-            <a 
-              href="mailto:gnonlonfoun@ensetmasters.org"
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition-colors duration-200 group border border-transparent hover:border-slate-200"
-            >
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-200">
-                <Mail className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 group-hover:text-slate-700">Email</p>
-                <p className="text-xs text-slate-600 truncate">gnonlonfoun@ensetmasters.org</p>
-              </div>
-            </a>
-            <a 
-              href="https://wa.me/22996113246"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition-colors duration-200 group border border-transparent hover:border-slate-200"
-            >
-              <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors duration-200">
-                <Phone className="w-4 h-4 text-green-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 group-hover:text-slate-700">Téléphone</p>
-                <p className="text-xs text-slate-600">+229 01 96 11 32 46</p>
-              </div>
-            </a>
-          </div>
+        <div className="p-4 border-t border-slate-100 space-y-2">
+          <a href="mailto:gnonlonfoun@ensetmasters.org" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <Mail className="w-4 h-4 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-700">Email</p>
+              <p className="text-xs text-slate-400 truncate">gnonlonfoun@ensetmasters.org</p>
+            </div>
+          </a>
+          <a href="https://wa.me/22901097565871" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
+            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+              <Phone className="w-4 h-4 text-green-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-700">WhatsApp</p>
+              <p className="text-xs text-slate-400">+229 01 97 56 58 71</p>
+            </div>
+          </a>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl">
-          {/* Header */}
-          <div className="text-center mb-6 sm:mb-8 lg:mb-12 px-4">
-            <img src="/logo-enset.png" alt="Logo ENSET-MASTERS" className="object-contain w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 sm:mb-3">
-              <SplitText 
-                text="ENSET-MASTERS"
+      {/* ── Main Content ── */}
+      <main className="pt-14">
+        <div className="max-w-5xl mx-auto px-5 pt-5 pb-14">
+
+          {/* Hero */}
+          <div className="mb-8">
+            <p className="text-[11px] font-semibold tracking-widest text-slate-400 uppercase mb-3">
+              Plateforme d'apprentissage — ENSET Bénin
+            </p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight mb-2 tracking-tight">
+              <SplitText
+                text="Choisissez votre"
                 splitType="chars"
-                delay={80}
-                duration={0.8}
-                from={{ opacity: 0, y: 50, rotationX: -90, scale: 0.8 }}
-                to={{ opacity: 1, y: 0, rotationX: 0, scale: 1 }}
-                ease="back.out(1.7)"
+                delay={40}
+                duration={0.6}
+                from={{ opacity: 0, y: 20 }}
+                to={{ opacity: 1, y: 0 }}
+                ease="power2.out"
                 threshold={0}
                 rootMargin="0px"
-                className="text-2xl sm:text-3xl font-bold text-slate-900"
+                className="text-3xl sm:text-4xl font-bold text-slate-900"
+              />
+              <br />
+              <SplitText
+                text="programme Master"
+                splitType="chars"
+                delay={40}
+                duration={0.6}
+                from={{ opacity: 0, y: 20 }}
+                to={{ opacity: 1, y: 0 }}
+                ease="power2.out"
+                threshold={0}
+                rootMargin="0px"
+                className="text-3xl sm:text-4xl font-bold text-blue-600"
               />
             </h1>
-            <p className="text-slate-600 text-base sm:text-lg">
-              Sélectionnez votre programme Master
+            <p className="text-slate-500 text-sm max-w-md">
+              Accédez à vos cours, devoirs et ressources pédagogiques en un clic.
             </p>
           </div>
 
           {/* Masters Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-            {masters.map((master) => (
-              <div
-                key={master.id}
-                onClick={() => onMasterSelect(master.id)}
-                className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.03] h-full"
-              >
-                <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl shadow-md p-3 sm:p-4 lg:p-5 border border-slate-200 hover:shadow-xl transition-all duration-300 h-full flex flex-col min-h-[180px] sm:min-h-[200px] lg:min-h-[260px] max-h-[200px] sm:max-h-[280px] lg:max-h-[320px] w-full mx-auto">
-                  {/* Master Icon */}
-                  <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-md sm:rounded-lg lg:rounded-xl bg-gradient-to-br ${master.color} flex items-center justify-center mx-auto mb-2 sm:mb-3 lg:mb-4 group-hover:scale-105 transition-transform duration-300 flex-shrink-0`}>
-                    <span className="text-sm sm:text-lg lg:text-xl">{master.icon}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
+            {masters.map((master) => {
+              const { Icon } = master;
+              const isHovered = hoveredId === master.id;
+
+              return (
+                <div
+                  key={master.id}
+                  onClick={() => master.available && onMasterSelect(master.id)}
+                  onMouseEnter={() => setHoveredId(master.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  className={`relative group rounded-2xl bg-white border transition-all duration-200 p-6 flex flex-col gap-4
+                    ${master.available
+                      ? 'border-slate-200 hover:border-blue-200 hover:shadow-lg cursor-pointer'
+                      : 'border-slate-100 opacity-60 cursor-default'
+                    }
+                    ${isHovered && master.available ? 'shadow-lg shadow-blue-50' : 'shadow-sm'}
+                  `}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200
+                      ${master.available
+                        ? isHovered ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+                        : 'bg-slate-100 text-slate-400'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+
+                    {master.available ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        Disponible
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
+                        <Clock className="w-3 h-3" />
+                        Bientôt
+                      </span>
+                    )}
                   </div>
 
-                  {/* Master Name */}
-                  <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-slate-900 text-center mb-1 sm:mb-2 group-hover:text-slate-700 transition-colors duration-300 flex-shrink-0">
-                    {master.name}
-                  </h3>
-
-                  {/* Master Description */}
-                  <p className="text-slate-500 text-center text-xs leading-tight sm:leading-snug flex-grow px-1">
-                    {master.description}
-                  </p>
-
-                  {/* Selection Indicator */}
-                  <div className="mt-2 sm:mt-3 lg:mt-4 flex justify-center flex-shrink-0">
-                    <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-br ${master.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div>
+                    <p className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-1">{master.name}</p>
+                    <h3 className={`font-semibold text-base leading-snug mb-2 transition-colors duration-200
+                      ${master.available && isHovered ? 'text-blue-700' : 'text-slate-800'}`}
+                    >
+                      {master.fullName}
+                    </h3>
+                    <p className="text-sm text-slate-400 leading-relaxed">{master.description}</p>
                   </div>
+
+                  {master.available && (
+                    <div className={`flex items-center gap-1 text-sm font-medium transition-all duration-200
+                      ${isHovered ? 'text-blue-600 translate-x-1' : 'text-slate-300'}`}
+                    >
+                      <span>Accéder à la plateforme</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  )}
+
+                  {master.available && (
+                    <div className={`absolute left-0 top-6 bottom-6 w-[3px] rounded-full transition-all duration-200
+                      ${isHovered ? 'bg-blue-500' : 'bg-blue-200'}`}
+                    />
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Rolling Gallery */}
-          <RollingGallery 
-            autoplay={true}
-            pauseOnHover={true}
-          />
+          {/* Gallery */}
+          <div>
+            <p className="text-[11px] font-semibold tracking-widest text-slate-300 uppercase mb-4">
+              Vie sur le campus
+            </p>
+            <RollingGallery autoplay={true} pauseOnHover={true} />
+          </div>
 
         </div>
-      </div>
+      </main>
     </div>
   );
 };
