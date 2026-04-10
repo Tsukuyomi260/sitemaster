@@ -148,13 +148,13 @@ function App() {
               gnonlonfoun@ensetmasters.org
             </a>
             <a 
-              href="https://wa.me/22996113246" 
-              target="_blank" 
+              href="https://wa.me/22901097565871"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
             >
               <WhatsAppIcon />
-              +229 01 96 11 32 46
+              +229 01 97 56 58 71
             </a>
           </div>
         </div>
@@ -201,14 +201,14 @@ function App() {
                       <EmailIcon />
                       gnonlonfoun@ensetmasters.org
                     </a>
-                    <a 
-                      href="https://wa.me/22996113246" 
-                      target="_blank" 
+                    <a
+                      href="https://wa.me/22901097565871"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
                     >
                       <WhatsAppIcon />
-                      +229 01 96 11 32 46
+                      +229 01 97 56 58 71
                     </a>
                   </div>
                   
@@ -230,30 +230,55 @@ function App() {
           <MasterSelection onMasterSelect={handleMasterSelect} />
         )}
       </div>
-      <footer className="bg-white text-slate-900 py-8 mt-12 border-t border-slate-200">
-        <div className="container mx-auto px-4 flex flex-col items-center justify-center">
-          <img src="/logo-enset.png" alt="Logo ENSET" className="w-16 h-16 rounded mb-2" />
-          <div className="font-bold text-lg text-center">ENSET-MASTERS</div>
-          <div className="text-xs text-slate-500 text-center mb-2">Ecole Normale Supérieure de l'Enseignement Technique</div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-2">
-            <a 
-              href="mailto:gnonlonfoun@ensetmasters.org" 
-              className="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
-            >
-              <EmailIcon />
-              gnonlonfoun@ensetmasters.org
-            </a>
-            <a 
-              href="https://wa.me/22996113246" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-xs text-green-600 hover:text-green-800 transition-colors duration-200 flex items-center gap-1"
-            >
-              <WhatsAppIcon />
-              +229 01 96 11 32 46
-            </a>
+      <footer className="bg-[#F8F7F4] border-t border-slate-200 mt-12">
+        <div className="max-w-5xl mx-auto px-5 py-10">
+          {/* Top row */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-8 border-b border-slate-200">
+            {/* Brand */}
+            <div className="flex items-center gap-3">
+              <img src="/logo-enset.png" alt="Logo ENSET" className="w-10 h-10 rounded-xl object-contain" />
+              <div>
+                <p className="font-bold text-slate-900 text-base tracking-tight whitespace-nowrap">ENSET-MASTERS</p>
+                <p className="text-xs text-slate-400 leading-tight mt-0.5">Ecole Normale Supérieure de l'Enseignement Technique</p>
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a
+                href="mailto:gnonlonfoun@ensetmasters.org"
+                className="flex items-center gap-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 transition-colors duration-200 group shadow-sm"
+              >
+                <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <EmailIcon />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Email</p>
+                  <p className="text-xs text-slate-700 group-hover:text-slate-900 transition-colors">gnonlonfoun@ensetmasters.org</p>
+                </div>
+              </a>
+              <a
+                href="https://wa.me/22901097565871"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 transition-colors duration-200 group shadow-sm"
+              >
+                <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                  <WhatsAppIcon />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">WhatsApp</p>
+                  <p className="text-xs text-slate-700 group-hover:text-slate-900 transition-colors">+229 01 97 56 58 71</p>
+                </div>
+              </a>
+            </div>
           </div>
-          <div className="text-xs text-slate-400 text-center">© {new Date().getFullYear()} ENSET-MASTERS. Tous droits réservés.</div>
+
+          {/* Bottom row */}
+          <div className="pt-5 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-xs text-slate-400">© {new Date().getFullYear()} ENSET-MASTERS. Tous droits réservés.</p>
+            <p className="text-xs text-slate-400">Bénin — Plateforme d'apprentissage des Masters</p>
+          </div>
         </div>
       </footer>
     </div>
