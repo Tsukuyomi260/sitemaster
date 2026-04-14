@@ -1144,24 +1144,20 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Vérifier le type de fichier
-      const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-powerpoint',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'text/plain'
-      ];
-      
-      if (allowedTypes.includes(file.type)) {
-        setSubmissionFile(file);
-        setSubmissionError('');
-      } else {
-        setSubmissionError('Format de fichier non supporté. Utilisez PDF, Word, PowerPoint ou texte.');
-        setSubmissionFile(null);
-      }
+    if (!file) return;
+
+    const isZip =
+      file.type === 'application/zip' ||
+      file.type === 'application/x-zip-compressed' ||
+      file.type === 'application/x-zip' ||
+      file.name.toLowerCase().endsWith('.zip');
+
+    if (isZip) {
+      setSubmissionFile(file);
+      setSubmissionError('');
+    } else {
+      setSubmissionError('Format invalide. Compressez tous vos fichiers en un seul archive .zip avant de soumettre.');
+      setSubmissionFile(null);
     }
   };
 
@@ -2237,115 +2233,156 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         )}
         </div>
 
-        {/* Modal de soumission de devoir */}
+        {/* ── Modal soumission de devoir ── */}
         {isSubmissionModalOpen && selectedAssignment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-lg w-full">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-900">Devoir - {selectedAssignment.course}</h2>
-                <button
-                  onClick={closeSubmissionModal}
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md">
+
+              {/* Header modal */}
+              <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold tracking-widest text-slate-400 uppercase mb-0.5">Soumission</p>
+                  <h2 className="text-base font-bold text-slate-900 leading-snug line-clamp-2">{selectedAssignment.course}</h2>
+                </div>
+                <button onClick={closeSubmissionModal} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors ml-3 flex-shrink-0">
+                  <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              {/* Formulaire de soumission */}
-              <div className="space-y-4">
-                {/* Upload de fichier */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-3">
-                    Fichier à soumettre *
-                  </label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-slate-400 transition-colors">
-                    <input
-                      type="file"
-                      onChange={handleFileChange}
-                      accept=".pdf,.doc,.docx,.ppt,.pptx,.txt"
-                      className="hidden"
-                      id="assignment-file"
-                    />
-                    <label htmlFor="assignment-file" className="cursor-pointer">
-                      <div className="space-y-3">
-                        <svg className="mx-auto h-10 w-10 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <div className="text-slate-600">
-                          <span className="font-medium">Cliquez pour sélectionner un fichier</span>
-                          <p className="text-xs mt-1">PDF, Word, PowerPoint ou texte</p>
-                        </div>
-                      </div>
-                    </label>
+              <div className="px-6 py-5 space-y-4">
+
+                {/* Notice ZIP */}
+                <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                  <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+                    </svg>
                   </div>
-                  {submissionFile && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-sm text-green-700">
-                        <span className="font-medium">✓</span> {submissionFile.name}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-xs font-semibold text-blue-800 mb-0.5">Archive ZIP uniquement</p>
+                    <p className="text-xs text-blue-600 leading-relaxed">
+                      Regroupez tous vos fichiers (PDF, Word, images…) dans une seule archive <span className="font-semibold">.zip</span> avant de soumettre.
+                    </p>
+                  </div>
                 </div>
 
-                {/* Titre du devoir */}
+                {/* Zone de dépôt */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+                    Archive ZIP *
+                  </label>
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    accept=".zip,application/zip,application/x-zip-compressed"
+                    className="hidden"
+                    id="assignment-file"
+                  />
+                  <label
+                    htmlFor="assignment-file"
+                    className={`flex flex-col items-center justify-center gap-3 w-full py-8 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200
+                      ${submissionFile
+                        ? 'border-blue-300 bg-blue-50'
+                        : 'border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/50'
+                      }`}
+                  >
+                    {submissionFile ? (
+                      <>
+                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-blue-700">{submissionFile.name}</p>
+                          <p className="text-xs text-blue-500 mt-0.5">{(submissionFile.size / 1024 / 1024).toFixed(2)} Mo — Cliquer pour changer</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center">
+                          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                          </svg>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-slate-600">Cliquez pour sélectionner votre archive</p>
+                          <p className="text-xs text-slate-400 mt-0.5">Fichier .zip uniquement</p>
+                        </div>
+                      </>
+                    )}
+                  </label>
+                </div>
+
+                {/* Titre */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
                     Titre du devoir *
                   </label>
                   <input
                     type="text"
                     value={submissionTitle}
                     onChange={(e) => setSubmissionTitle(e.target.value)}
-                    placeholder="Saisissez le titre de votre devoir..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex : Devoir S1 — Psychopédagogie"
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50 placeholder:text-slate-300 transition-all"
                   />
                 </div>
 
                 {/* Commentaires */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Commentaires (optionnel)
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+                    Commentaires <span className="font-normal normal-case text-slate-400">(optionnel)</span>
                   </label>
                   <textarea
                     value={submissionComments}
                     onChange={(e) => setSubmissionComments(e.target.value)}
-                    placeholder="Ajoutez des commentaires sur votre travail..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    rows={3}
+                    placeholder="Ajoutez un message pour votre enseignant…"
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50 placeholder:text-slate-300 resize-none transition-all"
+                    rows={2}
                   />
                 </div>
 
-                {/* Messages d'erreur et de succès */}
+                {/* Erreur */}
                 {submissionError && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-700">{submissionError}</p>
+                  <div className="flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                    <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-xs text-red-600">{submissionError}</p>
                   </div>
                 )}
 
+                {/* Succès */}
                 {submissionSuccess && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-700">
-                      ✅ Devoir soumis avec succès !
-                    </p>
+                  <div className="flex items-center gap-2.5 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                    <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-xs font-medium text-green-700">Devoir soumis avec succès !</p>
                   </div>
                 )}
 
                 {/* Boutons */}
-                <div className="flex space-x-3 pt-4">
+                <div className="flex gap-3 pt-1">
                   <button
                     onClick={closeSubmissionModal}
-                    className="flex-1 px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
                   >
                     Annuler
                   </button>
                   <button
                     onClick={handleSubmissionSubmit}
                     disabled={!submissionFile || !submissionTitle.trim() || isSubmitting}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed font-medium"
+                    className="flex-1 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? 'Soumission...' : 'Soumettre'}
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                        Envoi…
+                      </span>
+                    ) : 'Soumettre le devoir'}
                   </button>
                 </div>
               </div>
