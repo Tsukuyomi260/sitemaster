@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  BookOpen, 
-  ClipboardCheck, 
-  LogOut, 
-  Bell, 
-  Settings, 
-  ChevronUp, 
-  Users, 
-  Shield, 
-  GraduationCap, 
-  BarChart3, 
+import {
+  User,
+  BookOpen,
+  ClipboardCheck,
+  LogOut,
+  Bell,
+  Settings,
+  ChevronUp,
+  Users,
+  Shield,
+  GraduationCap,
+  BarChart3,
   Plus,
   Trash2,
   Eye,
@@ -20,10 +20,11 @@ import {
   RefreshCw,
   Crown,
   FileText,
-  X
+  X,
+  CreditCard
 } from 'lucide-react';
-import { 
-  getAllSubmissions, 
+import {
+  getAllSubmissions,
   getAllAdmins,
   getAllTeachers,
   getAllCoursesByMaster,
@@ -37,7 +38,9 @@ import {
   sendIndividualMessage,
   promoteStudent,
   demoteStudent,
-  getStudentsWithStudyYear
+  getStudentsWithStudyYear,
+  getAllPayments,
+  PaymentRecord
 } from '../api';
 
 interface AdminDashboardProps {
@@ -132,6 +135,8 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [courseAssignments, setCourseAssignments] = useState<CourseAssignment[]>([]);
   const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [globalStats, setGlobalStats] = useState<GlobalStats>({
     studentsCount: 0,
     teachersCount: 0,
@@ -215,6 +220,10 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         console.log('Données des soumissions reçues:', submissionsData);
         setSubmissions(submissionsData || []);
         console.log('État submissions mis à jour:', submissionsData || []);
+
+        // Charger les paiements
+        const paymentsData = await getAllPayments();
+        setPayments(paymentsData || []);
         
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
@@ -498,6 +507,17 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDownloadAll = async () => {
+    if (filteredSubmissions.length === 0) return;
+    for (let i = 0; i < filteredSubmissions.length; i++) {
+      const s = filteredSubmissions[i];
+      if (s.file_url && s.file_name) {
+        await new Promise<void>(resolve => setTimeout(resolve, i === 0 ? 0 : 300));
+        handleDownloadSubmission(s.file_url, s.file_name);
+      }
+    }
   };
 
   // Fonctions de gestion de la promotion (utilisées par l'UI de promotion)
@@ -802,6 +822,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
           <button onClick={() => setActiveTab('teachers')} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'teachers' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Enseignants</button>
           <button onClick={() => setActiveTab('courses')} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'courses' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Cours</button>
           <button onClick={() => { setActiveTab('submissions'); loadSubmissions(); }} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'submissions' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Devoirs</button>
+          <button onClick={() => { setActiveTab('payments'); setPaymentsLoading(true); getAllPayments().then(setPayments).finally(() => setPaymentsLoading(false)); }} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'payments' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Paiements</button>
           <button onClick={() => setActiveTab('messages')} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'messages' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Messages</button>
         </div>
         
@@ -1654,6 +1675,15 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                 </p>
               </div>
               <div className="flex items-center gap-3">
+                {filteredSubmissions.length > 0 && (
+                  <button
+                    onClick={handleDownloadAll}
+                    className="px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 text-sm lg:text-base"
+                  >
+                    <Download className="w-4 h-4" />
+                    Tout télécharger ({filteredSubmissions.length})
+                  </button>
+                )}
                 <button
                   onClick={reloadSubmissions}
                   className="px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium flex items-center gap-2 text-sm lg:text-base"
@@ -1836,6 +1866,112 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
             </div>
           </div>
         )}
+
+        {/* Section Paiements */}
+        {activeTab === 'payments' && (() => {
+          const approvedScol = payments.filter(p => p.type === 'scolarite' && p.status === 'approved');
+          const approvedLabo = payments.filter(p => p.type === 'laboratoire' && p.status === 'approved');
+          const totalCollected = payments.filter(p => p.status === 'approved').reduce((s, p) => s + p.amount, 0);
+
+          return (
+            <div className="space-y-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h2 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                    <CreditCard className="w-6 h-6 lg:w-8 lg:h-8 text-blue-600" />
+                    Paiements
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400 mt-1">Suivi des frais de scolarité et de laboratoire</p>
+                </div>
+                <button
+                  onClick={() => { setPaymentsLoading(true); getAllPayments().then(setPayments).finally(() => setPaymentsLoading(false)); }}
+                  className="px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-colors font-medium flex items-center gap-2 text-sm"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Actualiser
+                </button>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Total collecté</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalCollected.toLocaleString('fr-FR')} <span className="text-base font-normal text-slate-400">FCFA</span></p>
+                </div>
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Scolarités approuvées</p>
+                  <p className="text-2xl font-bold text-blue-600">{approvedScol.length}</p>
+                </div>
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Labos approuvés</p>
+                  <p className="text-2xl font-bold text-purple-600">{approvedLabo.length}</p>
+                </div>
+              </div>
+
+              {/* Tableau */}
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                {paymentsLoading ? (
+                  <div className="flex items-center justify-center py-12 gap-3">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-900 dark:border-white" />
+                    <span className="text-slate-500 dark:text-slate-400">Chargement…</span>
+                  </div>
+                ) : payments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-slate-400">Aucun paiement enregistré.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Étudiant</th>
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                          <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Montant</th>
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Réf. FedaPay</th>
+                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                        {payments.map(p => (
+                          <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                            <td className="px-5 py-3">
+                              <p className="font-medium text-slate-900 dark:text-white">{p.student_name}</p>
+                              <p className="text-xs text-slate-400">{p.student_email}</p>
+                            </td>
+                            <td className="px-5 py-3">
+                              <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${p.type === 'scolarite' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
+                                {p.type === 'scolarite' ? 'Scolarité' : 'Laboratoire'}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3 text-right font-semibold text-slate-900 dark:text-white">
+                              {p.amount.toLocaleString('fr-FR')} F
+                            </td>
+                            <td className="px-5 py-3">
+                              {p.status === 'approved' ? (
+                                <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">Approuvé</span>
+                              ) : p.status === 'pending' ? (
+                                <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">En attente</span>
+                              ) : p.status === 'declined' ? (
+                                <span className="text-xs font-medium text-red-600 bg-red-50 px-2.5 py-1 rounded-full">Refusé</span>
+                              ) : (
+                                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">Annulé</span>
+                              )}
+                            </td>
+                            <td className="px-5 py-3 text-xs text-slate-400 font-mono">{p.fedapay_reference || '—'}</td>
+                            <td className="px-5 py-3 text-xs text-slate-400">
+                              {new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Section Messages */}
         {activeTab === 'messages' && (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { submitAssignment, getStudentNotifications, markNotificationAsRead, recordCourseDownload } from '../api';
+import { submitAssignment, getStudentNotifications, markNotificationAsRead, recordCourseDownload, getStudentPayments, PaymentRecord } from '../api';
+import FedaPayButton from './FedaPayButton';
 import ClickSpark from './ClickSpark';
 import {
   BookOpen,
@@ -12,7 +13,14 @@ import {
   ClipboardCheck,
   Settings,
   MessageSquare,
-  Eye
+  Eye,
+  CreditCard,
+  GraduationCap,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Calendar,
+  BadgeCheck
 } from 'lucide-react';
 import { EmailIcon, WhatsAppIcon } from './ContactIcons';
 
@@ -251,6 +259,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [submittedAssignmentIds, setSubmittedAssignmentIds] = useState<Set<number>>(new Set());
+  const [pdfViewer, setPdfViewer] = useState<{ url: string; name: string } | null>(null);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showNotificationDetail, setShowNotificationDetail] = useState<Notification | null>(null);
@@ -269,7 +281,17 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     };
 
     loadNotifications();
-    
+
+    // Charger les devoirs déjà soumis depuis localStorage
+    if (studentInfo?.id) {
+      try {
+        const saved = localStorage.getItem(`submitted_assignments_${studentInfo.id}`);
+        if (saved) {
+          setSubmittedAssignmentIds(new Set(JSON.parse(saved)));
+        }
+      } catch {}
+    }
+
     // Debug: Afficher les informations de l'étudiant
     console.log('=== DASHBOARD ÉTUDIANT ===');
     console.log('Student Name:', studentName);
@@ -278,6 +300,16 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     console.log('==========================');
   // eslint-disable-next-line react-hooks/exhaustive-deps -- studentName suffit pour le chargement des notifications
   }, [studentName]);
+
+  // Charger les paiements quand l'onglet scolarité est actif
+  useEffect(() => {
+    if (activeTab !== 'scolarite' || !studentInfo?.email) return;
+    setPaymentsLoading(true);
+    getStudentPayments(studentInfo.email)
+      .then(setPayments)
+      .catch(console.error)
+      .finally(() => setPaymentsLoading(false));
+  }, [activeTab, studentInfo?.email]);
 
   // Appliquer le thème au chargement
   React.useEffect(() => {
@@ -586,9 +618,9 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     
     switch (assignmentFilter) {
       case 'pending':
-        return accessibleAssignments.filter(a => a.status === 'À rendre');
+        return accessibleAssignments.filter(a => !submittedAssignmentIds.has(a.id));
       case 'submitted':
-        return accessibleAssignments.filter(a => a.status === 'Rendu');
+        return accessibleAssignments.filter(a => submittedAssignmentIds.has(a.id));
       case 'graded':
         return accessibleAssignments.filter(a => a.status === 'Noté');
       default:
@@ -640,11 +672,12 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Tableau de bord', icon: Home },
-    { id: 'courses', label: 'Mes cours', icon: BookOpen },
-    { id: 'assignments', label: 'Devoirs', icon: ClipboardCheck },
-    { id: 'profile', label: 'Profil', icon: User },
-    { id: 'settings', label: 'Paramètres', icon: Settings }
+    { id: 'dashboard',  label: 'Tableau de bord', icon: Home },
+    { id: 'courses',    label: 'Mes cours',        icon: BookOpen },
+    { id: 'assignments',label: 'Devoirs',           icon: ClipboardCheck },
+    { id: 'scolarite',  label: 'Ma scolarité',      icon: CreditCard },
+    { id: 'profile',    label: 'Profil',            icon: User },
+    { id: 'settings',   label: 'Paramètres',        icon: Settings },
   ];
 
   const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, subtitle, color }) => (
@@ -996,26 +1029,41 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     );
   };
 
-  const AssignmentCard: React.FC<{ assignment: Assignment }> = ({ assignment }) => (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-blue-200 hover:shadow-md transition-all duration-200 flex flex-col justify-between">
-      <div>
-        <div className="flex items-start justify-between mb-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-            <FileText className="w-4 h-4 text-slate-500" />
+  const AssignmentCard: React.FC<{ assignment: Assignment }> = ({ assignment }) => {
+    const isSubmitted = submittedAssignmentIds.has(assignment.id);
+    return (
+      <div className={`bg-white rounded-2xl p-5 shadow-sm border transition-all duration-200 flex flex-col justify-between ${isSubmitted ? 'border-blue-100' : 'border-slate-200 hover:border-blue-200 hover:shadow-md'}`}>
+        <div>
+          <div className="flex items-start justify-between mb-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isSubmitted ? 'bg-blue-50' : 'bg-slate-100'}`}>
+              <FileText className={`w-4 h-4 ${isSubmitted ? 'text-blue-500' : 'text-slate-500'}`} />
+            </div>
+            {isSubmitted ? (
+              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
+                Rendu
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">À rendre</span>
+            )}
           </div>
-          <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">À rendre</span>
+          <p className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-1">{assignment.semester || 'Devoir'}</p>
+          <h3 className="font-semibold text-slate-800 text-sm leading-snug">{assignment.course}</h3>
         </div>
-        <p className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-1">{assignment.semester || 'Devoir'}</p>
-        <h3 className="font-semibold text-slate-800 text-sm leading-snug">{assignment.course}</h3>
+        <button
+          onClick={() => { if (!isSubmitted) handleSubmitAssignment(assignment); }}
+          disabled={isSubmitted}
+          className={`mt-4 w-full px-4 py-2 rounded-xl transition-colors text-sm font-medium ${
+            isSubmitted
+              ? 'bg-blue-50 text-blue-400 cursor-default border border-blue-100'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {isSubmitted ? 'Devoir remis ✓' : 'Rendre le devoir'}
+        </button>
       </div>
-      <button
-        onClick={() => handleSubmitAssignment(assignment)}
-        className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium"
-      >
-        Rendre le devoir
-      </button>
-    </div>
-  );
+    );
+  };
 
   const _AssignmentItem: React.FC<AssignmentItemProps> = ({ assignment }) => (
     <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-sm transition-all duration-200">
@@ -1197,7 +1245,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       setSubmissionFile(null);
       setSubmissionTitle('');
       setSubmissionComments('');
-      
+
+      // Marquer le devoir comme rendu
+      const newSubmitted = new Set(submittedAssignmentIds);
+      newSubmitted.add(selectedAssignment.id);
+      setSubmittedAssignmentIds(newSubmitted);
+      if (studentInfo?.id) {
+        localStorage.setItem(`submitted_assignments_${studentInfo.id}`, JSON.stringify(Array.from(newSubmitted)));
+      }
+
       // Fermer le modal après 2 secondes
       setTimeout(() => {
         setIsSubmissionModalOpen(false);
@@ -1842,10 +1898,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
             <div className="flex items-center justify-between mb-8">
               <div>
                 <p className="text-[11px] font-semibold tracking-widest text-slate-400 uppercase mb-1">
-                  {activeTab === 'dashboard' ? 'Tableau de bord' :
-                   activeTab === 'courses' ? 'Mes cours' :
+                  {activeTab === 'dashboard'   ? 'Tableau de bord' :
+                   activeTab === 'courses'     ? 'Mes cours' :
                    activeTab === 'assignments' ? 'Devoirs' :
-                   activeTab === 'profile' ? 'Profil' : 'Paramètres'}
+                   activeTab === 'scolarite'   ? 'Ma scolarité' :
+                   activeTab === 'profile'     ? 'Profil' : 'Paramètres'}
                 </p>
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                   Bonjour, {(studentInfo?.nom_complet || studentName).split(' ')[0]} 👋
@@ -1888,7 +1945,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   <StatCard
                     icon={ClipboardCheck}
                     title="Devoirs à rendre"
-                    value={getAccessibleAssignments().filter(a => a.status === 'À rendre').length.toString()}
+                    value={getAccessibleAssignments().filter(a => !submittedAssignmentIds.has(a.id)).length.toString()}
                     subtitle={studentProfile.studyYear === 1 ? "S1 + S2" : "S1 + S2 + S3"}
                     color="bg-orange-500"
                   />
@@ -1939,27 +1996,43 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                             </span>
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {semestre.cours.slice(0, 6).map((cours) => (
-                                  <div key={cours.fichier} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between mb-2">
-                                      <div className="flex-1">
-                                        <p className="font-medium text-slate-900 dark:text-white text-sm leading-relaxed">{cours.nom}</p>
-                                      </div>
+                            {semestre.cours.slice(0, 6).map((cours) => {
+                              const pdfUrl = `/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${encodeURIComponent(normalizeFileNameForUrl(cours.fichier))}`;
+                              return (
+                                <div key={cours.fichier} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:border-blue-200 hover:shadow-md transition-all duration-200">
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                                        PDF disponible
-                                      </span>
-                                      <a
-                                        href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${encodeURIComponent(normalizeFileNameForUrl(cours.fichier))}`}
-                                        download={cours.fichier}
-                                        className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors font-medium"
-                                      >
-                                        Télécharger
-                                      </a>
-                                    </div>
+                                    <p className="font-medium text-slate-900 dark:text-white text-sm leading-snug">{cours.nom}</p>
                                   </div>
-                                ))}
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => setPdfViewer({ url: pdfUrl, name: cours.nom })}
+                                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      </svg>
+                                      Lire
+                                    </button>
+                                    <a
+                                      href={pdfUrl}
+                                      download={cours.fichier}
+                                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 text-xs rounded-lg hover:bg-slate-200 transition-colors font-medium"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                      </svg>
+                                      Télécharger
+                                    </a>
+                                  </div>
+                                </div>
+                              );
+                            })}
                               </div>
                               {semestre.cours.length > 6 && (
                                 <p className="text-center mt-3 text-sm text-slate-600 dark:text-slate-400">
@@ -2046,30 +2119,48 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                             </span>
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {semestre.cours.map((cours) => (
-                              <div key={cours.fichier} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-                                <div className="flex items-start justify-between mb-3">
-                                  <div className="flex-1">
-                                    <p className="font-medium text-slate-900 dark:text-white text-sm leading-relaxed">{cours.nom}</p>
-                                    {cours.professeur && (
-                                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{cours.professeur}</p>
-                                    )}
+                            {semestre.cours.map((cours) => {
+                              const pdfUrl = `/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${encodeURIComponent(normalizeFileNameForUrl(cours.fichier))}`;
+                              return (
+                                <div key={cours.fichier} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:border-blue-200 hover:shadow-md transition-all duration-200">
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-slate-900 dark:text-white text-sm leading-snug">{cours.nom}</p>
+                                      {cours.professeur && (
+                                        <p className="text-xs text-slate-400 mt-0.5">{cours.professeur}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => setPdfViewer({ url: pdfUrl, name: cours.nom })}
+                                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      </svg>
+                                      Lire
+                                    </button>
+                                    <a
+                                      href={pdfUrl}
+                                      download={cours.fichier}
+                                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-600 text-xs rounded-lg hover:bg-slate-200 transition-colors font-medium"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                      </svg>
+                                      Télécharger
+                                    </a>
                                   </div>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                                    Fichier PDF disponible
-                                  </span>
-                                  <a
-                                    href={`/cours/${semestre.semestre.toLowerCase().replace(/ /g, '')}/${encodeURIComponent(normalizeFileNameForUrl(cours.fichier))}`}
-                                    download={cours.fichier}
-                                    className="px-3 py-2 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors font-medium"
-                                  >
-                                    Télécharger
-                                  </a>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       ))}
@@ -2126,74 +2217,48 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     </div>
 
                     {/* Filtres */}
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 mb-6">
-                      <div className="flex flex-wrap gap-2">
-                        <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {[
+                        { id: 'all',       label: 'Tous',     count: getAccessibleAssignments().length, active: 'bg-slate-800 text-white', inactive: 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300' },
+                        { id: 'pending',   label: 'À rendre', count: getAccessibleAssignments().filter(a => !submittedAssignmentIds.has(a.id)).length, active: 'bg-orange-500 text-white', inactive: 'bg-white border border-slate-200 text-orange-500 hover:border-orange-200' },
+                        { id: 'submitted', label: 'Rendus',   count: submittedAssignmentIds.size, active: 'bg-blue-600 text-white', inactive: 'bg-white border border-slate-200 text-blue-600 hover:border-blue-200' },
+                        { id: 'graded',    label: 'Notés',    count: getAccessibleAssignments().filter(a => a.status === 'Noté').length, active: 'bg-green-600 text-white', inactive: 'bg-white border border-slate-200 text-green-600 hover:border-green-200' },
+                      ].map(f => (
+                        <ClickSpark key={f.id} sparkColor="#ffffff" sparkSize={4} sparkRadius={10} sparkCount={6}>
                           <button
-                            onClick={() => setAssignmentFilter('all')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              assignmentFilter === 'all'
-                                ? 'bg-slate-900 text-white'
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                            }`}
+                            onClick={() => setAssignmentFilter(f.id as typeof assignmentFilter)}
+                            className={`flex items-center gap-2 pl-3 pr-2.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shadow-sm ${assignmentFilter === f.id ? f.active : f.inactive}`}
                           >
-                            Tous ({getAccessibleAssignments().length})
+                            {f.label}
+                            <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${assignmentFilter === f.id ? 'bg-white/20' : 'bg-slate-100 text-slate-500'}`}>
+                              {f.count}
+                            </span>
                           </button>
                         </ClickSpark>
-                        <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
-                          <button
-                            onClick={() => setAssignmentFilter('pending')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              assignmentFilter === 'pending'
-                                ? 'bg-red-600 text-white'
-                                : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/30'
-                            }`}
-                          >
-                            À rendre ({getAccessibleAssignments().filter(a => a.status === 'À rendre').length})
-                          </button>
-                        </ClickSpark>
-                        <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
-                          <button
-                            onClick={() => setAssignmentFilter('submitted')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              assignmentFilter === 'submitted'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/30'
-                            }`}
-                          >
-                            Rendus ({getAccessibleAssignments().filter(a => a.status === 'Rendu').length})
-                          </button>
-                        </ClickSpark>
-                        <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
-                          <button
-                            onClick={() => setAssignmentFilter('graded')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              assignmentFilter === 'graded'
-                                ? 'bg-green-600 text-white'
-                                : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
-                            }`}
-                          >
-                            Notés ({getAccessibleAssignments().filter(a => a.status === 'Noté').length})
-                          </button>
-                        </ClickSpark>
-                      </div>
+                      ))}
                     </div>
 
-                    {/* Statistiques */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">Total</p>
-                            <p className="text-2xl font-bold text-slate-900">{getAccessibleAssignments().length}</p>
+                    {/* Barre de progression générale */}
+                    {(() => {
+                      const total = getAccessibleAssignments().length;
+                      const submitted = submittedAssignmentIds.size;
+                      const pct = total > 0 ? Math.round((submitted / total) * 100) : 0;
+                      return (
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 mb-6">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-semibold text-slate-700">Progression générale</p>
+                            <span className="text-sm font-bold text-blue-600">{submitted} / {total} rendus</span>
                           </div>
-                          <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-slate-600" />
+                          <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div
+                              className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%` }}
+                            />
                           </div>
+                          <p className="text-xs text-slate-400 mt-1.5">{pct}% complété</p>
                         </div>
-                      </div>
-
-                    </div>
+                      );
+                    })()}
 
                     {/* Liste des devoirs */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -2214,6 +2279,219 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   </div>
                 )}
                 
+                {activeTab === 'scolarite' && (
+                  <div className="space-y-6">
+
+                    {/* Statut global */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                          <BadgeCheck className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase mb-1">Statut d'inscription</p>
+                          <h2 className="text-xl font-bold text-slate-900 leading-tight">Inscrit(e) — Actif</h2>
+                          <p className="text-sm text-slate-400 mt-0.5">Année académique {studentInfo?.annee_academique || '2024–2025'}</p>
+                        </div>
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          Actif
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Infos académiques */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {[
+                        { icon: GraduationCap, label: 'Programme', value: 'MR-MRTDDEFTP', sub: 'Technopédagogie & EFTP', color: 'bg-blue-50 text-blue-600' },
+                        { icon: Calendar,      label: 'Année d\'étude', value: studentInfo?.niveau || '1ère année', sub: studentInfo?.annee_academique || '2024–2025', color: 'bg-purple-50 text-purple-600' },
+                        { icon: Award,         label: 'Matricule', value: studentInfo?.matricule || '—', sub: studentInfo?.email || '', color: 'bg-orange-50 text-orange-600' },
+                      ].map(({ icon: Icon, label, value, sub, color }) => (
+                        <div key={label} className="bg-white rounded-2xl border border-slate-200 p-5">
+                          <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center mb-3`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+                          <p className="font-semibold text-slate-900 text-sm">{value}</p>
+                          {sub && <p className="text-xs text-slate-400 truncate mt-0.5">{sub}</p>}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Paiements — 2 types */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Scolarité */}
+                      {(() => {
+                        const paid = payments.some(p => p.type === 'scolarite' && p.status === 'approved');
+                        return (
+                          <div className={`bg-white rounded-2xl border p-5 flex flex-col gap-4 ${paid ? 'border-green-200' : 'border-slate-200'}`}>
+                            <div className="flex items-start justify-between">
+                              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                <GraduationCap className="w-5 h-5 text-blue-600" />
+                              </div>
+                              {paid ? (
+                                <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" /> Payé
+                                </span>
+                              ) : (
+                                <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                  <Clock className="w-3 h-3" /> En attente
+                                </span>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase mb-1">Frais de scolarité</p>
+                              <p className="text-2xl font-bold text-slate-900">451 500 <span className="text-base font-semibold text-slate-400">FCFA</span></p>
+                              <p className="text-xs text-slate-400 mt-0.5">{studentInfo?.annee_academique || '2024–2025'}</p>
+                            </div>
+                            {!paid ? (
+                              <FedaPayButton
+                                paymentType="scolarite"
+                                amount={451500}
+                                description={`Frais de scolarité MR-MRTDDEFTP — ${studentInfo?.annee_academique || '2024–2025'}`}
+                                studentEmail={studentInfo?.email || ''}
+                                studentName={studentInfo?.nom_complet || studentName}
+                                studentId={studentInfo?.id}
+                                matricule={studentInfo?.matricule}
+                                onSuccess={() => { getStudentPayments(studentInfo!.email).then(setPayments); }}
+                                onError={(msg) => alert(msg)}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                              >
+                                <CreditCard className="w-4 h-4" />
+                                Payer maintenant
+                              </FedaPayButton>
+                            ) : (
+                              <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
+                                <CheckCircle className="w-4 h-4" /> Scolarité réglée
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Laboratoire */}
+                      {(() => {
+                        const paid = payments.some(p => p.type === 'laboratoire' && p.status === 'approved');
+                        return (
+                          <div className={`bg-white rounded-2xl border p-5 flex flex-col gap-4 ${paid ? 'border-green-200' : 'border-slate-200'}`}>
+                            <div className="flex items-start justify-between">
+                              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                                <Award className="w-5 h-5 text-purple-600" />
+                              </div>
+                              {paid ? (
+                                <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" /> Payé
+                                </span>
+                              ) : (
+                                <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                                  <Clock className="w-3 h-3" /> En attente
+                                </span>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase mb-1">Frais de laboratoire</p>
+                              <p className="text-2xl font-bold text-slate-900">200 000 <span className="text-base font-semibold text-slate-400">FCFA</span></p>
+                              <p className="text-xs text-slate-400 mt-0.5">{studentInfo?.annee_academique || '2024–2025'}</p>
+                            </div>
+                            {!paid ? (
+                              <FedaPayButton
+                                paymentType="laboratoire"
+                                amount={200000}
+                                description={`Frais de laboratoire MR-MRTDDEFTP — ${studentInfo?.annee_academique || '2024–2025'}`}
+                                studentEmail={studentInfo?.email || ''}
+                                studentName={studentInfo?.nom_complet || studentName}
+                                studentId={studentInfo?.id}
+                                matricule={studentInfo?.matricule}
+                                onSuccess={() => { getStudentPayments(studentInfo!.email).then(setPayments); }}
+                                onError={(msg) => alert(msg)}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                              >
+                                <CreditCard className="w-4 h-4" />
+                                Payer maintenant
+                              </FedaPayButton>
+                            ) : (
+                              <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
+                                <CheckCircle className="w-4 h-4" /> Laboratoire réglé
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Historique des paiements */}
+                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-slate-400" />
+                          Historique des transactions
+                        </h3>
+                        {paymentsLoading && <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400" />}
+                      </div>
+                      {payments.length === 0 && !paymentsLoading ? (
+                        <div className="px-6 py-8 text-center">
+                          <p className="text-sm text-slate-400">Aucune transaction enregistrée pour le moment.</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-slate-100">
+                          {payments.map(p => (
+                            <div key={p.id} className="px-6 py-4 flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                {p.status === 'approved' ? (
+                                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                ) : p.status === 'pending' ? (
+                                  <Clock className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                                ) : (
+                                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                                )}
+                                <div>
+                                  <p className="text-sm font-medium text-slate-800">{p.description}</p>
+                                  <p className="text-xs text-slate-400">
+                                    {new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                    {p.fedapay_reference && ` · Réf. ${p.fedapay_reference}`}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 flex-shrink-0">
+                                <span className="text-sm font-semibold text-slate-900">{p.amount.toLocaleString('fr-FR')} FCFA</span>
+                                {p.status === 'approved' ? (
+                                  <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">Approuvé</span>
+                                ) : p.status === 'pending' ? (
+                                  <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">En attente</span>
+                                ) : p.status === 'declined' ? (
+                                  <span className="text-xs font-medium text-red-600 bg-red-50 px-2.5 py-1 rounded-full">Refusé</span>
+                                ) : (
+                                  <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">Annulé</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Contact administration */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-4">
+                      <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <MessageSquare className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-blue-900 mb-0.5">Une question sur votre scolarité ?</p>
+                        <p className="text-xs text-blue-700 mb-3">Contactez l'administration pour toute demande concernant vos frais, votre statut ou votre dossier.</p>
+                        <div className="flex flex-wrap gap-2">
+                          <a href="mailto:gnonlonfoun@ensetmasters.org" className="flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-white border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+                            <EmailIcon /> Email
+                          </a>
+                          <a href="https://wa.me/22901097565871" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-white border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors">
+                            <WhatsAppIcon /> WhatsApp
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
                 {activeTab === 'profile' && (
                   <ProfileSection />
                 )}
@@ -2222,7 +2500,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   <SettingsSection />
                 )}
 
-                {activeTab !== 'courses' && activeTab !== 'assignments' && activeTab !== 'profile' && activeTab !== 'settings' && (
+                {activeTab !== 'courses' && activeTab !== 'assignments' && activeTab !== 'scolarite' && activeTab !== 'profile' && activeTab !== 'settings' && (
                   <div className="bg-white rounded-2xl p-8 border border-slate-200">
                     <p className="text-slate-600">Contenu de l'onglet "{activeTab}" à développer...</p>
                   </div>
@@ -2387,6 +2665,46 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── Lecteur PDF inline ── */}
+        {pdfViewer && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-[#1e1e2e]">
+            {/* Barre de titre */}
+            <div className="flex items-center gap-3 px-4 h-13 bg-[#16162a] border-b border-white/10 flex-shrink-0" style={{ height: '52px' }}>
+              <div className="w-8 h-8 rounded-lg bg-blue-600/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p className="flex-1 text-sm font-medium text-white/90 truncate">{pdfViewer.name}</p>
+              <a
+                href={pdfViewer.url}
+                download
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors flex-shrink-0"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Télécharger
+              </a>
+              <button
+                onClick={() => setPdfViewer(null)}
+                className="ml-1 p-1.5 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
+                title="Fermer"
+              >
+                <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {/* Iframe */}
+            <iframe
+              src={`${pdfViewer.url}#toolbar=1&navpanes=1&scrollbar=1`}
+              className="flex-1 w-full border-none"
+              title={pdfViewer.name}
+            />
           </div>
         )}
 
