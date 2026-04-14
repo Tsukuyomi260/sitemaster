@@ -1401,3 +1401,63 @@ export async function promoteStudents(studentEmails: string[]) {
     throw error;
   }
 } 
+// ─── Paiements FedaPay ───────────────────────────────────────────────────────
+
+export interface PaymentRecord {
+  id: string;
+  student_id?: string;
+  student_email: string;
+  student_name: string;
+  matricule?: string;
+  type: 'scolarite' | 'laboratoire';
+  amount: number;
+  description: string;
+  status: 'pending' | 'approved' | 'declined' | 'cancelled';
+  fedapay_transaction_id?: string;
+  fedapay_reference?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function createPayment(data: Omit<PaymentRecord, 'id' | 'created_at' | 'updated_at'>): Promise<PaymentRecord> {
+  // Exclure student_id : uuid Supabase incompatible avec l'id étudiant (email/int)
+  // student_email suffit comme identifiant unique.
+  const { student_id: _ignored, ...insertData } = data;
+  const { data: record, error } = await supabase
+    .from('payments')
+    .insert([insertData])
+    .select()
+    .single();
+  if (error) throw error;
+  return record;
+}
+
+export async function updatePaymentStatus(
+  id: string,
+  update: { status: string; fedapay_transaction_id?: string; fedapay_reference?: string }
+): Promise<void> {
+  const { error } = await supabase
+    .from('payments')
+    .update({ ...update, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function getStudentPayments(studentEmail: string): Promise<PaymentRecord[]> {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('student_email', studentEmail)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getAllPayments(): Promise<PaymentRecord[]> {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
