@@ -3,16 +3,17 @@ import SplitText from './SplitText';
 import ClickSpark from './ClickSpark';
 import RollingGallery from './RollingGallery';
 import {
-  X, Mail, Phone, BookOpen, Users, Globe,
+  X, Mail, Phone, BookOpen, Users, ShoppingBag,
   Settings, Calendar, GraduationCap, ArrowRight,
   Clock, Layers, Hotel, FlaskConical
 } from 'lucide-react';
 
 interface MasterSelectionProps {
   onMasterSelect: (master: string) => void;
+  onNavigate?: (page: string) => void;
 }
 
-const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => {
+const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect, onNavigate }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -56,7 +57,7 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
     { icon: <Calendar className="w-4 h-4" />, label: 'Événements', description: 'Conférences et séminaires' },
     { icon: <BookOpen className="w-4 h-4" />, label: 'Programmes', description: 'Découvrir nos formations' },
     { icon: <Users className="w-4 h-4" />, label: 'Équipe', description: 'Notre corps enseignant' },
-    { icon: <Globe className="w-4 h-4" />, label: 'Campus', description: 'Visiter notre campus' },
+    { icon: <ShoppingBag className="w-4 h-4" />, label: 'Notre e-boutique', description: 'Produits officiels ENSET' },
     { icon: <Settings className="w-4 h-4" />, label: 'Services', description: 'Nos services étudiants' },
   ];
 
@@ -121,11 +122,14 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
 
         <div className="flex-1 overflow-y-auto p-4 space-y-1">
           {menuItems.map((item, i) => (
-            <a
+            <button
               key={i}
-              href={`#${item.label.toLowerCase()}`}
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group"
+              onClick={() => {
+                setIsMenuOpen(false);
+                if (item.label === 'Notre e-boutique') onNavigate?.('shop');
+                if (item.label === 'Équipe') onNavigate?.('team');
+              }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group text-left"
             >
               <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-slate-200 transition-colors flex-shrink-0">
                 {item.icon}
@@ -134,7 +138,7 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect }) => 
                 <p className="text-sm font-medium text-slate-800">{item.label}</p>
                 <p className="text-xs text-slate-400">{item.description}</p>
               </div>
-            </a>
+            </button>
           ))}
         </div>
 
