@@ -246,11 +246,13 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   console.log('StudentDashboard - studentName:', studentName); // Debug
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [watchedVideos, setWatchedVideos] = useState<Set<string>>(new Set());
   const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'submitted' | 'graded'>('all');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [savedPhone, setSavedPhone] = useState<string | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
@@ -290,6 +292,14 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
           setSubmittedAssignmentIds(new Set(JSON.parse(saved)));
         }
       } catch {}
+    }
+
+    // Charger photo et téléphone depuis localStorage
+    if (studentInfo?.email) {
+      const savedPhotoVal = localStorage.getItem(`profile_photo_${studentInfo.email}`);
+      if (savedPhotoVal) setProfilePhoto(savedPhotoVal);
+      const savedPhoneVal = localStorage.getItem(`profile_phone_${studentInfo.email}`);
+      if (savedPhoneVal) setSavedPhone(savedPhoneVal);
     }
 
     // Debug: Afficher les informations de l'étudiant
@@ -349,7 +359,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     firstName: studentInfo?.nom_complet ? studentInfo.nom_complet.split(' ')[0] : 'Prénom',
     lastName: studentInfo?.nom_complet ? studentInfo.nom_complet.split(' ').slice(1).join(' ') : 'Nom',
     email: studentInfo?.email || 'email@example.com',
-    phone: studentInfo?.telephone || '+229 90 12 34 56',
+    phone: savedPhone || studentInfo?.telephone || '+229 90 12 34 56',
     matricule: studentInfo?.matricule || 'Matricule',
     yearOfStudy: studentInfo?.niveau || '2ème année',
     studyYear: studentInfo?.study_year || 1, // Valeur par défaut à 1 si non définie
@@ -1176,7 +1186,11 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setProfilePhoto(e.target?.result as string);
+        const dataUrl = e.target?.result as string;
+        setProfilePhoto(dataUrl);
+        if (studentInfo?.email) {
+          localStorage.setItem(`profile_photo_${studentInfo.email}`, dataUrl);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -1342,7 +1356,12 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     };
 
     const handleSaveProfile = () => {
-      // Ici on pourrait sauvegarder les données
+      if (studentInfo?.email) {
+        if (formData.phone) {
+          localStorage.setItem(`profile_phone_${studentInfo.email}`, formData.phone);
+          setSavedPhone(formData.phone);
+        }
+      }
       setIsEditingProfile(false);
     };
 
@@ -1751,10 +1770,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4]">
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-slate-900">
 
       {/* ── Sidebar desktop ── */}
-      <div className="fixed left-0 top-0 h-full w-60 bg-white border-r border-slate-200 z-10 hidden md:flex flex-col">
+      <div className={`fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-10 hidden md:flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-60'}`}>
         {/* Logo */}
         <div className="px-5 py-5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -1784,25 +1803,56 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
           ))}
         </nav>
 
-        {/* User + logout */}
-        <div className="px-4 py-4 border-t border-slate-100">
-          <div className="flex items-center gap-2.5 mb-3 px-1">
-            <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-slate-500" />
+        {/* User + logout + theme + collapse */}
+        <div className="px-2 py-4 border-t border-slate-100 space-y-1">
+          {!isSidebarCollapsed && (
+            <div className="flex items-center gap-2.5 mb-2 px-2">
+              <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-slate-500" />
+              </div>
+              <div className="flex flex-col leading-none min-w-0">
+                <span className="text-sm font-medium text-slate-800 truncate">
+                  {studentInfo?.nom_complet || studentName}
+                </span>
+                <span className="text-[10px] text-slate-400">Étudiant Master</span>
+              </div>
             </div>
-            <div className="flex flex-col leading-none min-w-0">
-              <span className="text-sm font-medium text-slate-800 truncate">
-                {studentInfo?.nom_complet || studentName}
-              </span>
-              <span className="text-[10px] text-slate-400">Étudiant Master</span>
-            </div>
-          </div>
+          )}
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
+            title={isSidebarCollapsed ? 'Déconnexion' : undefined}
+            className={`w-full flex items-center rounded-xl transition-all duration-200 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 ${isSidebarCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2 px-3 py-2'}`}
           >
             <LogOut className="w-4 h-4" />
-            <span>Déconnexion</span>
+            {!isSidebarCollapsed && <span>Déconnexion</span>}
+          </button>
+          {/* Toggle thème */}
+          <button
+            onClick={() => handleThemeChange(settings.theme === 'dark' ? 'light' : 'dark')}
+            title={settings.theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
+            className={`w-full flex items-center rounded-xl transition-all duration-200 text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-50 ${isSidebarCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2 px-3 py-2'}`}
+          >
+            {settings.theme === 'dark' ? (
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+            {!isSidebarCollapsed && <span>{settings.theme === 'dark' ? 'Mode clair' : 'Mode sombre'}</span>}
+          </button>
+          {/* Collapse */}
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            title={isSidebarCollapsed ? 'Agrandir' : 'Réduire'}
+            className={`w-full flex items-center rounded-xl transition-all duration-200 text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-50 ${isSidebarCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2 px-3 py-2'}`}
+          >
+            <svg className={`w-4 h-4 flex-shrink-0 transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            </svg>
+            {!isSidebarCollapsed && <span>Réduire</span>}
           </button>
         </div>
       </div>
@@ -1888,7 +1938,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       )}
 
       {/* ── Main Content ── */}
-      <div className="md:ml-60 pt-14 md:pt-0">
+      <div className={`md:pt-0 pt-14 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-60'}`}>
         <div className="px-5 py-6 max-w-6xl">
         {selectedCourse ? (
           <CourseDetail course={selectedCourse} onBack={handleBackToDashboard} />
