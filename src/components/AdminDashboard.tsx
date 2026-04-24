@@ -817,7 +817,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   };
 
   const handleDeleteArticle = async (id: string) => {
-    if (!confirm('Supprimer cet article ?')) return;
+    if (!window.confirm('Supprimer cet article ?')) return;
     await deleteBlogArticle(id).catch(console.error);
     reloadBlogArticles();
   };
