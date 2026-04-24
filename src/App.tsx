@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import MasterSelection from './components/MasterSelection';
 import ShopPage from './components/ShopPage';
 import TeamPage from './components/TeamPage';
+import BlogPage from './components/BlogPage';
+import ArticlePage from './components/ArticlePage';
 import LoginInterface from './components/LoginInterface';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
@@ -21,7 +23,8 @@ function App() {
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMaster, setSelectedMaster] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<'home' | 'shop' | 'team'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'shop' | 'team' | 'blog' | 'article'>('home');
+  const [selectedArticleSlug, setSelectedArticleSlug] = useState<string>('');
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
 
@@ -148,7 +151,12 @@ function App() {
   };
 
   const handleNavigate = (page: string) => {
-    if (page === 'shop' || page === 'team') setCurrentPage(page);
+    if (page === 'shop' || page === 'team' || page === 'blog') {
+      setCurrentPage(page as any);
+    } else if (page.startsWith('article:')) {
+      setSelectedArticleSlug(page.slice(8));
+      setCurrentPage('article');
+    }
   };
 
   const handleLogout = async () => {
@@ -265,6 +273,10 @@ function App() {
           <ShopPage onBack={() => setCurrentPage('home')} />
         ) : currentPage === 'team' ? (
           <TeamPage onBack={() => setCurrentPage('home')} />
+        ) : currentPage === 'blog' ? (
+          <BlogPage onBack={() => setCurrentPage('home')} onReadArticle={slug => handleNavigate(`article:${slug}`)} />
+        ) : currentPage === 'article' ? (
+          <ArticlePage slug={selectedArticleSlug} onBack={() => setCurrentPage('blog')} />
         ) : (
           <MasterSelection onMasterSelect={handleMasterSelect} onNavigate={handleNavigate} />
         )}

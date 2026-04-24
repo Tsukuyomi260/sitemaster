@@ -675,35 +675,22 @@ export async function createAdmin(email: string, password: string) {
 }
 
 // Créer un nouvel enseignant
-export async function createTeacher(email: string, password: string) {
-  try {
-    // Créer l'utilisateur dans auth.users
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true
-    });
+export async function createTeacher(email: string, password: string, nom_complet?: string) {
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { role: 'teacher', nom_complet: nom_complet || null } }
+  });
+  if (authError) throw authError;
+  if (!authData.user) throw new Error('Création du compte échouée');
 
-    if (authError) throw authError;
+  // Fallback : force le bon rôle si le trigger a inscrit 'student' par défaut
+  await supabase
+    .from('profiles')
+    .update({ role: 'teacher', nom_complet: nom_complet || null })
+    .eq('id', authData.user.id);
 
-    // Ajouter le rôle teacher dans profiles
-    if (authData.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
-          email: email,
-          role: 'teacher'
-        });
-
-      if (profileError) throw profileError;
-    }
-
-    return authData.user;
-  } catch (error) {
-    console.error('Erreur lors de la création de l\'enseignant:', error);
-    throw error;
-  }
+  return authData.user;
 }
 
 // Assigner un cours à un enseignant
@@ -1460,4 +1447,215 @@ export async function getAllPayments(): Promise<PaymentRecord[]> {
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data || [];
+}
+
+// ─── Preuves de paiement ─────────────────────────────────────────────────────
+
+export interface PaymentProof {
+  id: string;
+  student_email: string;
+  student_name: string;
+  matricule?: string;
+  type: 'scolarite' | 'laboratoire';
+  proof_url: string;
+  uploaded_at: string;
+}
+
+export async function uploadPaymentProof(
+  file: File,
+  studentEmail: string,
+  studentName: string,
+  matricule: string | undefined,
+  type: 'scolarite' | 'laboratoire'
+): Promise<PaymentProof> {
+  const ext = file.name.split('.').pop() || 'png';
+  const path = `${type}/${studentEmail.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('payment-proofs')
+    .upload(path, file, { upsert: false });
+  if (uploadError) throw uploadError;
+
+  const { data: urlData } = supabase.storage
+    .from('payment-proofs')
+    .getPublicUrl(path);
+  const proof_url = urlData.publicUrl;
+
+  const { data: record, error: dbError } = await supabase
+    .from('payment_proofs')
+    .insert([{ student_email: studentEmail, student_name: studentName, matricule, type, proof_url }])
+    .select()
+    .single();
+  if (dbError) throw dbError;
+  return record;
+}
+
+export async function getStudentPaymentProofs(studentEmail: string): Promise<PaymentProof[]> {
+  const { data, error } = await supabase
+    .from('payment_proofs')
+    .select('*')
+    .eq('student_email', studentEmail)
+    .order('uploaded_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getAllPaymentProofs(): Promise<PaymentProof[]> {
+  const { data, error } = await supabase
+    .from('payment_proofs')
+    .select('*')
+    .order('uploaded_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  price: number;
+  category: string;
+  pages?: number;
+  edition?: string;
+  publisher?: string;
+  published_year?: number;
+  badge?: string;
+  cover_url?: string;
+  in_stock: boolean;
+  created_at: string;
+}
+
+export async function getAllBooksAdmin(): Promise<Book[]> {
+  const { data, error } = await supabase.from('books').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getBooks(): Promise<Book[]> {
+  const { data, error } = await supabase.from('books').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createBook(bookData: Omit<Book, 'id' | 'created_at'>, coverFile?: File): Promise<Book> {
+  let cover_url = bookData.cover_url;
+  if (coverFile) {
+    const ext = coverFile.name.split('.').pop();
+    const filePath = `covers/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('book-covers').upload(filePath, coverFile);
+    if (uploadError) throw uploadError;
+    cover_url = supabase.storage.from('book-covers').getPublicUrl(filePath).data.publicUrl;
+  }
+  const { data, error } = await supabase.from('books').insert([{ ...bookData, cover_url }]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateBook(id: string, bookData: Partial<Omit<Book, 'id' | 'created_at'>>, coverFile?: File): Promise<Book> {
+  let cover_url = bookData.cover_url;
+  if (coverFile) {
+    const ext = coverFile.name.split('.').pop();
+    const filePath = `covers/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('book-covers').upload(filePath, coverFile);
+    if (uploadError) throw uploadError;
+    cover_url = supabase.storage.from('book-covers').getPublicUrl(filePath).data.publicUrl;
+  }
+  const { data, error } = await supabase.from('books').update({ ...bookData, cover_url }).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteBook(id: string): Promise<void> {
+  const { error } = await supabase.from('books').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export interface BlogAuthor {
+  name: string;
+  affiliation?: string;
+  email?: string;
+}
+
+export interface BlogArticle {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  authors: BlogAuthor[];
+  abstract_fr?: string;
+  abstract_en?: string;
+  keywords_fr?: string[];
+  keywords_en?: string[];
+  content?: string;
+  cover_url?: string;
+  volume?: string;
+  issue_number?: string;
+  submitted_at?: string;
+  published_at?: string;
+  updated_at?: string;
+  status: 'draft' | 'published';
+  created_at?: string;
+}
+
+export async function getPublishedArticles(): Promise<BlogArticle[]> {
+  const { data, error } = await supabase
+    .from('blog_articles')
+    .select('*')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+  if (error) throw error;
+  return (data || []) as BlogArticle[];
+}
+
+export async function getAllBlogArticles(): Promise<BlogArticle[]> {
+  const { data, error } = await supabase
+    .from('blog_articles')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []) as BlogArticle[];
+}
+
+export async function getArticleBySlug(slug: string): Promise<BlogArticle | null> {
+  const { data, error } = await supabase
+    .from('blog_articles')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+  if (error) return null;
+  return data as BlogArticle;
+}
+
+export async function createBlogArticle(article: Omit<BlogArticle, 'id' | 'created_at' | 'updated_at'>, coverFile?: File): Promise<BlogArticle> {
+  let cover_url = article.cover_url;
+  if (coverFile) {
+    const ext = coverFile.name.split('.').pop();
+    const filePath = `articles/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('blog-covers').upload(filePath, coverFile);
+    if (uploadError) throw uploadError;
+    cover_url = supabase.storage.from('blog-covers').getPublicUrl(filePath).data.publicUrl;
+  }
+  const { data, error } = await supabase.from('blog_articles').insert([{ ...article, cover_url }]).select().single();
+  if (error) throw error;
+  return data as BlogArticle;
+}
+
+export async function updateBlogArticle(id: string, article: Partial<Omit<BlogArticle, 'id' | 'created_at'>>, coverFile?: File): Promise<BlogArticle> {
+  let cover_url = article.cover_url;
+  if (coverFile) {
+    const ext = coverFile.name.split('.').pop();
+    const filePath = `articles/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('blog-covers').upload(filePath, coverFile);
+    if (uploadError) throw uploadError;
+    cover_url = supabase.storage.from('blog-covers').getPublicUrl(filePath).data.publicUrl;
+  }
+  const { data, error } = await supabase.from('blog_articles').update({ ...article, cover_url }).eq('id', id).select().single();
+  if (error) throw error;
+  return data as BlogArticle;
+}
+
+export async function deleteBlogArticle(id: string): Promise<void> {
+  const { error } = await supabase.from('blog_articles').delete().eq('id', id);
+  if (error) throw error;
 }
