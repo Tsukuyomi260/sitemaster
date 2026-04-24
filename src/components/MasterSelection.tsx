@@ -5,7 +5,7 @@ import RollingGallery from './RollingGallery';
 import {
   X, Mail, Phone, BookOpen, Users, ShoppingBag,
   Settings, Calendar, GraduationCap, ArrowRight,
-  Clock, Layers, Hotel, FlaskConical
+  Clock, Layers, Hotel, FlaskConical, Newspaper
 } from 'lucide-react';
 
 interface MasterSelectionProps {
@@ -55,6 +55,7 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect, onNav
   const menuItems = [
     { icon: <GraduationCap className="w-4 h-4" />, label: 'Formations spéciales', description: 'Programmes personnalisés' },
     { icon: <Calendar className="w-4 h-4" />, label: 'Événements', description: 'Conférences et séminaires' },
+    { icon: <Newspaper className="w-4 h-4" />, label: 'Blog', description: 'EFTP/TVET Rev\' — Articles scientifiques' },
     { icon: <BookOpen className="w-4 h-4" />, label: 'Programmes', description: 'Découvrir nos formations' },
     { icon: <Users className="w-4 h-4" />, label: 'Équipe', description: 'Notre corps enseignant' },
     { icon: <ShoppingBag className="w-4 h-4" />, label: 'Notre e-boutique', description: 'Produits officiels ENSET' },
@@ -128,6 +129,7 @@ const MasterSelection: React.FC<MasterSelectionProps> = ({ onMasterSelect, onNav
                 setIsMenuOpen(false);
                 if (item.label === 'Notre e-boutique') onNavigate?.('shop');
                 if (item.label === 'Équipe') onNavigate?.('team');
+                if (item.label === 'Blog') onNavigate?.('blog');
               }}
               className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group text-left"
             >

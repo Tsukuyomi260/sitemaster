@@ -21,7 +21,10 @@ import {
   Crown,
   FileText,
   X,
-  CreditCard
+  CreditCard,
+  ShoppingBag,
+  Newspaper,
+  Pencil
 } from 'lucide-react';
 import {
   getAllSubmissions,
@@ -40,7 +43,19 @@ import {
   demoteStudent,
   getStudentsWithStudyYear,
   getAllPayments,
-  PaymentRecord
+  PaymentRecord,
+  getAllPaymentProofs,
+  PaymentProof,
+  Book as BookType,
+  getAllBooksAdmin,
+  createBook,
+  updateBook,
+  deleteBook,
+  BlogArticle,
+  getAllBlogArticles,
+  createBlogArticle,
+  updateBlogArticle,
+  deleteBlogArticle
 } from '../api';
 
 interface AdminDashboardProps {
@@ -76,6 +91,7 @@ interface Teacher {
   email: string;
   role: string;
   created_at: string;
+  nom_complet?: string;
   blocked?: boolean;
 }
 
@@ -89,6 +105,7 @@ interface CourseAssignment {
   teachers?: {
     email: string;
     role: string;
+     nom_complet?: string;
   };
 }
 
@@ -137,6 +154,43 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [proofs, setProofs] = useState<PaymentProof[]>([]);
+  const [proofsLoading, setProofsLoading] = useState(false);
+  const [adminBooks, setAdminBooks] = useState<BookType[]>([]);
+  const [booksLoading, setBooksLoading] = useState(false);
+  const [showBookModal, setShowBookModal] = useState(false);
+  const [editingBook, setEditingBook] = useState<BookType | null>(null);
+  const [bookCoverFile, setBookCoverFile] = useState<File | null>(null);
+  const [bookCoverPreview, setBookCoverPreview] = useState('');
+  const [bookForm, setBookForm] = useState({ title: '', author: '', description: '', price: 0, category: 'pedagogie', pages: '', edition: '', publisher: '', published_year: '', badge: '', in_stock: true });
+  const [bookError, setBookError] = useState('');
+  const [bookSaving, setBookSaving] = useState(false);
+  const [bookSearch, setBookSearch] = useState('');
+
+  // Blog states
+  const [blogArticles, setBlogArticles] = useState<BlogArticle[]>([]);
+  const [blogLoading, setBlogLoading] = useState(false);
+  const [showArticleModal, setShowArticleModal] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<BlogArticle | null>(null);
+  const [articleStep, setArticleStep] = useState(1);
+  const [articleCoverFile, setArticleCoverFile] = useState<File | null>(null);
+  const [articleCoverPreview, setArticleCoverPreview] = useState<string>('');
+  const [articleError, setArticleError] = useState('');
+  const [articleSaving, setArticleSaving] = useState(false);
+  const [articleForm, setArticleForm] = useState<{
+    title: string; slug: string; category: string; volume: string; issue_number: string;
+    status: 'draft' | 'published';
+    authors: { name: string; affiliation: string; email: string }[];
+    abstract_fr: string; abstract_en: string;
+    keywords_fr: string; keywords_en: string;
+    content: string;
+    submitted_at: string; published_at: string;
+  }>({
+    title: '', slug: '', category: 'recherche', volume: '', issue_number: '',
+    status: 'draft', authors: [{ name: '', affiliation: '', email: '' }],
+    abstract_fr: '', abstract_en: '', keywords_fr: '', keywords_en: '',
+    content: '', submitted_at: '', published_at: '',
+  });
   const [globalStats, setGlobalStats] = useState<GlobalStats>({
     studentsCount: 0,
     teachersCount: 0,
@@ -173,6 +227,8 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [newTeacherEmail, setNewTeacherEmail] = useState('');
   const [newTeacherPassword, setNewTeacherPassword] = useState('');
+  const [newTeacherName, setNewTeacherName] = useState('');
+  const [createTeacherError, setCreateTeacherError] = useState('');
   const [selectedTeacherForCourse, setSelectedTeacherForCourse] = useState('');
   const [selectedCourseForAssignment, setSelectedCourseForAssignment] = useState('');
   const [messageTitle, setMessageTitle] = useState('');
@@ -224,6 +280,10 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         // Charger les paiements
         const paymentsData = await getAllPayments();
         setPayments(paymentsData || []);
+        const proofsData = await getAllPaymentProofs();
+        setProofs(proofsData || []);
+        const booksData = await getAllBooksAdmin();
+        setAdminBooks(booksData || []);
         
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
@@ -376,17 +436,19 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   };
 
   const handleCreateTeacher = async () => {
+    setCreateTeacherError('');
     try {
-      await createTeacher(newTeacherEmail, newTeacherPassword);
+      await createTeacher(newTeacherEmail, newTeacherPassword, newTeacherName);
       setNewTeacherEmail('');
       setNewTeacherPassword('');
+      setNewTeacherName('');
       setShowCreateTeacherModal(false);
       reloadTeachers();
-      // Mettre à jour les stats
       const stats = await getGlobalStats();
       setGlobalStats(stats);
-    } catch (error) {
-      console.error('Erreur lors de la création de l\'enseignant:', error);
+    } catch (error: any) {
+      console.error('Erreur création enseignant:', error);
+      setCreateTeacherError(error?.message || 'Erreur lors de la création. Vérifiez les informations.');
     }
   };
 
@@ -669,6 +731,163 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+
+  const slugify = (text: string) =>
+    text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  const resetArticleForm = () => {
+    setArticleForm({
+      title: '', slug: '', category: 'recherche', volume: '', issue_number: '',
+      status: 'draft', authors: [{ name: '', affiliation: '', email: '' }],
+      abstract_fr: '', abstract_en: '', keywords_fr: '', keywords_en: '',
+      content: '', submitted_at: '', published_at: '',
+    });
+    setArticleCoverFile(null);
+    setArticleCoverPreview('');
+    setArticleError('');
+    setArticleStep(1);
+    setEditingArticle(null);
+  };
+
+  const reloadBlogArticles = () => {
+    setBlogLoading(true);
+    getAllBlogArticles().then(setBlogArticles).catch(console.error).finally(() => setBlogLoading(false));
+  };
+
+  const openEditArticle = (article: BlogArticle) => {
+    setEditingArticle(article);
+    setArticleForm({
+      title: article.title,
+      slug: article.slug,
+      category: article.category,
+      volume: article.volume || '',
+      issue_number: article.issue_number || '',
+      status: article.status,
+      authors: article.authors.length > 0 ? article.authors.map(a => ({ name: a.name, affiliation: a.affiliation || '', email: a.email || '' })) : [{ name: '', affiliation: '', email: '' }],
+      abstract_fr: article.abstract_fr || '',
+      abstract_en: article.abstract_en || '',
+      keywords_fr: (article.keywords_fr || []).join(', '),
+      keywords_en: (article.keywords_en || []).join(', '),
+      content: article.content || '',
+      submitted_at: article.submitted_at ? article.submitted_at.slice(0, 10) : '',
+      published_at: article.published_at ? article.published_at.slice(0, 10) : '',
+    });
+    setArticleCoverPreview(article.cover_url || '');
+    setArticleError('');
+    setArticleStep(1);
+    setShowArticleModal(true);
+  };
+
+  const handleSaveArticle = async () => {
+    if (!articleForm.title.trim()) { setArticleError('Le titre est requis.'); return; }
+    if (!articleForm.authors[0]?.name.trim()) { setArticleError('Au moins un auteur est requis.'); return; }
+    setArticleSaving(true);
+    setArticleError('');
+    try {
+      const payload = {
+        title: articleForm.title.trim(),
+        slug: articleForm.slug.trim() || slugify(articleForm.title),
+        category: articleForm.category,
+        volume: articleForm.volume || undefined,
+        issue_number: articleForm.issue_number || undefined,
+        status: articleForm.status,
+        authors: articleForm.authors.filter(a => a.name.trim()).map(a => ({ name: a.name.trim(), affiliation: a.affiliation.trim() || undefined, email: a.email.trim() || undefined })),
+        abstract_fr: articleForm.abstract_fr || undefined,
+        abstract_en: articleForm.abstract_en || undefined,
+        keywords_fr: articleForm.keywords_fr ? articleForm.keywords_fr.split(',').map(k => k.trim()).filter(Boolean) : [],
+        keywords_en: articleForm.keywords_en ? articleForm.keywords_en.split(',').map(k => k.trim()).filter(Boolean) : [],
+        content: articleForm.content || undefined,
+        submitted_at: articleForm.submitted_at || undefined,
+        published_at: articleForm.published_at || (articleForm.status === 'published' ? new Date().toISOString() : undefined),
+      };
+      if (editingArticle) {
+        await updateBlogArticle(editingArticle.id, payload, articleCoverFile || undefined);
+      } else {
+        await createBlogArticle(payload as any, articleCoverFile || undefined);
+      }
+      reloadBlogArticles();
+      setShowArticleModal(false);
+      resetArticleForm();
+    } catch (e: any) {
+      setArticleError(e.message || 'Erreur lors de la sauvegarde.');
+    } finally {
+      setArticleSaving(false);
+    }
+  };
+
+  const handleDeleteArticle = async (id: string) => {
+    if (!confirm('Supprimer cet article ?')) return;
+    await deleteBlogArticle(id).catch(console.error);
+    reloadBlogArticles();
+  };
+
+  const resetBookForm = () => {
+    setBookForm({ title: '', author: '', description: '', price: 0, category: 'pedagogie', pages: '', edition: '', publisher: '', published_year: '', badge: '', in_stock: true });
+    setBookCoverFile(null);
+    setBookCoverPreview('');
+    setBookError('');
+  };
+
+  const reloadBooks = async () => {
+    setBooksLoading(true);
+    try { const d = await getAllBooksAdmin(); setAdminBooks(d || []); }
+    catch (e) { console.error(e); }
+    finally { setBooksLoading(false); }
+  };
+
+  const handleSaveBook = async () => {
+    if (!bookForm.title || !bookForm.author) { setBookError('Titre et auteur requis'); return; }
+    setBookError('');
+    setBookSaving(true);
+    try {
+      const data: Omit<BookType, 'id' | 'created_at'> = {
+        title: bookForm.title,
+        author: bookForm.author,
+        description: bookForm.description,
+        price: Number(bookForm.price),
+        category: bookForm.category,
+        pages: bookForm.pages ? Number(bookForm.pages) : undefined,
+        edition: bookForm.edition || undefined,
+        publisher: bookForm.publisher || undefined,
+        published_year: bookForm.published_year ? Number(bookForm.published_year) : undefined,
+        badge: bookForm.badge || undefined,
+        in_stock: bookForm.in_stock,
+        cover_url: bookCoverPreview && !bookCoverFile ? bookCoverPreview : undefined,
+      };
+      if (editingBook) await updateBook(editingBook.id, data, bookCoverFile || undefined);
+      else await createBook(data, bookCoverFile || undefined);
+      setShowBookModal(false);
+      await reloadBooks();
+    } catch (err: any) {
+      setBookError(err?.message || 'Erreur lors de la sauvegarde');
+    } finally {
+      setBookSaving(false);
+    }
+  };
+
+  const handleDeleteBook = async (id: string) => {
+    if (!window.confirm('Supprimer cet ouvrage définitivement ?')) return;
+    await deleteBook(id);
+    await reloadBooks();
+  };
+
+  const openEditBook = (book: BookType) => {
+    setEditingBook(book);
+    setBookForm({
+      title: book.title, author: book.author, description: book.description || '',
+      price: book.price, category: book.category,
+      pages: book.pages ? String(book.pages) : '',
+      edition: book.edition || '', publisher: book.publisher || '',
+      published_year: book.published_year ? String(book.published_year) : '',
+      badge: book.badge || '', in_stock: book.in_stock,
+    });
+    setBookCoverFile(null);
+    setBookCoverPreview(book.cover_url || '');
+    setBookError('');
+    setShowBookModal(true);
+  };
+
   const [notificationStudentSearch, setNotificationStudentSearch] = useState('');
   const [showStudentSuggestions, setShowStudentSuggestions] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<null | Student>(null);
@@ -768,6 +987,30 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
               <span>Devoirs rendus</span>
             </button>
             
+            <button
+              onClick={() => { setActiveTab('boutique'); reloadBooks(); }}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium ${
+                activeTab === 'boutique'
+                  ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'
+              }`}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              <span>E-Boutique</span>
+            </button>
+            
+            <button
+              onClick={() => { setActiveTab('blog'); reloadBlogArticles(); }}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium ${
+                activeTab === 'blog'
+                  ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:shadow-md'
+              }`}
+            >
+              <Newspaper className="w-5 h-5" />
+              <span>Blog</span>
+            </button>
+
             <button 
               onClick={() => setActiveTab('messages')} 
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium ${
@@ -823,6 +1066,8 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
           <button onClick={() => setActiveTab('courses')} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'courses' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Cours</button>
           <button onClick={() => { setActiveTab('submissions'); loadSubmissions(); }} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'submissions' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Devoirs</button>
           <button onClick={() => { setActiveTab('payments'); setPaymentsLoading(true); getAllPayments().then(setPayments).finally(() => setPaymentsLoading(false)); }} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'payments' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Paiements</button>
+          <button onClick={() => { setActiveTab('boutique'); reloadBooks(); }} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'boutique' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>E-Boutique</button>
+          <button onClick={() => { setActiveTab('blog'); reloadBlogArticles(); }} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'blog' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Blog</button>
           <button onClick={() => setActiveTab('messages')} className={`px-3 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${activeTab === 'messages' ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Messages</button>
         </div>
         
@@ -1371,10 +1616,10 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                                 </div>
                                 <div className="ml-4">
                                   <div className="text-sm font-medium text-slate-900 dark:text-white">
-                                    {teacher.email.length > 30 ? `${teacher.email.substring(0, 30)}...` : teacher.email}
+                                    {teacher.nom_complet || teacher.email}
                                   </div>
                                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                                    ID: {teacher.id.substring(0, 8)}...
+                                    {teacher.nom_complet ? teacher.email : `ID: ${teacher.id.substring(0, 8)}...`}
                                   </div>
                                 </div>
                               </div>
@@ -1390,6 +1635,16 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedTeacherForCourse(teacher.email);
+                                    setShowAssignCourseModal(true);
+                                  }}
+                                  className="flex items-center space-x-1 px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                                >
+                                  <BookOpen className="w-4 h-4" />
+                                  <span>Cours</span>
+                                </button>
                                 <button
                                   onClick={() => {
                                     setSelectedUser(teacher);
@@ -1867,24 +2122,22 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
           </div>
         )}
 
-        {/* Section Paiements */}
+        {/* Section Paiements — Preuves étudiants */}
         {activeTab === 'payments' && (() => {
-          const approvedScol = payments.filter(p => p.type === 'scolarite' && p.status === 'approved');
-          const approvedLabo = payments.filter(p => p.type === 'laboratoire' && p.status === 'approved');
-          const totalCollected = payments.filter(p => p.status === 'approved').reduce((s, p) => s + p.amount, 0);
-
+          const scolProofs = proofs.filter(p => p.type === 'scolarite');
+          const laboProofs = proofs.filter(p => p.type === 'laboratoire');
           return (
             <div className="space-y-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
                   <h2 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                     <CreditCard className="w-6 h-6 lg:w-8 lg:h-8 text-blue-600" />
-                    Paiements
+                    Preuves de paiement
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">Suivi des frais de scolarité et de laboratoire</p>
+                  <p className="text-slate-600 dark:text-slate-400 mt-1">Captures d'écran soumises par les étudiants</p>
                 </div>
                 <button
-                  onClick={() => { setPaymentsLoading(true); getAllPayments().then(setPayments).finally(() => setPaymentsLoading(false)); }}
+                  onClick={() => { setProofsLoading(true); getAllPaymentProofs().then(setProofs).finally(() => setProofsLoading(false)); }}
                   className="px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-colors font-medium flex items-center gap-2 text-sm"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -1895,83 +2148,421 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
               {/* Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Total collecté</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalCollected.toLocaleString('fr-FR')} <span className="text-base font-normal text-slate-400">FCFA</span></p>
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Total preuves</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{proofs.length}</p>
                 </div>
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Scolarités approuvées</p>
-                  <p className="text-2xl font-bold text-blue-600">{approvedScol.length}</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Scolarités reçues</p>
+                  <p className="text-2xl font-bold text-blue-600">{scolProofs.length}</p>
                 </div>
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Labos approuvés</p>
-                  <p className="text-2xl font-bold text-purple-600">{approvedLabo.length}</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Labos reçus</p>
+                  <p className="text-2xl font-bold text-purple-600">{laboProofs.length}</p>
                 </div>
               </div>
 
-              {/* Tableau */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                {paymentsLoading ? (
-                  <div className="flex items-center justify-center py-12 gap-3">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-900 dark:border-white" />
-                    <span className="text-slate-500 dark:text-slate-400">Chargement…</span>
-                  </div>
-                ) : payments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-slate-400">Aucun paiement enregistré.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
-                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Étudiant</th>
-                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                          <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Montant</th>
-                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
-                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Réf. FedaPay</th>
-                          <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                        {payments.map(p => (
-                          <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                            <td className="px-5 py-3">
-                              <p className="font-medium text-slate-900 dark:text-white">{p.student_name}</p>
-                              <p className="text-xs text-slate-400">{p.student_email}</p>
-                            </td>
-                            <td className="px-5 py-3">
-                              <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${p.type === 'scolarite' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
-                                {p.type === 'scolarite' ? 'Scolarité' : 'Laboratoire'}
-                              </span>
-                            </td>
-                            <td className="px-5 py-3 text-right font-semibold text-slate-900 dark:text-white">
-                              {p.amount.toLocaleString('fr-FR')} F
-                            </td>
-                            <td className="px-5 py-3">
-                              {p.status === 'approved' ? (
-                                <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">Approuvé</span>
-                              ) : p.status === 'pending' ? (
-                                <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">En attente</span>
-                              ) : p.status === 'declined' ? (
-                                <span className="text-xs font-medium text-red-600 bg-red-50 px-2.5 py-1 rounded-full">Refusé</span>
-                              ) : (
-                                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">Annulé</span>
-                              )}
-                            </td>
-                            <td className="px-5 py-3 text-xs text-slate-400 font-mono">{p.fedapay_reference || '—'}</td>
-                            <td className="px-5 py-3 text-xs text-slate-400">
-                              {new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+              {/* Grille de preuves */}
+              {proofsLoading ? (
+                <div className="flex items-center justify-center py-12 gap-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-900 dark:border-white" />
+                  <span className="text-slate-500 dark:text-slate-400">Chargement…</span>
+                </div>
+              ) : proofs.length === 0 ? (
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-center py-12">
+                  <p className="text-slate-400">Aucune preuve soumise pour le moment.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {proofs.map(p => (
+                    <div key={p.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
+                      {/* Miniature cliquable */}
+                      <a href={p.proof_url} target="_blank" rel="noopener noreferrer" className="block relative h-40 bg-slate-100 dark:bg-slate-700 hover:opacity-90 transition-opacity">
+                        <img src={p.proof_url} alt="Preuve" className="w-full h-full object-cover" />
+                        <span className={`absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${p.type === 'scolarite' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white'}`}>
+                          {p.type === 'scolarite' ? 'Scolarité' : 'Laboratoire'}
+                        </span>
+                      </a>
+                      {/* Infos */}
+                      <div className="p-4 flex flex-col gap-2 flex-1">
+                        <p className="font-semibold text-slate-900 dark:text-white text-sm leading-tight">{p.student_name}</p>
+                        <p className="text-xs text-slate-400 truncate">{p.student_email}</p>
+                        {p.matricule && <p className="text-xs text-slate-400">Matricule : {p.matricule}</p>}
+                        <p className="text-xs text-slate-400 mt-auto pt-1">
+                          {new Date(p.uploaded_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        </p>
+                        <a
+                          href={p.proof_url}
+                          download
+                          className="mt-1 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 dark:bg-slate-600 hover:bg-slate-700 text-white text-xs font-medium rounded-xl transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v11" /></svg>
+                          Télécharger
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })()}
+
+
+        {/* Section E-Boutique */}
+        {activeTab === 'boutique' && (
+          <div className="space-y-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">E-Boutique</h1>
+                <p className="text-slate-600 dark:text-slate-400 mt-2">Catalogue des ouvrages pédagogiques ({adminBooks.length} ouvrage{adminBooks.length !== 1 ? 's' : ''})</p>
+              </div>
+              <button
+                onClick={() => { setEditingBook(null); resetBookForm(); setShowBookModal(true); }}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm self-start"
+              >
+                <Plus className="w-4 h-4" />
+                Ajouter un ouvrage
+              </button>
+            </div>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Rechercher par titre ou auteur..."
+                value={bookSearch}
+                onChange={e => setBookSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {booksLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
+              </div>
+            ) : (() => {
+              const catColors: Record<string, string> = {
+                pedagogie: 'from-blue-500 to-blue-700',
+                didactique: 'from-violet-500 to-violet-700',
+                recherche: 'from-amber-500 to-amber-700',
+                technique: 'from-cyan-500 to-cyan-700',
+              };
+              const filtered = adminBooks.filter(b =>
+                !bookSearch ||
+                b.title.toLowerCase().includes(bookSearch.toLowerCase()) ||
+                b.author.toLowerCase().includes(bookSearch.toLowerCase())
+              );
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filtered.map(book => (
+                    <div key={book.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                      <div className="h-36 relative flex-shrink-0">
+                        {book.cover_url ? (
+                          <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className={`w-full h-full bg-gradient-to-br ${catColors[book.category] || 'from-slate-500 to-slate-700'} flex items-center justify-center`}>
+                            <BookOpen className="w-10 h-10 text-white/50" />
+                          </div>
+                        )}
+                        {!book.in_stock && (
+                          <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">Épuisé</span>
+                        )}
+                        {book.badge && (
+                          <span className="absolute top-2 right-2 bg-blue-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">{book.badge}</span>
+                        )}
+                      </div>
+                      <div className="p-3 flex-1 flex flex-col">
+                        <p className="text-xs font-semibold text-slate-800 dark:text-white leading-tight line-clamp-2 mb-0.5">{book.title}</p>
+                        <p className="text-[11px] text-blue-600 mb-0.5">{book.author}</p>
+                        {book.publisher && <p className="text-[10px] text-slate-400 mb-1">{book.publisher}{book.edition ? ` — ${book.edition}` : ''}</p>}
+                        <div className="mt-auto flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">{book.price.toLocaleString('fr-FR')} <span className="text-xs font-normal text-slate-400">FCFA</span></span>
+                          <div className="flex gap-1">
+                            <button onClick={() => openEditBook(book)} title="Modifier" className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-100 hover:text-blue-600 text-slate-600 transition-colors">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handleDeleteBook(book.id)} title="Supprimer" className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-red-100 hover:text-red-600 text-slate-600 transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {filtered.length === 0 && (
+                    <div className="col-span-full py-20 flex flex-col items-center gap-3 text-slate-400">
+                      <ShoppingBag className="w-12 h-12" />
+                      <p className="text-sm">{bookSearch ? 'Aucun résultat pour cette recherche' : 'Aucun ouvrage — cliquez sur « Ajouter un ouvrage »'}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Section Blog */}
+        {activeTab === 'blog' && (
+          <div className="space-y-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                  <Newspaper className="w-6 h-6 lg:w-8 lg:h-8 text-violet-600" />
+                  EFTP/TVET Rev'
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400 mt-1">Revue scientifique pluridisciplinaire — ISSN 3093-4303</p>
+              </div>
+              <button
+                onClick={() => { resetArticleForm(); setShowArticleModal(true); }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors"
+              >
+                <Newspaper className="w-4 h-4" />
+                Nouvel article
+              </button>
+            </div>
+
+            {blogLoading ? (
+              <div className="flex items-center justify-center py-16"><RefreshCw className="w-6 h-6 animate-spin text-slate-400" /></div>
+            ) : blogArticles.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-16 text-slate-400">
+                <Newspaper className="w-10 h-10" />
+                <p className="text-sm">Aucun article pour le moment</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {blogArticles.map(article => (
+                  <div key={article.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
+                    <div className="h-28 relative flex-shrink-0 bg-slate-100 dark:bg-slate-700">
+                      {article.cover_url
+                        ? <img src={article.cover_url} alt={article.title} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center"><Newspaper className="w-8 h-8 text-slate-300" /></div>
+                      }
+                      <span className={`absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${article.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {article.status === 'published' ? 'Publié' : 'Brouillon'}
+                      </span>
+                    </div>
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug mb-1 line-clamp-2">{article.title}</h3>
+                      <p className="text-xs text-blue-600 mb-2">{article.authors.map(a => a.name).join(' · ')}</p>
+                      <p className="text-[11px] text-slate-400 mb-3 flex-1 line-clamp-2">{article.abstract_fr}</p>
+                      <div className="flex items-center gap-2 mt-auto">
+                        <button onClick={() => openEditArticle(article)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors">
+                          <Pencil className="w-3 h-3" />Modifier
+                        </button>
+                        <button onClick={() => handleDeleteArticle(article.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
+                          <Trash2 className="w-3 h-3" />Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Article Modal */}
+            {showArticleModal && (
+              <>
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={() => { setShowArticleModal(false); resetArticleForm(); }} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                    <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-slate-900 dark:text-white">{editingArticle ? "Modifier l'article" : 'Nouvel article'}</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">Étape {articleStep} / 5</p>
+                      </div>
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map(s => (
+                          <button key={s} onClick={() => setArticleStep(s)}
+                            className={`w-7 h-7 rounded-full text-xs font-bold transition-colors ${articleStep === s ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                      {articleStep === 1 && (
+                        <>
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Métadonnées</p>
+                          <div>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Titre *</label>
+                            <input value={articleForm.title} onChange={e => setArticleForm(f => ({ ...f, title: e.target.value, slug: slugify(e.target.value) }))}
+                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="Titre de l'article" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Slug (URL)</label>
+                            <input value={articleForm.slug} onChange={e => setArticleForm(f => ({ ...f, slug: e.target.value }))}
+                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300 font-mono" placeholder="slug-de-l-article" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Catégorie</label>
+                              <select value={articleForm.category} onChange={e => setArticleForm(f => ({ ...f, category: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                                <option value="pedagogie">Pédagogie</option>
+                                <option value="didactique">Didactique</option>
+                                <option value="recherche">Recherche</option>
+                                <option value="technique">Technologies</option>
+                                <option value="autre">Autre</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Statut</label>
+                              <select value={articleForm.status} onChange={e => setArticleForm(f => ({ ...f, status: e.target.value as any }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                                <option value="draft">Brouillon</option>
+                                <option value="published">Publié</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Volume</label>
+                              <input value={articleForm.volume} onChange={e => setArticleForm(f => ({ ...f, volume: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="Vol. I" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Numéro</label>
+                              <input value={articleForm.issue_number} onChange={e => setArticleForm(f => ({ ...f, issue_number: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="N°1" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Date de soumission</label>
+                              <input type="date" value={articleForm.submitted_at} onChange={e => setArticleForm(f => ({ ...f, submitted_at: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Date de publication</label>
+                              <input type="date" value={articleForm.published_at} onChange={e => setArticleForm(f => ({ ...f, published_at: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {articleStep === 2 && (
+                        <>
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Auteurs</p>
+                          {articleForm.authors.map((author, idx) => (
+                            <div key={idx} className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-slate-600">Auteur {idx + 1}</span>
+                                {articleForm.authors.length > 1 && (
+                                  <button onClick={() => setArticleForm(f => ({ ...f, authors: f.authors.filter((_, i) => i !== idx) }))}
+                                    className="text-red-500 hover:text-red-700 text-xs">Supprimer</button>
+                                )}
+                              </div>
+                              <input value={author.name} onChange={e => setArticleForm(f => ({ ...f, authors: f.authors.map((a, i) => i === idx ? { ...a, name: e.target.value } : a) }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="Nom complet *" />
+                              <input value={author.affiliation} onChange={e => setArticleForm(f => ({ ...f, authors: f.authors.map((a, i) => i === idx ? { ...a, affiliation: e.target.value } : a) }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="Institution / Affiliation" />
+                              <input value={author.email} onChange={e => setArticleForm(f => ({ ...f, authors: f.authors.map((a, i) => i === idx ? { ...a, email: e.target.value } : a) }))}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="Email" />
+                            </div>
+                          ))}
+                          <button onClick={() => setArticleForm(f => ({ ...f, authors: [...f.authors, { name: '', affiliation: '', email: '' }] }))}
+                            className="flex items-center gap-2 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                            + Ajouter un auteur
+                          </button>
+                        </>
+                      )}
+
+                      {articleStep === 3 && (
+                        <>
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Résumés & Mots-clés</p>
+                          <div>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Résumé (FR)</label>
+                            <textarea value={articleForm.abstract_fr} onChange={e => setArticleForm(f => ({ ...f, abstract_fr: e.target.value }))} rows={4}
+                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none" placeholder="Résumé en français..." />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Mots-clés (FR) — séparés par des virgules</label>
+                            <input value={articleForm.keywords_fr} onChange={e => setArticleForm(f => ({ ...f, keywords_fr: e.target.value }))}
+                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="formation, pédagogie, EFTP" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Abstract (EN)</label>
+                            <textarea value={articleForm.abstract_en} onChange={e => setArticleForm(f => ({ ...f, abstract_en: e.target.value }))} rows={4}
+                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none" placeholder="Abstract in English..." />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Keywords (EN) — comma-separated</label>
+                            <input value={articleForm.keywords_en} onChange={e => setArticleForm(f => ({ ...f, keywords_en: e.target.value }))}
+                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="training, pedagogy, TVET" />
+                          </div>
+                        </>
+                      )}
+
+                      {articleStep === 4 && (
+                        <>
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Contenu de l'article</p>
+                          <p className="text-[11px] text-slate-400">Format : <code>1. Titre de section</code>, <code>1.1 Sous-section</code>, <code>**gras**</code>, <code>*italique*</code></p>
+                          <textarea value={articleForm.content} onChange={e => setArticleForm(f => ({ ...f, content: e.target.value }))} rows={16}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none font-mono"
+                            placeholder={"1. Introduction\n\nTexte de l'introduction...\n\n1.1 Contexte\n\nTexte...\n\n2. Méthodologie\n\n..."} />
+                        </>
+                      )}
+
+                      {articleStep === 5 && (
+                        <>
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Couverture & Publication</p>
+                          <div>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2 block">Image de couverture</label>
+                            {articleCoverPreview && (
+                              <img src={articleCoverPreview} alt="Aperçu couverture" className="w-full h-36 object-cover rounded-xl mb-2 border border-slate-200" />
+                            )}
+                            <input type="file" accept="image/*" onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setArticleCoverFile(file);
+                                setArticleCoverPreview(URL.createObjectURL(file));
+                              }
+                            }} className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer" />
+                          </div>
+                          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 space-y-2 text-sm">
+                            <p className="font-medium text-slate-700 dark:text-slate-300">Récapitulatif</p>
+                            <p className="text-xs text-slate-500"><span className="font-medium">Titre :</span> {articleForm.title || '—'}</p>
+                            <p className="text-xs text-slate-500"><span className="font-medium">Auteurs :</span> {articleForm.authors.filter(a => a.name).map(a => a.name).join(', ') || '—'}</p>
+                            <p className="text-xs text-slate-500"><span className="font-medium">Statut :</span> {articleForm.status === 'published' ? 'Publié' : 'Brouillon'}</p>
+                            <p className="text-xs text-slate-500"><span className="font-medium">Catégorie :</span> {articleForm.category}</p>
+                          </div>
+                        </>
+                      )}
+
+                      {articleError && <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{articleError}</p>}
+                    </div>
+
+                    <div className="p-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between gap-3">
+                      <button onClick={() => setArticleStep(s => Math.max(1, s - 1))} disabled={articleStep === 1}
+                        className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 disabled:opacity-40 transition-colors">
+                        ← Précédent
+                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => { setShowArticleModal(false); resetArticleForm(); }}
+                          className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                          Annuler
+                        </button>
+                        {articleStep < 5 ? (
+                          <button onClick={() => setArticleStep(s => s + 1)}
+                            className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-xl hover:bg-slate-700 transition-colors">
+                            Suivant →
+                          </button>
+                        ) : (
+                          <button onClick={handleSaveArticle} disabled={articleSaving}
+                            className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-60">
+                            {articleSaving ? 'Enregistrement...' : editingArticle ? 'Enregistrer' : 'Publier'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Section Messages */}
         {activeTab === 'messages' && (
@@ -2208,6 +2799,19 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
               <form onSubmit={(e) => { e.preventDefault(); handleCreateTeacher(); }} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Nom complet
+                  </label>
+                  <input
+                    type="text"
+                    value={newTeacherName}
+                    onChange={(e) => setNewTeacherName(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    placeholder="Dr. Nom Prénom"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Adresse email
                   </label>
                   <input
@@ -2235,10 +2839,15 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                   />
                 </div>
                 
-                <div className="flex gap-3 pt-4">
+                {createTeacherError && (
+                  <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                    {createTeacherError}
+                  </div>
+                )}
+                <div className="flex gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => setShowCreateTeacherModal(false)}
+                    onClick={() => { setShowCreateTeacherModal(false); setCreateTeacherError(''); }}
                     className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium"
                   >
                     Annuler
@@ -2303,11 +2912,44 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                     required
                   >
                     <option value="">Sélectionner un cours</option>
-                    <option value="01 S3 Collaboration interdisciplinaire dans l'EFTP">01 S3 Collaboration interdisciplinaire dans l'EFTP</option>
-                    <option value="02 S3 Méthodologie de recherche en EFTP">02 S3 Méthodologie de recherche en EFTP</option>
-                    <option value="03 S3 Évaluation et certification en EFTP">03 S3 Évaluation et certification en EFTP</option>
-                    <option value="04 S3 Innovation pédagogique en EFTP">04 S3 Innovation pédagogique en EFTP</option>
-                    <option value="05 S3 Appropriation des programmes d'études">05 S3 Appropriation des programmes d'études</option>
+                    <optgroup label="── Semestre 1 ──">
+                      <option value="01 S1 PSYCHOPEDAGOGIE DE L'ENFANT ET DE L'ADOLESCENT">01 S1 Psychopédagogie de l'enfant et de l'adolescent</option>
+                      <option value="02 S1 PSYCHOLOGIE DE L'APPRENTISSAGE">02 S1 Psychologie de l'apprentissage</option>
+                      <option value="03 S1 Administration des etablissements eftp et gpec en eftp">03 S1 Administration des établissements EFTP</option>
+                      <option value="04 S1 Etude des Textes Fondamentaux de l'EFTP">04 S1 Étude des textes fondamentaux de l'EFTP</option>
+                      <option value="05 S1 GEOGRAPHIE DE L'EFTP">05 S1 Géographie de l'EFTP</option>
+                      <option value="06 S1 Analyse, Conception et Réalisation de Manuels Pédagogiques pour l'EFTP">06 S1 Manuels pédagogiques pour l'EFTP</option>
+                      <option value="07 S1 Théorie didactique">07 S1 Théorie didactique</option>
+                      <option value="08 S1 Fondements de la Didactique des Disciplines de l'EFTP">08 S1 Fondements de la didactique des disciplines</option>
+                      <option value="09 S1 Anglais Technique">09 S1 Anglais technique</option>
+                      <option value="10 S1 Communication scientifique en anglais">10 S1 Communication scientifique en anglais</option>
+                      <option value="11 S1 Projet apprenant">11 S1 Projet apprenant</option>
+                    </optgroup>
+                    <optgroup label="── Semestre 2 ──">
+                      <option value="01 S2 Délinquance Juvénile">01 S2 Délinquance juvénile</option>
+                      <option value="02 S2 Epistomologie et science de l'education et de la formation">02 S2 Épistémologie et sciences de l'éducation</option>
+                      <option value="03 S2 Gestion de classes en situation formelle dans l'EFTP">03 S2 Gestion de classes en situation formelle</option>
+                      <option value="04 S2 Gestion de classes de contexte de formation professionnelle">04 S2 Gestion de classes — formation professionnelle</option>
+                      <option value="05 S2 Didactique de la matière en EFTP">05 S2 Didactique de la matière en EFTP</option>
+                      <option value="06 S2 Docimologie">06 S2 Docimologie</option>
+                      <option value="07 - 08 S2 Pedagogie et Andragogie">07-08 S2 Pédagogie et andragogie</option>
+                      <option value="09 S2 Sociologie de l'Education et Réalité de l'EFTP">09 S2 Sociologie de l'éducation et réalité EFTP</option>
+                      <option value="10 S2 Education des apprenants à besoin spécifiques">10 S2 Éducation des apprenants à besoins spécifiques</option>
+                      <option value="11 S2 Ethique et déontologie de la profession enseignante">11 S2 Éthique et déontologie enseignante</option>
+                      <option value="12 S2 Enseignement et formation en entreprise">12 S2 Enseignement et formation en entreprise</option>
+                    </optgroup>
+                    <optgroup label="── Semestre 3 (2ème année) ──">
+                      <option value="01 S3 Collaboration interdisciplinaire dans l'EFTP">01 S3 Collaboration interdisciplinaire</option>
+                      <option value="02 S3 Projet transverseaux dans l'EFTP">02 S3 Projets transversaux dans l'EFTP</option>
+                      <option value="03 S3 Conception et mise en oeuvre de projet de recherche action">03 S3 Projet de recherche-action</option>
+                      <option value="04 S3 Amélioration des pratiques pédagogiques dans les etablissements d'EFTP">04 S3 Amélioration des pratiques pédagogiques</option>
+                      <option value="05 S3 Appropriation des programmes d'études">05 S3 Appropriation des programmes d'études</option>
+                      <option value="06 S3 Evaluation des programmes d'etude">06 S3 Évaluation des programmes d'étude</option>
+                      <option value="07 - 08 S3 Conception et redaction des curricula dans l'EFTP">07-08 S3 Conception et rédaction des curricula</option>
+                      <option value="09 S3 Tice et innovation pédagogique en EFTP">09 S3 TICE et innovation pédagogique</option>
+                      <option value="10 S3 Anglais scientifique">10 S3 Anglais scientifique</option>
+                      <option value="11 S3 Montage d'évènement scientifique et culturels">11 S3 Montage d'événements scientifiques</option>
+                    </optgroup>
                   </select>
                 </div>
                 
@@ -2584,6 +3226,116 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         )}
         
         {/* Modal profil administrateur */}
+
+        {/* Modal Ouvrage */}
+        {showBookModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  {editingBook ? "Modifier l'ouvrage" : "Ajouter un ouvrage"}
+                </h3>
+                <button onClick={() => setShowBookModal(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+              <div className="p-6 space-y-5">
+                {/* Couverture */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Couverture</label>
+                  <div className="flex items-start gap-4">
+                    <div className="w-20 h-28 rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-50 dark:bg-slate-700">
+                      {bookCoverPreview ? (
+                        <img src={bookCoverPreview} alt="preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <BookOpen className="w-7 h-7 text-slate-300" />
+                      )}
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) { setBookCoverFile(file); setBookCoverPreview(URL.createObjectURL(file)); }
+                        }}
+                        className="block w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      <p className="text-xs text-slate-400 mt-1.5">JPG, PNG, WEBP recommandés — max 5 Mo</p>
+                      {bookCoverPreview && (
+                        <button onClick={() => { setBookCoverFile(null); setBookCoverPreview(''); }} className="text-xs text-red-500 hover:text-red-700 mt-1">Supprimer la couverture</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Titre *</label>
+                    <input value={bookForm.title} onChange={e => setBookForm(f => ({...f, title: e.target.value}))} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Auteur(s) *</label>
+                    <input value={bookForm.author} onChange={e => setBookForm(f => ({...f, author: e.target.value}))} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Catégorie</label>
+                    <select value={bookForm.category} onChange={e => setBookForm(f => ({...f, category: e.target.value}))} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                      <option value="pedagogie">Pédagogie</option>
+                      <option value="didactique">Didactique</option>
+                      <option value="recherche">Recherche</option>
+                      <option value="technique">Numérique</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Prix (FCFA) *</label>
+                    <input type="number" min="0" value={bookForm.price} onChange={e => setBookForm(f => ({...f, price: Number(e.target.value)}))} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Pages</label>
+                    <input type="number" min="0" value={bookForm.pages} onChange={e => setBookForm(f => ({...f, pages: e.target.value}))} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Maison d'édition</label>
+                    <input value={bookForm.publisher} onChange={e => setBookForm(f => ({...f, publisher: e.target.value}))} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Édition (ex : 2e éd. 2024)</label>
+                    <input value={bookForm.edition} onChange={e => setBookForm(f => ({...f, edition: e.target.value}))} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Badge (Bestseller, Nouveau…)</label>
+                    <input value={bookForm.badge} onChange={e => setBookForm(f => ({...f, badge: e.target.value}))} placeholder="optionnel" className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Description</label>
+                    <textarea rows={3} value={bookForm.description} onChange={e => setBookForm(f => ({...f, description: e.target.value}))} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:text-white" />
+                  </div>
+                  <div className="sm:col-span-2 flex items-center gap-3">
+                    <input type="checkbox" id="inStockCheck" checked={bookForm.in_stock} onChange={e => setBookForm(f => ({...f, in_stock: e.target.checked}))} className="w-4 h-4 rounded text-blue-600 cursor-pointer" />
+                    <label htmlFor="inStockCheck" className="text-sm text-slate-700 dark:text-slate-300 cursor-pointer">En stock — visible et achetable dans la boutique</label>
+                  </div>
+                </div>
+
+                {bookError && (
+                  <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{bookError}</div>
+                )}
+
+                <div className="flex gap-3 pt-1">
+                  <button onClick={() => setShowBookModal(false)} className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Annuler</button>
+                  <button
+                    onClick={handleSaveBook}
+                    disabled={bookSaving || !bookForm.title || !bookForm.author}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all disabled:opacity-50"
+                  >
+                    {bookSaving ? 'Enregistrement...' : editingBook ? 'Enregistrer les modifications' : 'Ajouter le livre'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {showProfileModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
