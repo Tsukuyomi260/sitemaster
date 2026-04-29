@@ -257,6 +257,22 @@ export async function createAssignment(assignmentData: {
   }
 }
 
+// Mettre à jour la date de soumission d'un devoir
+export async function updateSubmissionDate(submissionId: number, newDate: string) {
+  try {
+    const { data, error } = await supabase
+      .from('assignment_submissions')
+      .update({ submitted_at: newDate })
+      .eq('id', submissionId);
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la date de soumission:', error);
+    throw error;
+  }
+}
+
 export async function updateAssignment(assignmentId: number, assignmentData: Partial<{
   title: string;
   course: string;

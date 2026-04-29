@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import JSZip from 'jszip';
 import {
   User,
   BookOpen,
@@ -711,6 +712,51 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         await new Promise<void>(resolve => setTimeout(resolve, i === 0 ? 0 : 300));
         handleDownloadSubmission(s.file_url, s.file_name);
       }
+    }
+  };
+
+  const handleDownloadStudentSubmissions = async (studentId: string, studentName: string) => {
+    try {
+      const studentSubmissions = submissions.filter(s => s.student_id === studentId);
+      if (studentSubmissions.length === 0) {
+        alert('Aucun devoir à télécharger pour cet étudiant');
+        return;
+      }
+
+      const zip = new JSZip();
+      let filesAdded = 0;
+
+      for (const submission of studentSubmissions) {
+        if (submission.file_url) {
+          try {
+            const response = await fetch(submission.file_url);
+            const blob = await response.blob();
+            const fileName = submission.file_name || `devoir_${submission.assignment_id}`;
+            zip.file(fileName, blob);
+            filesAdded++;
+          } catch (error) {
+            console.error(`Erreur téléchargement fichier ${submission.file_name}:`, error);
+          }
+        }
+      }
+
+      if (filesAdded === 0) {
+        alert('Impossible de télécharger les fichiers');
+        return;
+      }
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `devoirs_${studentName.replace(/\s+/g, '_')}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur création zip:', error);
+      alert('Erreur lors du téléchargement des devoirs');
     }
   };
 
@@ -2237,19 +2283,6 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                                 {submission.file_name ? truncateFileName(submission.file_name, 25) : 'Fichier non disponible'}
                               </div>
                             </div>
-                            
-                            <div>
-                              <span className="font-medium text-slate-700 dark:text-slate-300">Soumis le:</span>
-                              <div className="mt-1">
-                                {new Date(submission.submitted_at).toLocaleDateString('fr-FR', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </div>
-                            </div>
                           </div>
                           
                           {submission.comments && (
@@ -2260,17 +2293,24 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                           )}
                         </div>
                         
-                        <div className="flex items-center space-x-2 lg:ml-4">
+                        <div className="flex items-center space-x-2 lg:ml-4 flex-wrap">
                           <button
                             onClick={() => handleDownloadSubmission(submission.file_url, submission.file_name)}
-                            className="p-2 lg:p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="Télécharger le fichier"
+                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Télécharger ce fichier"
                           >
                             <Download className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => handleDownloadStudentSubmissions(submission.student_id, submission.students?.nom_complet || 'etudiant')}
+                            className="px-3 py-1 text-xs font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                            title="Télécharger tous les devoirs de cet étudiant"
+                          >
+                            Tous les devoirs
+                          </button>
+                          <button
                             onClick={() => setSelectedUser(submission)}
-                            className="p-2 lg:p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                             title="Voir les détails"
                           >
                             <Eye className="w-4 h-4" />
