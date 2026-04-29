@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { submitAssignment, getAssignmentSubmissions, getStudentNotifications, markNotificationAsRead, recordCourseDownload, uploadPaymentProof, getStudentPaymentProofs, PaymentProof } from '../api';
+import { submitAssignment, getAssignmentSubmissions, getSubmittedAssignmentIds, getStudentNotifications, markNotificationAsRead, recordCourseDownload, uploadPaymentProof, getStudentPaymentProofs, PaymentProof } from '../api';
 import ClickSpark from './ClickSpark';
 import {
   BookOpen,
@@ -286,15 +286,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
     loadNotifications();
 
-    // Charger les devoirs soumis depuis Supabase (source de vérité)
+    // Charger les devoirs soumis depuis Supabase (source de vérité, sans JOIN)
     if (studentInfo?.id) {
-      getAssignmentSubmissions(studentInfo.id).then(submissions => {
-        if (submissions && submissions.length > 0) {
-          const ids = new Set<number>(submissions.map((s: any) => s.assignment_id).filter(Boolean));
-          setSubmittedAssignmentIds(ids);
-          localStorage.setItem(`submitted_assignments_${studentInfo.id}`, JSON.stringify(Array.from(ids)));
+      getSubmittedAssignmentIds(studentInfo.id).then(ids => {
+        if (ids.length > 0) {
+          const idSet = new Set<number>(ids);
+          setSubmittedAssignmentIds(idSet);
+          localStorage.setItem(`submitted_assignments_${studentInfo.id}`, JSON.stringify(Array.from(idSet)));
         } else {
-          // Fallback localStorage si pas de connexion
+          // Fallback localStorage si Supabase ne retourne rien
           try {
             const saved = localStorage.getItem(`submitted_assignments_${studentInfo.id}`);
             if (saved) setSubmittedAssignmentIds(new Set(JSON.parse(saved)));

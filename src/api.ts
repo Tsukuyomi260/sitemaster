@@ -234,6 +234,14 @@ export async function submitAssignment(
   }
 }
 
+export async function getSubmittedAssignmentIds(studentId: string): Promise<number[]> {
+  const { data } = await supabase
+    .from('assignment_submissions')
+    .select('assignment_id')
+    .eq('student_id', studentId);
+  return (data || []).map((s: any) => s.assignment_id).filter((id: any) => id !== null && id !== undefined);
+}
+
 export async function getAssignmentSubmissions(studentId: string) {
   try {
     const { data, error } = await supabase
