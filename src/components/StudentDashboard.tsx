@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { submitAssignment, getStudentNotifications, markNotificationAsRead, recordCourseDownload, uploadPaymentProof, getStudentPaymentProofs, PaymentProof } from '../api';
+import { submitAssignment, getAssignmentSubmissions, getStudentNotifications, markNotificationAsRead, recordCourseDownload, uploadPaymentProof, getStudentPaymentProofs, PaymentProof } from '../api';
 import ClickSpark from './ClickSpark';
 import {
   BookOpen,
@@ -286,14 +286,26 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
     loadNotifications();
 
-    // Charger les devoirs déjà soumis depuis localStorage
+    // Charger les devoirs soumis depuis Supabase (source de vérité)
     if (studentInfo?.id) {
-      try {
-        const saved = localStorage.getItem(`submitted_assignments_${studentInfo.id}`);
-        if (saved) {
-          setSubmittedAssignmentIds(new Set(JSON.parse(saved)));
+      getAssignmentSubmissions(studentInfo.id).then(submissions => {
+        if (submissions && submissions.length > 0) {
+          const ids = new Set<number>(submissions.map((s: any) => s.assignment_id).filter(Boolean));
+          setSubmittedAssignmentIds(ids);
+          localStorage.setItem(`submitted_assignments_${studentInfo.id}`, JSON.stringify(Array.from(ids)));
+        } else {
+          // Fallback localStorage si pas de connexion
+          try {
+            const saved = localStorage.getItem(`submitted_assignments_${studentInfo.id}`);
+            if (saved) setSubmittedAssignmentIds(new Set(JSON.parse(saved)));
+          } catch {}
         }
-      } catch {}
+      }).catch(() => {
+        try {
+          const saved = localStorage.getItem(`submitted_assignments_${studentInfo.id}`);
+          if (saved) setSubmittedAssignmentIds(new Set(JSON.parse(saved)));
+        } catch {}
+      });
     }
 
     // Charger photo et téléphone depuis localStorage
