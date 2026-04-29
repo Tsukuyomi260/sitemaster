@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, BookOpen, Users, Download, Upload, Settings, LogOut, ChevronUp, MessageSquare, Send, Search, X } from 'lucide-react';
-import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents, getSubmissionsByCourse, getSubmissionsForTeacher } from '../api';
+import { getTeacherCourses, getStudentsByCourse, sendMessageToStudents, sendMessageToAllStudents, getSubmissionsByCourse, getSubmissionsForTeacher, downloadSubmissionFile } from '../api';
+import { supabase } from '../supabaseClient';
 
 interface TeacherDashboardProps {
   teacherName: string;
@@ -73,12 +74,21 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [studentSearchTerm, setStudentSearchTerm] = useState<string>('');
   const [submissionSearchTerm, setSubmissionSearchTerm] = useState<string>('');
+  const [teacherDisplayName, setTeacherDisplayName] = useState<string>('');
 
   // Charger les cours assignés au montage du composant
   useEffect(() => {
     const loadTeacherData = async () => {
       try {
         setLoading(true);
+
+        // Charger le nom complet depuis profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('nom_complet')
+          .eq('email', teacherName)
+          .single();
+        if (profile?.nom_complet) setTeacherDisplayName(profile.nom_complet);
         
         const coursesData = await getTeacherCourses(teacherName);
         setCourses(coursesData || []);
@@ -248,14 +258,13 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
     }
   };
 
-  const handleDownloadSubmission = (fileUrl: string, fileName: string) => {
-    // Créer un lien de téléchargement
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadSubmission = async (fileUrl: string, fileName: string) => {
+    try {
+      await downloadSubmissionFile(fileUrl, fileName);
+    } catch (e) {
+      console.error('Erreur téléchargement:', e);
+      alert('Impossible de télécharger le fichier.');
+    }
   };
 
   const truncateFileName = (fileName: string, maxLength: number = 30) => {
@@ -356,7 +365,7 @@ function TeacherDashboard({ teacherName, onLogout }: TeacherDashboardProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2 mb-1">
-                <p className="font-semibold text-slate-900 dark:text-white truncate">{teacherName}</p>
+                <p className="font-semibold text-slate-900 dark:text-white truncate">{teacherDisplayName || teacherName}</p>
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm">
                   Enseignant
                 </span>

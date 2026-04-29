@@ -55,7 +55,8 @@ import {
   getAllBlogArticles,
   createBlogArticle,
   updateBlogArticle,
-  deleteBlogArticle
+  deleteBlogArticle,
+  downloadSubmissionFile
 } from '../api';
 
 interface AdminDashboardProps {
@@ -562,13 +563,13 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     }
   };
 
-  const handleDownloadSubmission = (fileUrl: string, fileName: string) => {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadSubmission = async (fileUrl: string, fileName: string) => {
+    try {
+      await downloadSubmissionFile(fileUrl, fileName);
+    } catch (e) {
+      console.error('Erreur téléchargement:', e);
+      alert('Impossible de télécharger le fichier.');
+    }
   };
 
   const handleDownloadAll = async () => {

@@ -168,28 +168,30 @@ export async function signOut() {
 // Fonctions pour les soumissions de devoirs
 export async function submitAssignment(assignmentId: number, studentId: string, file: File, title: string, comments?: string) {
   try {
-    // Upload du fichier vers Supabase Storage
-    const fileName = `${studentId}_assignment_${assignmentId}_${Date.now()}.${file.name.split('.').pop()}`;
-    const { error: uploadError } = await supabase.storage
-      .from('assignments')
-      .upload(fileName, file);
+    const submissionId = `${assignmentId}_${Date.now()}`;
 
-    if (uploadError) {
-      throw uploadError;
-    }
+    // 1. Obtenir une URL pré-signée depuis le Worker Cloudflare
+    const { url: uploadUrl, key: r2Key } = await getUploadUrl(
+      file.name,
+      file.type || 'application/zip',
+      submissionId
+    );
 
-    // Récupérer l'URL publique du fichier
-    const { data: { publicUrl } } = supabase.storage
-      .from('assignments')
-      .getPublicUrl(fileName);
+    // 2. Uploader directement vers R2 (pas de passage par Supabase)
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type || 'application/zip' },
+    });
+    if (!uploadRes.ok) throw new Error("Échec de l'upload vers le stockage");
 
-    // Enregistrer la soumission dans la base de données
+    // 3. Enregistrer la soumission en base avec la clé R2
     const { data, error } = await supabase
       .from('assignment_submissions')
       .insert({
         assignment_id: assignmentId,
         student_id: studentId,
-        file_url: publicUrl,
+        file_url: r2Key,
         file_name: file.name,
         submission_title: title,
         submitted_at: new Date().toISOString(),
@@ -197,11 +199,9 @@ export async function submitAssignment(assignmentId: number, studentId: string, 
         status: 'submitted'
       });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    return { success: true, data, fileUrl: publicUrl };
+    return { success: true, data, fileUrl: r2Key };
   } catch (error) {
     console.error('Erreur lors de la soumission du devoir:', error);
     throw error;
@@ -1658,4 +1658,50 @@ export async function updateBlogArticle(id: string, article: Partial<Omit<BlogAr
 export async function deleteBlogArticle(id: string): Promise<void> {
   const { error } = await supabase.from('blog_articles').delete().eq('id', id);
   if (error) throw error;
+}
+
+const WORKER_URL = process.env.REACT_APP_WORKER_URL;
+
+export async function getUploadUrl(
+  filename: string,
+  contentType: string,
+  submissionId: string
+): Promise<{ url: string; key: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${WORKER_URL}/upload-url`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session?.access_token}`,
+    },
+    body: JSON.stringify({ filename, contentType, submissionId }),
+  });
+  if (!res.ok) throw new Error("Impossible d'obtenir l'URL d'upload");
+  return await res.json();
+}
+
+export async function downloadSubmissionFile(key: string, filename?: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${WORKER_URL}/download?key=${encodeURIComponent(key)}`, {
+    headers: { Authorization: `Bearer ${session?.access_token}` },
+  });
+  if (!res.ok) throw new Error('Téléchargement impossible');
+  const blob = await res.blob();
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename || key.split('/').pop() || 'devoir';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+
+export async function listStudentFiles(studentId: string): Promise<{ key: string; size: number; uploaded: string; filename: string }[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${WORKER_URL}/list?studentId=${studentId}`, {
+    headers: { Authorization: `Bearer ${session?.access_token}` },
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.files || [];
 }
