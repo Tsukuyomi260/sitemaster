@@ -259,6 +259,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   const [submissionComments, setSubmissionComments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState<number | null>(null);
   const [submissionError, setSubmissionError] = useState('');
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [submittedAssignmentIds, setSubmittedAssignmentIds] = useState<Set<number>>(new Set());
@@ -1241,6 +1242,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
     setIsSubmitting(true);
     setUploadProgress(0);
+    setUploadSpeed(null);
     setSubmissionError('');
 
     try {
@@ -1250,7 +1252,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         submissionFile,
         submissionTitle,
         submissionComments,
-        setUploadProgress
+        (percent: number, speed?: number) => {
+          setUploadProgress(percent);
+          if (speed !== undefined) setUploadSpeed(speed);
+        }
       );
 
       setSubmissionSuccess(true);
@@ -1291,6 +1296,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     setSubmissionError('');
     setSubmissionSuccess(false);
     setUploadProgress(0);
+    setUploadSpeed(null);
   };
 
   // Fonction pour gérer le téléchargement d'un cours
@@ -2502,7 +2508,16 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                       <span className="font-medium text-slate-700">
                         {uploadProgress < 10 ? 'Préparation…' : uploadProgress < 95 ? 'Envoi en cours…' : 'Finalisation…'}
                       </span>
-                      <span className="font-bold text-blue-600">{uploadProgress}%</span>
+                      <div className="flex items-center gap-2">
+                        {uploadSpeed !== null && uploadProgress >= 10 && uploadProgress < 95 && (
+                          <span className="text-slate-400 font-mono text-[11px]">
+                            {uploadSpeed >= 1
+                              ? `${uploadSpeed.toFixed(1)} Mo/s`
+                              : `${(uploadSpeed * 1024).toFixed(0)} Ko/s`}
+                          </span>
+                        )}
+                        <span className="font-bold text-blue-600">{uploadProgress}%</span>
+                      </div>
                     </div>
                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                       <div

@@ -172,7 +172,7 @@ export async function submitAssignment(
   file: File,
   title: string,
   comments?: string,
-  onProgress?: (percent: number) => void
+  onProgress?: (percent: number, speedMBs?: number) => void
 ) {
   try {
     const submissionId = `${assignmentId}_${Date.now()}`;
@@ -185,13 +185,20 @@ export async function submitAssignment(
       submissionId
     );
 
-    // 2. Uploader directement vers R2 avec suivi de progression via XHR
-    onProgress?.(10);
+    // 2. Uploader directement vers R2 avec suivi de progression et vitesse via XHR
+    onProgress?.(10, 0);
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      let lastLoaded = 0;
+      let lastTime = Date.now();
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable && onProgress) {
-          onProgress(10 + Math.round((e.loaded / e.total) * 85));
+          const percent = 10 + Math.round((e.loaded / e.total) * 85);
+          const now = Date.now();
+          const elapsed = (now - lastTime) / 1000;
+          const speedMBs = elapsed > 0.2 ? (e.loaded - lastLoaded) / elapsed / (1024 * 1024) : undefined;
+          if (elapsed > 0.2) { lastLoaded = e.loaded; lastTime = now; }
+          onProgress(percent, speedMBs);
         }
       };
       xhr.onload = () => {
