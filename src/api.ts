@@ -1701,18 +1701,18 @@ export async function getUploadUrl(
 
 export async function downloadSubmissionFile(key: string, filename?: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
+  // Le Worker génère une URL pré-signée — le téléchargement se fait directement depuis R2
   const res = await fetch(`${WORKER_URL}/download?key=${encodeURIComponent(key)}`, {
     headers: { Authorization: `Bearer ${session?.access_token}` },
   });
   if (!res.ok) throw new Error('Téléchargement impossible');
-  const blob = await res.blob();
+  const { url, filename: serverFilename } = await res.json();
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = filename || key.split('/').pop() || 'devoir';
+  link.href = url;
+  link.download = filename || serverFilename || key.split('/').pop() || 'devoir';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
 }
 
 export async function listStudentFiles(studentId: string): Promise<{ key: string; size: number; uploaded: string; filename: string }[]> {
