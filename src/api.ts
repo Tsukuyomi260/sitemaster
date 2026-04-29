@@ -166,24 +166,43 @@ export async function signOut() {
 }
 
 // Fonctions pour les soumissions de devoirs
-export async function submitAssignment(assignmentId: number, studentId: string, file: File, title: string, comments?: string) {
+export async function submitAssignment(
+  assignmentId: number,
+  studentId: string,
+  file: File,
+  title: string,
+  comments?: string,
+  onProgress?: (percent: number) => void
+) {
   try {
     const submissionId = `${assignmentId}_${Date.now()}`;
 
     // 1. Obtenir une URL pré-signée depuis le Worker Cloudflare
+    onProgress?.(5);
     const { url: uploadUrl, key: r2Key } = await getUploadUrl(
       file.name,
       file.type || 'application/zip',
       submissionId
     );
 
-    // 2. Uploader directement vers R2 (pas de passage par Supabase)
-    const uploadRes = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: file,
-      headers: { 'Content-Type': file.type || 'application/zip' },
+    // 2. Uploader directement vers R2 avec suivi de progression via XHR
+    onProgress?.(10);
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress(10 + Math.round((e.loaded / e.total) * 85));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error("Échec de l'upload vers le stockage"));
+      };
+      xhr.onerror = () => reject(new Error('Erreur réseau pendant l\'upload'));
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/zip');
+      xhr.send(file);
     });
-    if (!uploadRes.ok) throw new Error("Échec de l'upload vers le stockage");
 
     // 3. Enregistrer la soumission en base avec la clé R2
     const { data, error } = await supabase

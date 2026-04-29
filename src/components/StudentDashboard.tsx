@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { submitAssignment, getStudentNotifications, markNotificationAsRead, recordCourseDownload, getStudentPayments, PaymentRecord } from '../api';
-import FedaPayButton from './FedaPayButton';
+import { submitAssignment, getStudentNotifications, markNotificationAsRead, recordCourseDownload, uploadPaymentProof, getStudentPaymentProofs, PaymentProof } from '../api';
 import ClickSpark from './ClickSpark';
 import {
   BookOpen,
@@ -259,12 +258,14 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   const [submissionTitle, setSubmissionTitle] = useState('');
   const [submissionComments, setSubmissionComments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [submissionError, setSubmissionError] = useState('');
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [submittedAssignmentIds, setSubmittedAssignmentIds] = useState<Set<number>>(new Set());
   const [pdfViewer, setPdfViewer] = useState<{ url: string; name: string } | null>(null);
-  const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [scolariteProof, setScolariteProof] = useState<PaymentProof | null>(null);
+  const [laboProof, setLaboProof] = useState<PaymentProof | null>(null);
+  const [proofUploading, setProofUploading] = useState<'scolarite' | 'laboratoire' | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showNotificationDetail, setShowNotificationDetail] = useState<Notification | null>(null);
@@ -300,6 +301,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       if (savedPhotoVal) setProfilePhoto(savedPhotoVal);
       const savedPhoneVal = localStorage.getItem(`profile_phone_${studentInfo.email}`);
       if (savedPhoneVal) setSavedPhone(savedPhoneVal);
+      getStudentPaymentProofs(studentInfo.email).then(proofs => {
+        setScolariteProof(proofs.find(p => p.type === 'scolarite') || null);
+        setLaboProof(proofs.find(p => p.type === 'laboratoire') || null);
+      }).catch(() => {});
     }
 
     // Debug: Afficher les informations de l'étudiant
@@ -311,15 +316,6 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   // eslint-disable-next-line react-hooks/exhaustive-deps -- studentName suffit pour le chargement des notifications
   }, [studentName]);
 
-  // Charger les paiements quand l'onglet scolarité est actif
-  useEffect(() => {
-    if (activeTab !== 'scolarite' || !studentInfo?.email) return;
-    setPaymentsLoading(true);
-    getStudentPayments(studentInfo.email)
-      .then(setPayments)
-      .catch(console.error)
-      .finally(() => setPaymentsLoading(false));
-  }, [activeTab, studentInfo?.email]);
 
   // Appliquer le thème au chargement
   React.useEffect(() => {
@@ -1244,6 +1240,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     }
 
     setIsSubmitting(true);
+    setUploadProgress(0);
     setSubmissionError('');
 
     try {
@@ -1252,7 +1249,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         studentInfo.id,
         submissionFile,
         submissionTitle,
-        submissionComments
+        submissionComments,
+        setUploadProgress
       );
 
       setSubmissionSuccess(true);
@@ -1284,6 +1282,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   };
 
   const closeSubmissionModal = () => {
+    if (isSubmitting) return;
     setIsSubmissionModalOpen(false);
     setSelectedAssignment(null);
     setSubmissionFile(null);
@@ -1291,6 +1290,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     setSubmissionComments('');
     setSubmissionError('');
     setSubmissionSuccess(false);
+    setUploadProgress(0);
   };
 
   // Fonction pour gérer le téléchargement d'un cours
@@ -2350,38 +2350,41 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                       </div>
                     </div>
 
-                    {/* Infos académiques */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {[
-                        { icon: GraduationCap, label: 'Programme', value: 'MR-MRTDDEFTP', sub: 'Technopédagogie & EFTP', color: 'bg-blue-50 text-blue-600' },
-                        { icon: Calendar,      label: 'Année d\'étude', value: studentInfo?.niveau || '1ère année', sub: studentInfo?.annee_academique || '2024–2025', color: 'bg-purple-50 text-purple-600' },
-                        { icon: Award,         label: 'Matricule', value: studentInfo?.matricule || '—', sub: studentInfo?.email || '', color: 'bg-orange-50 text-orange-600' },
-                      ].map(({ icon: Icon, label, value, sub, color }) => (
-                        <div key={label} className="bg-white rounded-2xl border border-slate-200 p-5">
-                          <div className={`w-9 h-9 rounded-xl ${color} flex items-center justify-center mb-3`}>
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <p className="text-xs text-slate-400 mb-0.5">{label}</p>
-                          <p className="font-semibold text-slate-900 text-sm">{value}</p>
-                          {sub && <p className="text-xs text-slate-400 truncate mt-0.5">{sub}</p>}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Paiements — 2 types */}
+                    {/* Frais — 2 cartes avec upload preuve */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Scolarité */}
-                      {(() => {
-                        const paid = payments.some(p => p.type === 'scolarite' && p.status === 'approved');
+                      {([
+                        { key: 'scolarite' as const, label: 'Frais de scolarité', amount: '451 500', icon: GraduationCap, color: 'blue', proof: scolariteProof, setProof: setScolariteProof },
+                        { key: 'laboratoire' as const, label: 'Frais de laboratoire', amount: '200 000', icon: Award, color: 'purple', proof: laboProof, setProof: setLaboProof },
+                      ] as const).map(({ key, label, amount, icon: Icon, color, proof, setProof }) => {
+                        const uploading = proofUploading === key;
+                        const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0];
+                          if (!file || !studentInfo?.email) return;
+                          setProofUploading(key);
+                          try {
+                            const record = await uploadPaymentProof(file, studentInfo.email, studentInfo.nom_complet || studentName, studentInfo.matricule, key);
+                            setProof(record);
+                          } catch (err: any) {
+                            const msg = err?.message || '';
+                            if (msg.includes('400') || msg.includes('Bucket') || msg.includes('bucket')) {
+                              alert('Bucket de stockage non configuré. Contactez l\u2019administration.');
+                            } else {
+                              alert('Erreur lors de l\u2019envoi : ' + (msg || 'Réessayez.'));
+                            }
+                          } finally {
+                            setProofUploading(null);
+                            e.target.value = '';
+                          }
+                        };
                         return (
-                          <div className={`bg-white rounded-2xl border p-5 flex flex-col gap-4 ${paid ? 'border-green-200' : 'border-slate-200'}`}>
+                          <div key={key} className={`bg-white rounded-2xl border p-5 flex flex-col gap-4 ${proof ? 'border-green-200' : 'border-slate-200'}`}>
                             <div className="flex items-start justify-between">
-                              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                                <GraduationCap className="w-5 h-5 text-blue-600" />
+                              <div className={`w-10 h-10 rounded-xl bg-${color}-50 flex items-center justify-center`}>
+                                <Icon className={`w-5 h-5 text-${color}-600`} />
                               </div>
-                              {paid ? (
+                              {proof ? (
                                 <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full flex items-center gap-1">
-                                  <CheckCircle className="w-3 h-3" /> Payé
+                                  <CheckCircle className="w-3 h-3" /> Preuve soumise
                                 </span>
                               ) : (
                                 <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full flex items-center gap-1">
@@ -2390,134 +2393,40 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                               )}
                             </div>
                             <div>
-                              <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase mb-1">Frais de scolarité</p>
-                              <p className="text-2xl font-bold text-slate-900">451 500 <span className="text-base font-semibold text-slate-400">FCFA</span></p>
+                              <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase mb-1">{label}</p>
+                              <p className="text-2xl font-bold text-slate-900">{amount} <span className="text-base font-semibold text-slate-400">FCFA</span></p>
                               <p className="text-xs text-slate-400 mt-0.5">{studentInfo?.annee_academique || '2024–2025'}</p>
                             </div>
-                            {!paid ? (
-                              <FedaPayButton
-                                paymentType="scolarite"
-                                amount={451500}
-                                description={`Frais de scolarité MR-MRTDDEFTP — ${studentInfo?.annee_academique || '2024–2025'}`}
-                                studentEmail={studentInfo?.email || ''}
-                                studentName={studentInfo?.nom_complet || studentName}
-                                studentId={studentInfo?.id}
-                                matricule={studentInfo?.matricule}
-                                onSuccess={() => { getStudentPayments(studentInfo!.email).then(setPayments); }}
-                                onError={(msg) => alert(msg)}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
-                              >
-                                <CreditCard className="w-4 h-4" />
-                                Payer maintenant
-                              </FedaPayButton>
-                            ) : (
-                              <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
-                                <CheckCircle className="w-4 h-4" /> Scolarité réglée
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
-
-                      {/* Laboratoire */}
-                      {(() => {
-                        const paid = payments.some(p => p.type === 'laboratoire' && p.status === 'approved');
-                        return (
-                          <div className={`bg-white rounded-2xl border p-5 flex flex-col gap-4 ${paid ? 'border-green-200' : 'border-slate-200'}`}>
-                            <div className="flex items-start justify-between">
-                              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                                <Award className="w-5 h-5 text-purple-600" />
-                              </div>
-                              {paid ? (
-                                <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full flex items-center gap-1">
-                                  <CheckCircle className="w-3 h-3" /> Payé
-                                </span>
-                              ) : (
-                                <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                                  <Clock className="w-3 h-3" /> En attente
-                                </span>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase mb-1">Frais de laboratoire</p>
-                              <p className="text-2xl font-bold text-slate-900">200 000 <span className="text-base font-semibold text-slate-400">FCFA</span></p>
-                              <p className="text-xs text-slate-400 mt-0.5">{studentInfo?.annee_academique || '2024–2025'}</p>
-                            </div>
-                            {!paid ? (
-                              <FedaPayButton
-                                paymentType="laboratoire"
-                                amount={200000}
-                                description={`Frais de laboratoire MR-MRTDDEFTP — ${studentInfo?.annee_academique || '2024–2025'}`}
-                                studentEmail={studentInfo?.email || ''}
-                                studentName={studentInfo?.nom_complet || studentName}
-                                studentId={studentInfo?.id}
-                                matricule={studentInfo?.matricule}
-                                onSuccess={() => { getStudentPayments(studentInfo!.email).then(setPayments); }}
-                                onError={(msg) => alert(msg)}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-colors"
-                              >
-                                <CreditCard className="w-4 h-4" />
-                                Payer maintenant
-                              </FedaPayButton>
-                            ) : (
-                              <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
-                                <CheckCircle className="w-4 h-4" /> Laboratoire réglé
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Historique des paiements */}
-                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-slate-400" />
-                          Historique des transactions
-                        </h3>
-                        {paymentsLoading && <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400" />}
-                      </div>
-                      {payments.length === 0 && !paymentsLoading ? (
-                        <div className="px-6 py-8 text-center">
-                          <p className="text-sm text-slate-400">Aucune transaction enregistrée pour le moment.</p>
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-slate-100">
-                          {payments.map(p => (
-                            <div key={p.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                              <div className="flex items-center gap-3">
-                                {p.status === 'approved' ? (
-                                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                                ) : p.status === 'pending' ? (
-                                  <Clock className="w-4 h-4 text-orange-400 flex-shrink-0" />
-                                ) : (
-                                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                                )}
-                                <div>
-                                  <p className="text-sm font-medium text-slate-800">{p.description}</p>
-                                  <p className="text-xs text-slate-400">
-                                    {new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                    {p.fedapay_reference && ` · Réf. ${p.fedapay_reference}`}
-                                  </p>
+                            {proof ? (
+                              <div className="space-y-3">
+                                <a href={proof.proof_url} target="_blank" rel="noopener noreferrer" className="block rounded-xl overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity">
+                                  <img src={proof.proof_url} alt="Preuve de paiement" className="w-full h-32 object-cover" />
+                                </a>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-slate-400">Envoyée le {new Date(proof.uploaded_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                  <a href={proof.proof_url} download className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">Télécharger</a>
                                 </div>
+                                <label className={`w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium rounded-xl transition-colors cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                  {uploading ? 'Envoi…' : 'Remplacer la preuve'}
+                                  <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+                                </label>
                               </div>
-                              <div className="flex items-center gap-3 flex-shrink-0">
-                                <span className="text-sm font-semibold text-slate-900">{p.amount.toLocaleString('fr-FR')} FCFA</span>
-                                {p.status === 'approved' ? (
-                                  <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">Approuvé</span>
-                                ) : p.status === 'pending' ? (
-                                  <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">En attente</span>
-                                ) : p.status === 'declined' ? (
-                                  <span className="text-xs font-medium text-red-600 bg-red-50 px-2.5 py-1 rounded-full">Refusé</span>
-                                ) : (
-                                  <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">Annulé</span>
-                                )}
+                            ) : (
+                              <div className="space-y-2">
+                                <p className="text-xs text-slate-500 leading-relaxed">Effectuez le paiement puis chargez une capture d'écran comme preuve.</p>
+                                <label className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-${color}-600 hover:bg-${color}-700 text-white text-sm font-semibold rounded-xl transition-colors cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                  {uploading ? (
+                                    <><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Envoi en cours…</>
+                                  ) : (
+                                    <><CreditCard className="w-4 h-4" /> Charger ma preuve</>
+                                  )}
+                                  <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+                                </label>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Contact administration */}
@@ -2563,140 +2472,147 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
         {/* ── Modal soumission de devoir ── */}
         {isSubmissionModalOpen && selectedAssignment && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm flex flex-col max-h-[90vh]">
 
-              {/* Header modal */}
-              <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold tracking-widest text-slate-400 uppercase mb-0.5">Soumission</p>
-                  <h2 className="text-base font-bold text-slate-900 leading-snug line-clamp-2">{selectedAssignment.course}</h2>
+              {/* Header */}
+              <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between gap-3 flex-shrink-0">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold tracking-widest text-blue-500 uppercase mb-0.5">Rendre le devoir</p>
+                  <h2 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">{selectedAssignment.course}</h2>
                 </div>
-                <button onClick={closeSubmissionModal} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors ml-3 flex-shrink-0">
+                <button
+                  onClick={closeSubmissionModal}
+                  disabled={isSubmitting}
+                  className="w-7 h-7 rounded-lg hover:bg-slate-100 transition-colors flex items-center justify-center flex-shrink-0 disabled:opacity-30"
+                >
                   <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              <div className="px-6 py-5 space-y-4">
+              {/* Contenu scrollable */}
+              <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
 
-                {/* Notice ZIP */}
-                <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-                  <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-blue-800 mb-0.5">Archive ZIP uniquement</p>
-                    <p className="text-xs text-blue-600 leading-relaxed">
-                      Regroupez tous vos fichiers (PDF, Word, images…) dans une seule archive <span className="font-semibold">.zip</span> avant de soumettre.
+                {/* Loader upload */}
+                {isSubmitting && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-700">
+                        {uploadProgress < 10 ? 'Préparation…' : uploadProgress < 95 ? 'Envoi en cours…' : 'Finalisation…'}
+                      </span>
+                      <span className="font-bold text-blue-600">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 text-center">
+                      Ne fermez pas cette fenêtre pendant l'envoi
                     </p>
-                  </div>
-                </div>
-
-                {/* Zone de dépôt */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-                    Archive ZIP *
-                  </label>
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    accept=".zip,application/zip,application/x-zip-compressed"
-                    className="hidden"
-                    id="assignment-file"
-                  />
-                  <label
-                    htmlFor="assignment-file"
-                    className={`flex flex-col items-center justify-center gap-3 w-full py-8 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200
-                      ${submissionFile
-                        ? 'border-blue-300 bg-blue-50'
-                        : 'border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/50'
-                      }`}
-                  >
-                    {submissionFile ? (
-                      <>
-                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-semibold text-blue-700">{submissionFile.name}</p>
-                          <p className="text-xs text-blue-500 mt-0.5">{(submissionFile.size / 1024 / 1024).toFixed(2)} Mo — Cliquer pour changer</p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center">
-                          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                          </svg>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-medium text-slate-600">Cliquez pour sélectionner votre archive</p>
-                          <p className="text-xs text-slate-400 mt-0.5">Fichier .zip uniquement</p>
-                        </div>
-                      </>
-                    )}
-                  </label>
-                </div>
-
-                {/* Titre */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-                    Titre du devoir *
-                  </label>
-                  <input
-                    type="text"
-                    value={submissionTitle}
-                    onChange={(e) => setSubmissionTitle(e.target.value)}
-                    placeholder="Ex : Devoir S1 — Psychopédagogie"
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50 placeholder:text-slate-300 transition-all"
-                  />
-                </div>
-
-                {/* Commentaires */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-                    Commentaires <span className="font-normal normal-case text-slate-400">(optionnel)</span>
-                  </label>
-                  <textarea
-                    value={submissionComments}
-                    onChange={(e) => setSubmissionComments(e.target.value)}
-                    placeholder="Ajoutez un message pour votre enseignant…"
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50 placeholder:text-slate-300 resize-none transition-all"
-                    rows={2}
-                  />
-                </div>
-
-                {/* Erreur */}
-                {submissionError && (
-                  <div className="flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-                    <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-xs text-red-600">{submissionError}</p>
                   </div>
                 )}
 
                 {/* Succès */}
                 {submissionSuccess && (
-                  <div className="flex items-center gap-2.5 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-                    <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-xs font-medium text-green-700">Devoir soumis avec succès !</p>
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-bold text-green-700">Devoir soumis !</p>
+                    <p className="text-xs text-slate-400 text-center">Votre devoir a bien été enregistré.</p>
                   </div>
                 )}
 
-                {/* Boutons */}
-                <div className="flex gap-3 pt-1">
+                {!isSubmitting && !submissionSuccess && (
+                  <>
+                    {/* Zone fichier */}
+                    <div>
+                      <input
+                        type="file"
+                        onChange={handleFileChange}
+                        accept=".zip,application/zip,application/x-zip-compressed"
+                        className="hidden"
+                        id="assignment-file"
+                      />
+                      <label
+                        htmlFor="assignment-file"
+                        className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 ${
+                          submissionFile
+                            ? 'border-blue-300 bg-blue-50'
+                            : 'border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/50'
+                        }`}
+                      >
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${submissionFile ? 'bg-blue-600' : 'bg-slate-200'}`}>
+                          <svg className={`w-4 h-4 ${submissionFile ? 'text-white' : 'text-slate-400'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            {submissionFile
+                              ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              : <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            }
+                          </svg>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          {submissionFile ? (
+                            <>
+                              <p className="text-xs font-semibold text-blue-700 truncate">{submissionFile.name}</p>
+                              <p className="text-[11px] text-blue-500">{(submissionFile.size / 1024 / 1024).toFixed(1)} Mo · Cliquer pour changer</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-xs font-medium text-slate-600">Sélectionner l'archive ZIP</p>
+                              <p className="text-[11px] text-slate-400">Fichier .zip uniquement</p>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Titre */}
+                    <input
+                      type="text"
+                      value={submissionTitle}
+                      onChange={(e) => setSubmissionTitle(e.target.value)}
+                      placeholder="Titre du devoir *"
+                      className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 placeholder:text-slate-300 transition-all"
+                    />
+
+                    {/* Commentaires */}
+                    <textarea
+                      value={submissionComments}
+                      onChange={(e) => setSubmissionComments(e.target.value)}
+                      placeholder="Message pour l'enseignant (optionnel)"
+                      className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 placeholder:text-slate-300 resize-none transition-all"
+                      rows={2}
+                    />
+
+                    {/* Note ZIP */}
+                    <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+                      </svg>
+                      Compressez tous vos fichiers dans une archive .zip avant de soumettre.
+                    </p>
+
+                    {/* Erreur */}
+                    {submissionError && (
+                      <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">{submissionError}</p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Footer boutons */}
+              {!submissionSuccess && (
+                <div className="px-5 pb-5 pt-3 border-t border-slate-100 flex gap-2.5 flex-shrink-0">
                   <button
                     onClick={closeSubmissionModal}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-40"
                   >
                     Annuler
                   </button>
@@ -2705,15 +2621,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                     disabled={!submissionFile || !submissionTitle.trim() || isSubmitting}
                     className="flex-1 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                        Envoi…
-                      </span>
-                    ) : 'Soumettre le devoir'}
+                    {isSubmitting ? 'Envoi…' : 'Soumettre'}
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
