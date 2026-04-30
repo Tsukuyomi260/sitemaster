@@ -2503,9 +2503,15 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
         </div>
 
         {/* ── Modal soumission de devoir ── */}
-        {isSubmissionModalOpen && selectedAssignment && (
+        {isSubmissionModalOpen && selectedAssignment && (() => {
+          const deadlineStatus = selectedAssignment.deadline ? getDeadlineStatus(selectedAssignment.deadline) : { isPast: false };
+          return (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm flex flex-col max-h-[90vh]">
+            <div className={`rounded-2xl shadow-2xl border w-full max-w-sm flex flex-col max-h-[90vh] ${
+              deadlineStatus.isPast
+                ? 'bg-slate-100 border-slate-300 opacity-90'
+                : 'bg-white border-slate-200'
+            }`}>
 
               {/* Header */}
               <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between gap-3 flex-shrink-0">
@@ -2567,8 +2573,26 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               {/* Contenu scrollable */}
               <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
 
+                {/* Message deadline passée */}
+                {deadlineStatus.isPast && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                      <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-red-700 mb-2">Délai de soumission dépassé</h3>
+                    <p className="text-sm text-slate-600 mb-2">Vous ne pouvez plus soumettre ce devoir.</p>
+                    {selectedAssignment.deadline && (
+                      <p className="text-xs text-slate-500">
+                        La date limite était le {new Date(selectedAssignment.deadline).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Loader upload */}
-                {isSubmitting && (
+                {!deadlineStatus.isPast && isSubmitting && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium text-slate-700">
@@ -2598,7 +2622,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 )}
 
                 {/* Succès */}
-                {submissionSuccess && (
+                {!deadlineStatus.isPast && submissionSuccess && (
                   <div className="flex flex-col items-center gap-2 py-4">
                     <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                       <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -2610,7 +2634,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   </div>
                 )}
 
-                {!isSubmitting && !submissionSuccess && (
+                {!deadlineStatus.isPast && !isSubmitting && !submissionSuccess && (
                   <>
                     {/* Zone fichier */}
                     <div>
@@ -2708,7 +2732,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               )}
             </div>
           </div>
-        )}
+        );
+        })()}
 
         {/* ── Lecteur PDF inline ── */}
         {pdfViewer && (

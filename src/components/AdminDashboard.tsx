@@ -24,7 +24,8 @@ import {
   CreditCard,
   ShoppingBag,
   Newspaper,
-  Pencil
+  Pencil,
+  Calendar
 } from 'lucide-react';
 import {
   getAllSubmissions,
@@ -205,6 +206,9 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   // Assignment management states
   const [assignments, setAssignments] = useState<any[]>([]);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [showDeadlineModal, setShowDeadlineModal] = useState(false);
+  const [selectedAssignmentForDeadline, setSelectedAssignmentForDeadline] = useState<any | null>(null);
+  const [deadlineInput, setDeadlineInput] = useState('');
   const [editingAssignment, setEditingAssignment] = useState<any | null>(null);
   const [assignmentForm, setAssignmentForm] = useState({
     title: '',
@@ -216,7 +220,9 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     is_active: true
   });
   const [assignmentError, setAssignmentError] = useState('');
+  const [deadlineError, setDeadlineError] = useState('');
   const [assignmentSaving, setAssignmentSaving] = useState(false);
+  const [deadlineSaving, setDeadlineSaving] = useState(false);
 
   // États de chargement
   const [, setStudentsLoading] = useState(false);
@@ -503,6 +509,39 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
       setAssignmentError('Erreur lors de la sauvegarde du devoir');
     } finally {
       setAssignmentSaving(false);
+    }
+  };
+
+  const openDeadlineModal = (assignment: any) => {
+    setSelectedAssignmentForDeadline(assignment);
+    setDeadlineInput(assignment.deadline || '');
+    setDeadlineError('');
+    setShowDeadlineModal(true);
+  };
+
+  const closeDeadlineModal = () => {
+    setShowDeadlineModal(false);
+    setSelectedAssignmentForDeadline(null);
+    setDeadlineInput('');
+    setDeadlineError('');
+  };
+
+  const handleSetDeadline = async () => {
+    if (!deadlineInput) {
+      setDeadlineError('Veuillez sélectionner une date limite');
+      return;
+    }
+
+    setDeadlineSaving(true);
+    try {
+      await updateAssignment(selectedAssignmentForDeadline.id, { deadline: deadlineInput });
+      await reloadAssignments();
+      closeDeadlineModal();
+    } catch (error) {
+      console.error('Erreur lors de la définition de la deadline:', error);
+      setDeadlineError('Erreur lors de la sauvegarde de la deadline');
+    } finally {
+      setDeadlineSaving(false);
     }
   };
 
@@ -2140,18 +2179,31 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-slate-900 dark:text-white text-sm">{assignment.title}</h4>
                           <p className="text-xs text-slate-500 mt-1">{assignment.course}</p>
-                          {assignment.deadline && (
-                            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                              Deadline: <span className="font-semibold">{new Date(assignment.deadline).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                          {assignment.deadline ? (
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1 font-semibold">
+                              ✓ Deadline: {new Date(assignment.deadline).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </p>
+                          ) : (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1 font-semibold">⚠️ Pas de deadline définie</p>
                           )}
                         </div>
-                        <button
-                          onClick={() => openAssignmentModal(assignment)}
-                          className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-lg text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex-shrink-0"
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </button>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => openDeadlineModal(assignment)}
+                            className="px-3 py-1.5 bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 rounded-lg text-xs font-medium hover:bg-orange-200 dark:hover:bg-orange-800 transition-colors whitespace-nowrap"
+                            title="Mettre ou modifier la deadline"
+                          >
+                            <Calendar className="w-3 h-3 inline mr-1" />
+                            Deadline
+                          </button>
+                          <button
+                            onClick={() => openAssignmentModal(assignment)}
+                            className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-lg text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                            title="Éditer le devoir"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -3780,6 +3832,86 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                   className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40"
                 >
                   {assignmentSaving ? 'Enregistrement...' : 'Enregistrer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Mettre une deadline */}
+        {showDeadlineModal && selectedAssignmentForDeadline && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                      <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-300" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900 dark:text-white">Mettre une deadline</h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{selectedAssignmentForDeadline.title}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={closeDeadlineModal}
+                    disabled={deadlineSaving}
+                    className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Date limite de soumission *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={deadlineInput}
+                    onChange={e => setDeadlineInput(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 text-slate-900 dark:text-white text-base"
+                  />
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                    Les étudiants ne pourront pas soumettre après cette date et heure
+                  </p>
+                </div>
+
+                {deadlineInput && (
+                  <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                    <p className="text-sm text-orange-800 dark:text-orange-200">
+                      <strong>Deadline:</strong> {new Date(deadlineInput).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                )}
+
+                {deadlineError && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">{deadlineError}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex gap-3">
+                <button
+                  onClick={closeDeadlineModal}
+                  disabled={deadlineSaving}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-40"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSetDeadline}
+                  disabled={deadlineSaving || !deadlineInput}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+                >
+                  <Calendar className="w-4 h-4" />
+                  {deadlineSaving ? 'Enregistrement...' : 'Définir la deadline'}
                 </button>
               </div>
             </div>
