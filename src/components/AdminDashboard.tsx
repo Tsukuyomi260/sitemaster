@@ -395,11 +395,40 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     return (
       submission.students?.nom_complet?.toLowerCase().includes(searchLower) ||
       submission.students?.matricule?.toLowerCase().includes(searchLower) ||
-      submission.assignments?.title?.toLowerCase().includes(searchLower) ||
-      submission.assignments?.course?.toLowerCase().includes(searchLower) ||
       submission.file_name?.toLowerCase().includes(searchLower)
     );
   });
+
+  // Stats de soumissions
+  const submissionStats = (() => {
+    const totalStudents = students.length;
+    const totalAssignments = Math.max(...submissions.map(s => s.assignment_id || 0), 0) || 1;
+    const byStudent: Record<string, { nom: string; matricule: string; count: number }> = {};
+    for (const s of submissions) {
+      const id = s.student_id;
+      if (!byStudent[id]) {
+        byStudent[id] = {
+          nom: s.students?.nom_complet || id,
+          matricule: s.students?.matricule || id,
+          count: 0,
+        };
+      }
+      byStudent[id].count++;
+    }
+    const studentList = Object.entries(byStudent).map(([id, v]) => ({
+      id, ...v,
+      percent: Math.min(100, Math.round((v.count / totalAssignments) * 100)),
+    })).sort((a, b) => b.percent - a.percent);
+
+    const submittedAll = studentList.filter(s => s.count >= totalAssignments).length;
+    const submittedSome = studentList.filter(s => s.count > 0 && s.count < totalAssignments).length;
+    const submittedNone = Math.max(0, totalStudents - studentList.length);
+    const globalRate = totalStudents > 0
+      ? Math.round((studentList.reduce((acc, s) => acc + s.count, 0) / (totalStudents * totalAssignments)) * 100)
+      : 0;
+
+    return { totalAssignments, totalStudents, submittedAll, submittedSome, submittedNone, globalRate, studentList };
+  })();
 
   // Effet pour logger les changements de submissions
   useEffect(() => {
@@ -1919,7 +1948,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         
         {activeTab === 'submissions' && (
           <div className="space-y-6">
-            {/* En-tête avec titre et actions */}
+            {/* En-tête */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
                 <h2 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
@@ -1968,7 +1997,67 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
               </div>
             </div>
 
-            {/* Contenu principal */}
+            {/* Stats de soumission */}
+            {!submissionsLoading && submissions.length > 0 && (
+              <div className="space-y-4">
+                {/* Cartes globales */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                    <p className="text-xs text-slate-400 mb-1">Taux global</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{submissionStats.globalRate}%</p>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${submissionStats.globalRate}%` }} />
+                    </div>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                    <p className="text-xs text-slate-400 mb-1">Tout soumis</p>
+                    <p className="text-2xl font-bold text-green-600">{submissionStats.submittedAll}</p>
+                    <p className="text-xs text-slate-400 mt-1">étudiants complets</p>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                    <p className="text-xs text-slate-400 mb-1">Partiellement</p>
+                    <p className="text-2xl font-bold text-amber-500">{submissionStats.submittedSome}</p>
+                    <p className="text-xs text-slate-400 mt-1">devoirs incomplets</p>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                    <p className="text-xs text-slate-400 mb-1">Aucun devoir</p>
+                    <p className="text-2xl font-bold text-red-500">{submissionStats.submittedNone}</p>
+                    <p className="text-xs text-slate-400 mt-1">étudiants sans rendu</p>
+                  </div>
+                </div>
+
+                {/* Tableau par étudiant */}
+                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-700">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white">Progression par étudiant</h3>
+                  </div>
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                    {submissionStats.studentList.map(s => (
+                      <div key={s.id} className="flex items-center gap-4 px-5 py-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-slate-800 dark:text-white truncate">{s.nom}</p>
+                          <p className="text-xs text-slate-400">{s.matricule}</p>
+                        </div>
+                        <div className="w-32 hidden sm:block">
+                          <div className="w-full h-1.5 bg-slate-100 rounded-full">
+                            <div
+                              className={`h-full rounded-full transition-all ${s.percent >= 100 ? 'bg-green-500' : s.percent > 0 ? 'bg-amber-400' : 'bg-red-400'}`}
+                              style={{ width: `${s.percent}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className={`text-xs font-bold w-10 text-right ${s.percent >= 100 ? 'text-green-600' : s.percent > 0 ? 'text-amber-500' : 'text-red-500'}`}>
+                          {s.percent}%
+                        </span>
+                        <span className="text-xs text-slate-400 w-16 text-right">{s.count} rendu{s.count > 1 ? 's' : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Liste des soumissions */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
               {submissionsLoading ? (
                 <div className="flex items-center justify-center py-12">

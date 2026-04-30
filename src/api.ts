@@ -1278,43 +1278,29 @@ export async function sendIndividualMessage(adminEmail: string, recipientEmail: 
 // Fonction pour récupérer toutes les soumissions (pour les admins)
 export async function getAllSubmissions() {
   try {
-    console.log('Début de la récupération des soumissions...');
-    
-    // Récupérer d'abord toutes les soumissions avec les détails des devoirs
+    // Récupérer toutes les soumissions sans JOIN sur assignments (table souvent vide)
     const { data: submissions, error } = await supabase
       .from('assignment_submissions')
-      .select(`
-        *,
-        assignments (
-          title,
-          course,
-          due_date,
-          points
-        )
-      `)
+      .select('*')
       .order('submitted_at', { ascending: false });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     // Récupérer les informations des étudiants
-    const studentIds = submissions?.map(s => s.student_id) || [];
-    
-    const { data: studentsInfo, error: studentsError } = await supabase
+    const allIds = submissions?.map(s => s.student_id) || [];
+    const studentIds = allIds.filter((id, idx) => allIds.indexOf(id) === idx);
+
+    const { data: studentsInfo } = await supabase
       .from('students')
-      .select('id, nom_complet, matricule, email')
+      .select('id, nom_complet, matricule, email, niveau, annee_etude')
       .in('id', studentIds);
 
-    if (studentsError) {
-      console.error('Erreur lors de la récupération des informations étudiants:', studentsError);
-    }
-
-    // Combiner les soumissions avec les détails des étudiants
+    // Combiner soumissions + infos étudiants
     const submissionsWithDetails = submissions?.map(submission => {
       const student = studentsInfo?.find(s => s.id === submission.student_id);
       return {
         ...submission,
+        assignments: null,
         students: student
       };
     });
