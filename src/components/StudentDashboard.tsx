@@ -46,6 +46,7 @@ interface Assignment {
   course: string;
   courseId: number;
   dueDate: string;
+  deadline?: string; // Date limite de soumission
   status: 'À rendre' | 'En cours' | 'Rendu' | 'Noté';
   priority: 'high' | 'medium' | 'low';
   description: string;
@@ -1203,6 +1204,18 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const getDeadlineStatus = (deadline?: string) => {
+    if (!deadline) return { isPast: false, isApproaching: false, hoursLeft: null };
+    const now = new Date();
+    const deadlineDate = new Date(deadline);
+    const hoursLeft = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    return {
+      isPast: now > deadlineDate,
+      isApproaching: hoursLeft > 0 && hoursLeft <= 24,
+      hoursLeft: hoursLeft > 0 ? Math.ceil(hoursLeft) : null
+    };
   };
 
   const handleSubmitAssignment = (assignment: Assignment) => {
@@ -2510,6 +2523,46 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                 </button>
               </div>
 
+              {/* Deadline warning */}
+              {selectedAssignment.deadline && (() => {
+                const status = getDeadlineStatus(selectedAssignment.deadline);
+                const deadlineDate = new Date(selectedAssignment.deadline);
+                if (status.isPast) {
+                  return (
+                    <div className="px-5 py-3 bg-red-50 border-b border-red-200">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-red-700">Deadline dépassée</p>
+                          <p className="text-xs text-red-600">Cette soumission n'est plus possible. La date limite était le {deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else if (status.isApproaching) {
+                  return (
+                    <div className="px-5 py-3 bg-amber-50 border-b border-amber-200">
+                      <div className="flex items-start gap-2">
+                        <Clock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-amber-700">Deadline approche</p>
+                          <p className="text-xs text-amber-600">{status.hoursLeft} heure{status.hoursLeft! > 1 ? 's' : ''} restante{status.hoursLeft! > 1 ? 's' : ''} jusqu'au {deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
+                      <div className="flex items-start gap-2">
+                        <Calendar className="w-4 h-4 text-slate-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-slate-600">Date limite : <span className="font-semibold">{deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></p>
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
+
               {/* Contenu scrollable */}
               <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
 
@@ -2645,10 +2698,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   </button>
                   <button
                     onClick={handleSubmissionSubmit}
-                    disabled={!submissionFile || !submissionTitle.trim() || isSubmitting}
+                    disabled={!submissionFile || !submissionTitle.trim() || isSubmitting || (selectedAssignment.deadline && getDeadlineStatus(selectedAssignment.deadline).isPast)}
                     className="flex-1 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? 'Envoi…' : 'Soumettre'}
+                    {selectedAssignment.deadline && getDeadlineStatus(selectedAssignment.deadline).isPast ? 'Deadline dépassée' : isSubmitting ? 'Envoi…' : 'Soumettre'}
                   </button>
                 </div>
               )}

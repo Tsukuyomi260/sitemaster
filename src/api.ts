@@ -166,6 +166,22 @@ export async function signOut() {
 }
 
 // Fonctions pour les soumissions de devoirs
+export async function getAssignmentById(assignmentId: number) {
+  try {
+    const { data: assignment, error } = await supabase
+      .from('assignments')
+      .select('*')
+      .eq('id', assignmentId)
+      .single();
+
+    if (error) throw error;
+    return assignment;
+  } catch (error) {
+    console.error('Erreur lors de la récupération du devoir:', error);
+    return null;
+  }
+}
+
 export async function submitAssignment(
   assignmentId: number,
   studentId: string,
@@ -175,6 +191,16 @@ export async function submitAssignment(
   onProgress?: (percent: number, speedMBs?: number) => void
 ) {
   try {
+    // Vérifier la deadline
+    const assignment = await getAssignmentById(assignmentId);
+    if (assignment && assignment.deadline) {
+      const deadline = new Date(assignment.deadline);
+      const now = new Date();
+      if (now > deadline) {
+        throw new Error(`Cette soumission n'est plus possible. La date limite était le ${deadline.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
+      }
+    }
+
     const submissionId = `${assignmentId}_${Date.now()}`;
 
     // 1. Obtenir une URL pré-signée depuis le Worker Cloudflare

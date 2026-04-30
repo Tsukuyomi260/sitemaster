@@ -1,126 +1,11 @@
-import React, { useState } from 'react';
-import { ArrowLeft, ShoppingCart, ShoppingBag, BookOpen, X, Plus, Minus, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ShoppingCart, ShoppingBag, BookOpen, X, Plus, Minus, Check, RefreshCw } from 'lucide-react';
 import ClickSpark from './ClickSpark';
+import { getBooks, Book } from '../api';
 
 interface ShopPageProps {
   onBack: () => void;
 }
-
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  description: string;
-  price: number;
-  category: 'pedagogie' | 'didactique' | 'recherche' | 'technique';
-  pages?: number;
-  edition?: string;
-  badge?: string;
-  inStock: boolean;
-  color: string;
-}
-
-const books: Book[] = [
-  {
-    id: 1,
-    title: "Technopédagogie et formation à distance",
-    author: "Gnonlonfoun J.M.",
-    description: "Fondements théoriques et pratiques de l'intégration des technologies dans l'enseignement technique et professionnel.",
-    price: 8500,
-    category: 'pedagogie',
-    pages: 320,
-    edition: '2e éd. 2023',
-    badge: 'Bestseller',
-    inStock: true,
-    color: 'from-blue-500 to-blue-700',
-  },
-  {
-    id: 2,
-    title: "Didactique des disciplines de l'EFTP",
-    author: "Adjahouinou D.C.",
-    description: "Méthodes et approches didactiques spécifiques à l'enseignement technique et professionnel en Afrique subsaharienne.",
-    price: 7200,
-    category: 'didactique',
-    pages: 280,
-    edition: '1re éd. 2022',
-    inStock: true,
-    color: 'from-violet-500 to-violet-700',
-  },
-  {
-    id: 3,
-    title: "Ingénierie de la formation professionnelle",
-    author: "Houngnibo A.",
-    description: "Concevoir, piloter et évaluer des dispositifs de formation professionnelle dans les contextes francophones.",
-    price: 9000,
-    category: 'pedagogie',
-    pages: 360,
-    edition: '1re éd. 2023',
-    inStock: true,
-    color: 'from-emerald-500 to-emerald-700',
-  },
-  {
-    id: 4,
-    title: "Méthodes de recherche en sciences de l'éducation",
-    author: "Azonhe H.T., Keke C.N.",
-    description: "Guide méthodologique pour la rédaction de mémoires et thèses en sciences de l'éducation et formation.",
-    price: 6500,
-    category: 'recherche',
-    pages: 240,
-    edition: '3e éd. 2024',
-    badge: 'Nouveau',
-    inStock: true,
-    color: 'from-amber-500 to-amber-700',
-  },
-  {
-    id: 5,
-    title: "Évaluation des apprentissages en EFTP",
-    author: "Balogoun C.",
-    description: "Outils et stratégies d'évaluation adaptés aux formations techniques et professionnelles : évaluation formative, certificative et par compétences.",
-    price: 7500,
-    category: 'didactique',
-    pages: 260,
-    edition: '1re éd. 2022',
-    inStock: true,
-    color: 'from-rose-500 to-rose-700',
-  },
-  {
-    id: 6,
-    title: "Numérique éducatif et e-learning",
-    author: "Dossou-Yovo A.",
-    description: "Conception de contenus numériques pédagogiques, LMS, classes virtuelles et outils de collaboration pour l'enseignement supérieur.",
-    price: 8000,
-    category: 'technique',
-    pages: 310,
-    edition: '2e éd. 2024',
-    badge: 'Nouveau',
-    inStock: true,
-    color: 'from-cyan-500 to-cyan-700',
-  },
-  {
-    id: 7,
-    title: "Curriculum et programmes de formation",
-    author: "Fagnisse S.",
-    description: "Élaboration et révision des curricula de formation professionnelle selon l'approche par compétences (APC).",
-    price: 7000,
-    category: 'pedagogie',
-    pages: 295,
-    edition: '1re éd. 2021',
-    inStock: false,
-    color: 'from-slate-500 to-slate-700',
-  },
-  {
-    id: 8,
-    title: "Sciences biologiques et enseignement technique",
-    author: "Agbangla C.",
-    description: "Transposition didactique des sciences biologiques dans les filières techniques et professionnelles.",
-    price: 6800,
-    category: 'didactique',
-    pages: 220,
-    edition: '1re éd. 2023',
-    inStock: true,
-    color: 'from-teal-500 to-teal-700',
-  },
-];
 
 const categoryLabels: Record<string, string> = {
   tous: 'Tous',
@@ -130,11 +15,27 @@ const categoryLabels: Record<string, string> = {
   technique: 'Numérique',
 };
 
+const catColors: Record<string, string> = {
+  pedagogie: 'from-blue-500 to-blue-700',
+  didactique: 'from-violet-500 to-violet-700',
+  recherche: 'from-amber-500 to-amber-700',
+  technique: 'from-cyan-500 to-cyan-700',
+};
+
 const ShopPage: React.FC<ShopPageProps> = ({ onBack }) => {
-  const [activeCategory, setActiveCategory] = useState<'tous' | 'pedagogie' | 'didactique' | 'recherche' | 'technique'>('tous');
-  const [cart, setCart] = useState<Record<number, number>>({});
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('tous');
+  const [cart, setCart] = useState<Record<string, number>>({});
   const [showCart, setShowCart] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+
+  useEffect(() => {
+    getBooks()
+      .then(data => setBooks(data || []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = activeCategory === 'tous'
     ? books
@@ -142,12 +43,12 @@ const ShopPage: React.FC<ShopPageProps> = ({ onBack }) => {
 
   const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
   const cartTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
-    const b = books.find(b => b.id === Number(id));
+    const b = books.find(b => b.id === id);
     return sum + (b?.price || 0) * qty;
   }, 0);
 
-  const addToCart = (id: number) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
-  const removeFromCart = (id: number) => setCart(prev => {
+  const addToCart = (id: string) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+  const removeFromCart = (id: string) => setCart(prev => {
     const next = { ...prev };
     if (next[id] > 1) next[id]--;
     else delete next[id];
@@ -219,10 +120,17 @@ const ShopPage: React.FC<ShopPageProps> = ({ onBack }) => {
               <>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {Object.entries(cart).map(([id, qty]) => {
-                    const b = books.find(b => b.id === Number(id))!;
+                    const b = books.find(b => b.id === id)!;
+                    const color = catColors[b.category] || 'from-slate-500 to-slate-700';
                     return (
                       <div key={id} className="flex items-center gap-3">
-                        <div className={`w-9 h-12 rounded bg-gradient-to-b ${b.color} flex-shrink-0`} />
+                        <div className="w-9 h-12 rounded flex-shrink-0 overflow-hidden">
+                          {b.cover_url ? (
+                            <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className={`w-full h-full bg-gradient-to-b ${color}`} />
+                          )}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-slate-800 leading-tight line-clamp-2">{b.title}</p>
                           <p className="text-xs text-slate-400 mt-0.5">{b.price.toLocaleString('fr-FR')} FCFA</p>
@@ -286,85 +194,100 @@ const ShopPage: React.FC<ShopPageProps> = ({ onBack }) => {
             ))}
           </div>
 
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map(book => (
-              <div
-                key={book.id}
-                className={`bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col transition-shadow hover:shadow-md ${!book.inStock ? 'opacity-60' : ''}`}
-              >
-                {/* Couverture */}
-                <div className="relative h-36 flex items-center justify-center bg-slate-50 px-6">
-                  {/* Livre stylisé */}
-                  <div className="relative flex items-center justify-center">
-                    {/* Tranche */}
-                    <div className="absolute left-0 top-0 bottom-0 w-3 bg-black/20 rounded-l" style={{transform: 'translateX(-2px)'}} />
-                    {/* Couverture */}
-                    <div className={`w-24 h-32 rounded-r-md bg-gradient-to-br ${book.color} shadow-lg flex flex-col items-center justify-center p-2`}>
-                      <BookOpen className="w-6 h-6 text-white/80 mb-1" />
-                      <span className="text-white text-[8px] font-bold text-center leading-tight line-clamp-3 opacity-90">
-                        {book.title}
-                      </span>
+          {loading ? (
+            <div className="flex items-center justify-center py-24">
+              <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
+            </div>
+          ) : (
+            <>
+              {/* Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filtered.map(book => {
+                  const color = catColors[book.category] || 'from-slate-500 to-slate-700';
+                  return (
+                    <div
+                      key={book.id}
+                      className={`bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col transition-shadow hover:shadow-md ${!book.in_stock ? 'opacity-60' : ''}`}
+                    >
+                      {/* Couverture */}
+                      <div className="relative h-36 flex items-center justify-center bg-slate-50 px-6">
+                        {book.cover_url ? (
+                          <img src={book.cover_url} alt={book.title} className="h-full w-auto max-w-full object-contain" />
+                        ) : (
+                          <div className="relative flex items-center justify-center">
+                            <div className="absolute left-0 top-0 bottom-0 w-3 bg-black/20 rounded-l" style={{transform: 'translateX(-2px)'}} />
+                            <div className={`w-24 h-32 rounded-r-md bg-gradient-to-br ${color} shadow-lg flex flex-col items-center justify-center p-2`}>
+                              <BookOpen className="w-6 h-6 text-white/80 mb-1" />
+                              <span className="text-white text-[8px] font-bold text-center leading-tight line-clamp-3 opacity-90">{book.title}</span>
+                            </div>
+                          </div>
+                        )}
+                        {book.badge && (
+                          <span className="absolute top-3 right-3 bg-blue-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">{book.badge}</span>
+                        )}
+                        {!book.in_stock && (
+                          <span className="absolute top-3 left-3 bg-slate-400 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">Épuisé</span>
+                        )}
+                      </div>
+
+                      {/* Infos */}
+                      <div className="p-4 flex flex-col flex-1">
+                        <h3 className="text-sm font-semibold text-slate-800 leading-tight mb-1">{book.title}</h3>
+                        <p className="text-xs text-blue-600 font-medium mb-1">{book.author}</p>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          {book.edition && <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{book.edition}</span>}
+                          {book.pages && <span className="text-[10px] text-slate-400">{book.pages} pages</span>}
+                          {book.publisher && <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{book.publisher}</span>}
+                        </div>
+                        <p className="text-xs text-slate-400 mb-4 flex-1 leading-relaxed line-clamp-3">{book.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 text-sm">
+                            {book.price.toLocaleString('fr-FR')} <span className="font-normal text-slate-400 text-xs">FCFA</span>
+                          </span>
+                          <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
+                            <button
+                              onClick={() => book.in_stock && addToCart(book.id)}
+                              disabled={!book.in_stock}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                book.in_stock
+                                  ? 'bg-slate-900 text-white hover:bg-slate-700'
+                                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                              }`}
+                            >
+                              <ShoppingCart className="w-3 h-3" />
+                              {cart[book.id] ? `${cart[book.id]} ajouté${cart[book.id] > 1 ? 's' : ''}` : 'Ajouter'}
+                            </button>
+                          </ClickSpark>
+                        </div>
+                      </div>
                     </div>
+                  );
+                })}
+                {filtered.length === 0 && !loading && (
+                  <div className="col-span-full py-16 flex flex-col items-center gap-3 text-slate-400">
+                    <BookOpen className="w-10 h-10" />
+                    <p className="text-sm">Aucun ouvrage dans cette catégorie</p>
                   </div>
-                  {book.badge && (
-                    <span className="absolute top-3 right-3 bg-blue-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                      {book.badge}
-                    </span>
-                  )}
-                  {!book.inStock && (
-                    <span className="absolute top-3 left-3 bg-slate-400 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                      Épuisé
-                    </span>
-                  )}
-                </div>
-
-                {/* Infos */}
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="text-sm font-semibold text-slate-800 leading-tight mb-1">{book.title}</h3>
-                  <p className="text-xs text-blue-600 font-medium mb-1">{book.author}</p>
-                  <div className="flex items-center gap-2 mb-2">
-                    {book.edition && <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{book.edition}</span>}
-                    {book.pages && <span className="text-[10px] text-slate-400">{book.pages} pages</span>}
-                  </div>
-                  <p className="text-xs text-slate-400 mb-4 flex-1 leading-relaxed">{book.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 text-sm">
-                      {book.price.toLocaleString('fr-FR')} <span className="font-normal text-slate-400 text-xs">FCFA</span>
-                    </span>
-                    <ClickSpark sparkColor="#ffffff" sparkSize={4} sparkRadius={12} sparkCount={6}>
-                      <button
-                        onClick={() => book.inStock && addToCart(book.id)}
-                        disabled={!book.inStock}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          book.inStock
-                            ? 'bg-slate-900 text-white hover:bg-slate-700'
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        <ShoppingCart className="w-3 h-3" />
-                        {cart[book.id] ? `${cart[book.id]} ajouté${cart[book.id] > 1 ? 's' : ''}` : 'Ajouter'}
-                      </button>
-                    </ClickSpark>
-                  </div>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
 
-          {/* Info banner */}
-          <div className="mt-10 bg-amber-50 border border-amber-100 rounded-2xl p-5 flex gap-4 items-start">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <BookOpen className="w-4 h-4 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-amber-800 mb-1">Commande & remise des ouvrages</p>
-              <p className="text-xs text-amber-700 leading-relaxed">
-                Passez votre commande en ligne. L'administration ENSET-MASTERS vous contactera sous 24h
-                pour organiser la remise en main propre ou la livraison. Paiement à la réception — espèces ou Mobile Money.
-              </p>
-            </div>
-          </div>
+              {/* Info banner */}
+              {books.length > 0 && (
+                <div className="mt-10 bg-amber-50 border border-amber-100 rounded-2xl p-5 flex gap-4 items-start">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <BookOpen className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800 mb-1">Commande & remise des ouvrages</p>
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      Passez votre commande en ligne. L'administration ENSET-MASTERS vous contactera sous 24h
+                      pour organiser la remise en main propre ou la livraison. Paiement à la réception — espèces ou Mobile Money.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </main>
     </div>
