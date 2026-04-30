@@ -1305,7 +1305,8 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
     } catch (error) {
       console.error('Erreur lors de la soumission:', error);
-      setSubmissionError('Erreur lors de la soumission. Veuillez réessayer.');
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la soumission. Veuillez réessayer.';
+      setSubmissionError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
