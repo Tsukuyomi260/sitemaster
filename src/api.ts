@@ -182,6 +182,58 @@ export async function getAssignmentById(assignmentId: number) {
   }
 }
 
+export async function createAssignment(assignmentData: {
+  title: string;
+  course: string;
+  description?: string;
+  due_date?: string;
+  deadline?: string;
+  points?: number;
+  is_active?: boolean;
+}) {
+  try {
+    const { data, error } = await supabase
+      .from('assignments')
+      .insert([{
+        ...assignmentData,
+        is_active: assignmentData.is_active !== false
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de la création du devoir:', error);
+    throw error;
+  }
+}
+
+export async function updateAssignment(assignmentId: number, assignmentData: Partial<{
+  title: string;
+  course: string;
+  description: string;
+  due_date: string;
+  deadline: string;
+  points: number;
+  is_active: boolean;
+}>) {
+  try {
+    const { data, error } = await supabase
+      .from('assignments')
+      .update(assignmentData)
+      .eq('id', assignmentId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du devoir:', error);
+    throw error;
+  }
+}
+
 export async function submitAssignment(
   assignmentId: number,
   studentId: string,

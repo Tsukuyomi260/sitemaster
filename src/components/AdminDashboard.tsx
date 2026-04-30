@@ -302,6 +302,22 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     console.log('Nombre de cours assignés:', courseAssignments.length);
   }, [courseAssignments]);
 
+  // Auto-refresh submissions when on submissions tab
+  useEffect(() => {
+    if (activeTab !== 'submissions') return;
+
+    // Reload immediately when switching to tab
+    reloadSubmissions();
+
+    // Set up interval to refresh every 30 seconds while on this tab
+    const interval = setInterval(() => {
+      console.log('Auto-refresh submissions...');
+      reloadSubmissions();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [activeTab]);
+
   // Effet pour fermer les suggestions quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
