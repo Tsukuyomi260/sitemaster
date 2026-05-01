@@ -1402,6 +1402,27 @@ export async function sendIndividualMessage(adminEmail: string, recipientEmail: 
 }
 
 // Fonction pour récupérer toutes les soumissions (pour les admins)
+// Obtenir le nombre total d'assignments pour une année donnée
+export async function getTotalAssignmentsByYear(anneeEtude: number) {
+  try {
+    const { data: assignments, error } = await supabase
+      .from('assignments')
+      .select('id', { count: 'exact' })
+      .eq('annee_etude', anneeEtude)
+      .eq('is_active', true);
+
+    if (error) {
+      console.log('Fallback: Aucune table assignments trouvée, utilisant historique des soumissions');
+      return null;
+    }
+
+    return assignments?.length || 1;
+  } catch (error) {
+    console.log('Fallback: Pas de table assignments, utilisant historique');
+    return null;
+  }
+}
+
 export async function getAllSubmissions() {
   try {
     // Récupérer toutes les soumissions sans JOIN sur assignments (table souvent vide)
@@ -1418,7 +1439,7 @@ export async function getAllSubmissions() {
 
     const { data: studentsInfo } = await supabase
       .from('students')
-      .select('id, nom_complet, matricule, email, niveau, annee_etude')
+      .select('id, nom_complet, matricule, email, niveau, annee_etude, annee_academique')
       .in('id', studentIds);
 
     // Combiner soumissions + infos étudiants

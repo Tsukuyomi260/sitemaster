@@ -481,32 +481,55 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   // Stats de soumissions
   const submissionStats = (() => {
     const totalStudents = students.length;
-    const totalAssignments = Math.max(...submissions.map(s => s.assignment_id || 0), 0) || 1;
-    const byStudent: Record<string, { nom: string; matricule: string; count: number }> = {};
+
+    // Grouper par année d'étude pour compter les unique assignments
+    const submissionsByYear: Record<number, { studentMap: Record<string, any>; assignmentIds: Set<number> }> = {};
+
     for (const s of submissions) {
-      const id = s.student_id;
-      if (!byStudent[id]) {
-        byStudent[id] = {
-          nom: s.students?.nom_complet || id,
-          matricule: s.students?.matricule || id,
+      const studentYear = (s.students as any)?.annee_etude || (s.students as any)?.annee_academique || 1;
+      const studentId = s.student_id;
+
+      if (!submissionsByYear[studentYear]) {
+        submissionsByYear[studentYear] = {
+          studentMap: {},
+          assignmentIds: new Set<number>()
+        };
+      }
+
+      if (!submissionsByYear[studentYear].studentMap[studentId]) {
+        submissionsByYear[studentYear].studentMap[studentId] = {
+          nom: s.students?.nom_complet || studentId,
+          matricule: s.students?.matricule || studentId,
           count: 0,
         };
       }
-      byStudent[id].count++;
-    }
-    const studentList = Object.entries(byStudent).map(([id, v]) => ({
-      id, ...v,
-      percent: Math.min(100, Math.round((v.count / totalAssignments) * 100)),
-    })).sort((a, b) => b.percent - a.percent);
 
-    const submittedAll = studentList.filter(s => s.count >= totalAssignments).length;
-    const submittedSome = studentList.filter(s => s.count > 0 && s.count < totalAssignments).length;
+      submissionsByYear[studentYear].studentMap[studentId].count++;
+      submissionsByYear[studentYear].assignmentIds.add(s.assignment_id);
+    }
+
+    // Créer la liste d'étudiants avec percentages basés sur les assignments uniques de leur année
+    const studentList = Object.entries(submissionsByYear).flatMap(([year, data]) => {
+      const totalAssignmentsForYear = Math.max(1, data.assignmentIds.size);
+
+      return Object.entries(data.studentMap).map(([id, student]) => ({
+        id,
+        nom: student.nom,
+        matricule: student.matricule,
+        count: student.count,
+        percent: Math.min(100, Math.round((student.count / totalAssignmentsForYear) * 100)),
+      }));
+    }).sort((a, b) => b.percent - a.percent);
+
+    const globalTotalAssignments = Object.values(submissionsByYear).reduce((max, data) => Math.max(max, data.assignmentIds.size), 1);
+    const submittedAll = studentList.filter(s => s.percent === 100).length;
+    const submittedSome = studentList.filter(s => s.percent > 0 && s.percent < 100).length;
     const submittedNone = Math.max(0, totalStudents - studentList.length);
-    const globalRate = totalStudents > 0
-      ? Math.round((studentList.reduce((acc, s) => acc + s.count, 0) / (totalStudents * totalAssignments)) * 100)
+    const globalRate = studentList.length > 0
+      ? Math.round(studentList.reduce((acc, s) => acc + s.percent, 0) / studentList.length)
       : 0;
 
-    return { totalAssignments, totalStudents, submittedAll, submittedSome, submittedNone, globalRate, studentList };
+    return { totalAssignments: globalTotalAssignments, totalStudents, submittedAll, submittedSome, submittedNone, globalRate, studentList };
   })();
 
   // Effet pour logger les changements de submissions
@@ -2129,8 +2152,7 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                     {submissionStats.studentList.map(s => (
                       <div key={s.id} className="flex items-center gap-4 px-5 py-3">
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-slate-800 dark:text-white truncate">{s.nom}</p>
-                          <p className="text-xs text-slate-400">{s.matricule}</p>
+                          <p className="text-sm font-medium text-slate-800 dark:text-white truncate">{s.nom} <span className="text-xs text-slate-400">({s.matricule})</span></p>
                         </div>
                         <div className="w-32 hidden sm:block">
                           <div className="w-full h-1.5 bg-slate-100 rounded-full">
