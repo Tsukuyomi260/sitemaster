@@ -166,6 +166,54 @@ export async function signOut() {
 }
 
 // Fonctions pour les soumissions de devoirs
+export async function getGlobalSubmissionDeadline() {
+  try {
+    const { data, error } = await supabase
+      .from('app_config')
+      .select('value')
+      .eq('key', 'submission_deadline')
+      .single();
+
+    if (error && error.code === 'PGRST116') {
+      // Pas de deadline configurée
+      return null;
+    }
+    if (error) throw error;
+
+    return data?.value || null;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la deadline globale:', error);
+    return null;
+  }
+}
+
+export async function setGlobalSubmissionDeadline(deadline: string | null) {
+  try {
+    if (!deadline) {
+      // Supprimer la deadline
+      const { error } = await supabase
+        .from('app_config')
+        .delete()
+        .eq('key', 'submission_deadline');
+      if (error) throw error;
+      return null;
+    }
+
+    // Insérer ou mettre à jour la deadline
+    const { data, error } = await supabase
+      .from('app_config')
+      .upsert({ key: 'submission_deadline', value: deadline })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data?.value || null;
+  } catch (error) {
+    console.error('Erreur lors de la définition de la deadline globale:', error);
+    throw error;
+  }
+}
+
 export async function getAssignmentById(assignmentId: number) {
   try {
     const { data: assignment, error } = await supabase
@@ -243,13 +291,13 @@ export async function submitAssignment(
   onProgress?: (percent: number, speedMBs?: number) => void
 ) {
   try {
-    // Vérifier la deadline
-    const assignment = await getAssignmentById(assignmentId);
-    if (assignment && assignment.deadline) {
-      const deadline = new Date(assignment.deadline);
+    // Vérifier la deadline GLOBALE
+    const globalDeadline = await getGlobalSubmissionDeadline();
+    if (globalDeadline) {
+      const deadline = new Date(globalDeadline);
       const now = new Date();
       if (now > deadline) {
-        throw new Error(`Cette soumission n'est plus possible. La date limite était le ${deadline.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
+        throw new Error(`Délai de soumission de tous les devoirs dépassé. La date limite était le ${deadline.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
       }
     }
 

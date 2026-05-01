@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { submitAssignment, getAssignmentSubmissions, getSubmittedAssignmentIds, getStudentNotifications, markNotificationAsRead, recordCourseDownload, uploadPaymentProof, getStudentPaymentProofs, PaymentProof } from '../api';
+import { submitAssignment, getAssignmentSubmissions, getSubmittedAssignmentIds, getStudentNotifications, markNotificationAsRead, recordCourseDownload, uploadPaymentProof, getStudentPaymentProofs, PaymentProof, getGlobalSubmissionDeadline } from '../api';
 import ClickSpark from './ClickSpark';
 import {
   BookOpen,
@@ -264,6 +264,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   const [submissionError, setSubmissionError] = useState('');
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [submittedAssignmentIds, setSubmittedAssignmentIds] = useState<Set<number>>(new Set());
+  const [globalSubmissionDeadline, setGlobalSubmissionDeadline] = useState<string | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; name: string } | null>(null);
   const [scolariteProof, setScolariteProof] = useState<PaymentProof | null>(null);
   const [laboProof, setLaboProof] = useState<PaymentProof | null>(null);
@@ -330,6 +331,19 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
   // eslint-disable-next-line react-hooks/exhaustive-deps -- studentName suffit pour le chargement des notifications
   }, [studentName]);
 
+  // Charger la deadline globale de soumission
+  useEffect(() => {
+    const loadGlobalDeadline = async () => {
+      try {
+        const deadline = await getGlobalSubmissionDeadline();
+        setGlobalSubmissionDeadline(deadline);
+      } catch (error) {
+        console.error('Erreur lors du chargement de la deadline globale:', error);
+      }
+    };
+
+    loadGlobalDeadline();
+  }, []);
 
   // Appliquer le thème au chargement
   React.useEffect(() => {
@@ -1206,15 +1220,16 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
     }
   };
 
-  const getDeadlineStatus = (deadline?: string) => {
-    if (!deadline) return { isPast: false, isApproaching: false, hoursLeft: null };
+  const getGlobalDeadlineStatus = () => {
+    if (!globalSubmissionDeadline) return { isPast: false, isApproaching: false, hoursLeft: null };
     const now = new Date();
-    const deadlineDate = new Date(deadline);
+    const deadlineDate = new Date(globalSubmissionDeadline);
     const hoursLeft = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
     return {
       isPast: now > deadlineDate,
       isApproaching: hoursLeft > 0 && hoursLeft <= 24,
-      hoursLeft: hoursLeft > 0 ? Math.ceil(hoursLeft) : null
+      hoursLeft: hoursLeft > 0 ? Math.ceil(hoursLeft) : null,
+      deadline: globalSubmissionDeadline
     };
   };
 
@@ -2504,7 +2519,7 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
 
         {/* ── Modal soumission de devoir ── */}
         {isSubmissionModalOpen && selectedAssignment && (() => {
-          const deadlineStatus = selectedAssignment.deadline ? getDeadlineStatus(selectedAssignment.deadline) : { isPast: false };
+          const deadlineStatus = getGlobalDeadlineStatus();
           return (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className={`rounded-2xl shadow-2xl border w-full max-w-sm flex flex-col max-h-[90vh] ${
@@ -2531,17 +2546,17 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
               </div>
 
               {/* Deadline warning */}
-              {selectedAssignment.deadline && (() => {
-                const status = getDeadlineStatus(selectedAssignment.deadline);
-                const deadlineDate = new Date(selectedAssignment.deadline);
+              {globalSubmissionDeadline && (() => {
+                const status = deadlineStatus;
+                const deadlineDate = new Date(globalSubmissionDeadline);
                 if (status.isPast) {
                   return (
                     <div className="px-5 py-3 bg-red-50 border-b border-red-200">
                       <div className="flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-red-700">Deadline dépassée</p>
-                          <p className="text-xs text-red-600">Cette soumission n'est plus possible. La date limite était le {deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                          <p className="text-xs font-semibold text-red-700">Délai de soumission dépassé</p>
+                          <p className="text-xs text-red-600">Vous ne pouvez plus soumettre aucun devoir. La date limite était le {deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </div>
                     </div>
@@ -2553,17 +2568,17 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                         <Clock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-amber-700">Deadline approche</p>
-                          <p className="text-xs text-amber-600">{status.hoursLeft} heure{status.hoursLeft! > 1 ? 's' : ''} restante{status.hoursLeft! > 1 ? 's' : ''} jusqu'au {deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                          <p className="text-xs text-amber-600">{status.hoursLeft} heure{status.hoursLeft! > 1 ? 's' : ''} restante{status.hoursLeft! > 1 ? 's' : ''} pour soumettre. Deadline: {deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </div>
                     </div>
                   );
                 } else {
                   return (
-                    <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
+                    <div className="px-5 py-3 bg-blue-50 border-b border-blue-200">
                       <div className="flex items-start gap-2">
-                        <Calendar className="w-4 h-4 text-slate-600 mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-slate-600">Date limite : <span className="font-semibold">{deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></p>
+                        <Calendar className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-blue-600">Deadline de soumission: <span className="font-semibold">{deadlineDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></p>
                       </div>
                     </div>
                   );
@@ -2582,10 +2597,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                       </svg>
                     </div>
                     <h3 className="text-lg font-bold text-red-700 mb-2">Délai de soumission dépassé</h3>
-                    <p className="text-sm text-slate-600 mb-2">Vous ne pouvez plus soumettre ce devoir.</p>
-                    {selectedAssignment.deadline && (
+                    <p className="text-sm text-slate-600 mb-2">Vous ne pouvez plus soumettre aucun devoir.</p>
+                    {globalSubmissionDeadline && (
                       <p className="text-xs text-slate-500">
-                        La date limite était le {new Date(selectedAssignment.deadline).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        La date limite était le {new Date(globalSubmissionDeadline).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     )}
                   </div>
@@ -2723,10 +2738,10 @@ export default function StudentDashboard({ studentName, studentInfo, onLogout }:
                   </button>
                   <button
                     onClick={handleSubmissionSubmit}
-                    disabled={!submissionFile || !submissionTitle.trim() || isSubmitting || (selectedAssignment.deadline && getDeadlineStatus(selectedAssignment.deadline).isPast)}
+                    disabled={!submissionFile || !submissionTitle.trim() || isSubmitting || deadlineStatus.isPast}
                     className="flex-1 px-4 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {selectedAssignment.deadline && getDeadlineStatus(selectedAssignment.deadline).isPast ? 'Deadline dépassée' : isSubmitting ? 'Envoi…' : 'Soumettre'}
+                    {deadlineStatus.isPast ? 'Délai dépassé' : isSubmitting ? 'Envoi…' : 'Soumettre'}
                   </button>
                 </div>
               )}

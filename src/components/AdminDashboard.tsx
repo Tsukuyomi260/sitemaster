@@ -60,7 +60,9 @@ import {
   downloadSubmissionFile,
   getAllAssignments,
   createAssignment,
-  updateAssignment
+  updateAssignment,
+  getGlobalSubmissionDeadline,
+  setGlobalSubmissionDeadline
 } from '../api';
 
 interface AdminDashboardProps {
@@ -203,26 +205,12 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     submissionsCount: 0
   });
 
-  // Assignment management states
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
-  const [showDeadlineModal, setShowDeadlineModal] = useState(false);
-  const [selectedAssignmentForDeadline, setSelectedAssignmentForDeadline] = useState<any | null>(null);
-  const [deadlineInput, setDeadlineInput] = useState('');
-  const [editingAssignment, setEditingAssignment] = useState<any | null>(null);
-  const [assignmentForm, setAssignmentForm] = useState({
-    title: '',
-    course: '',
-    description: '',
-    due_date: '',
-    deadline: '',
-    points: 20,
-    is_active: true
-  });
-  const [assignmentError, setAssignmentError] = useState('');
-  const [deadlineError, setDeadlineError] = useState('');
-  const [assignmentSaving, setAssignmentSaving] = useState(false);
-  const [deadlineSaving, setDeadlineSaving] = useState(false);
+  // Global submission deadline states
+  const [globalSubmissionDeadline, setGlobalSubmissionDeadlineState] = useState<string | null>(null);
+  const [showGlobalDeadlineModal, setShowGlobalDeadlineModal] = useState(false);
+  const [globalDeadlineInput, setGlobalDeadlineInput] = useState('');
+  const [globalDeadlineError, setGlobalDeadlineError] = useState('');
+  const [globalDeadlineSaving, setGlobalDeadlineSaving] = useState(false);
 
   // États de chargement
   const [, setStudentsLoading] = useState(false);
@@ -311,9 +299,9 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
         const booksData = await getAllBooksAdmin();
         setAdminBooks(booksData || []);
 
-        // Charger les devoirs
-        const assignmentsData = await getAllAssignments();
-        setAssignments(assignmentsData || []);
+        // Charger la deadline globale de soumission
+        const deadline = await getGlobalSubmissionDeadline();
+        setGlobalSubmissionDeadlineState(deadline);
         
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
@@ -428,120 +416,49 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
     }
   };
 
-  // Assignment management functions
-  const reloadAssignments = async () => {
+  // Global deadline management functions
+  const openGlobalDeadlineModal = () => {
+    setGlobalDeadlineInput(globalSubmissionDeadline || '');
+    setGlobalDeadlineError('');
+    setShowGlobalDeadlineModal(true);
+  };
+
+  const closeGlobalDeadlineModal = () => {
+    setShowGlobalDeadlineModal(false);
+    setGlobalDeadlineInput('');
+    setGlobalDeadlineError('');
+  };
+
+  const handleSetGlobalDeadline = async () => {
+    if (!globalDeadlineInput) {
+      setGlobalDeadlineError('Veuillez sélectionner une date limite');
+      return;
+    }
+
+    setGlobalDeadlineSaving(true);
     try {
-      const assignmentsData = await getAllAssignments();
-      setAssignments(assignmentsData || []);
+      const newDeadline = await setGlobalSubmissionDeadline(globalDeadlineInput);
+      setGlobalSubmissionDeadlineState(newDeadline);
+      closeGlobalDeadlineModal();
     } catch (error) {
-      console.error('Erreur lors du rechargement des devoirs:', error);
-    }
-  };
-
-  const openAssignmentModal = (assignment?: any) => {
-    if (assignment) {
-      setEditingAssignment(assignment);
-      setAssignmentForm({
-        title: assignment.title || '',
-        course: assignment.course || '',
-        description: assignment.description || '',
-        due_date: assignment.due_date || '',
-        deadline: assignment.deadline || '',
-        points: assignment.points || 20,
-        is_active: assignment.is_active !== false
-      });
-    } else {
-      setEditingAssignment(null);
-      setAssignmentForm({
-        title: '',
-        course: '',
-        description: '',
-        due_date: '',
-        deadline: '',
-        points: 20,
-        is_active: true
-      });
-    }
-    setAssignmentError('');
-    setShowAssignmentModal(true);
-  };
-
-  const closeAssignmentModal = () => {
-    setShowAssignmentModal(false);
-    setEditingAssignment(null);
-    setAssignmentForm({
-      title: '',
-      course: '',
-      description: '',
-      due_date: '',
-      deadline: '',
-      points: 20,
-      is_active: true
-    });
-    setAssignmentError('');
-  };
-
-  const handleSaveAssignment = async () => {
-    if (!assignmentForm.title.trim()) {
-      setAssignmentError('Veuillez entrer le titre du devoir');
-      return;
-    }
-    if (!assignmentForm.course.trim()) {
-      setAssignmentError('Veuillez sélectionner un cours');
-      return;
-    }
-    if (!assignmentForm.deadline) {
-      setAssignmentError('Veuillez définir une date limite de soumission');
-      return;
-    }
-
-    setAssignmentSaving(true);
-    try {
-      if (editingAssignment) {
-        await updateAssignment(editingAssignment.id, assignmentForm);
-      } else {
-        await createAssignment(assignmentForm);
-      }
-      await reloadAssignments();
-      closeAssignmentModal();
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde du devoir:', error);
-      setAssignmentError('Erreur lors de la sauvegarde du devoir');
+      console.error('Erreur lors de la définition de la deadline globale:', error);
+      setGlobalDeadlineError('Erreur lors de la sauvegarde de la deadline');
     } finally {
-      setAssignmentSaving(false);
+      setGlobalDeadlineSaving(false);
     }
   };
 
-  const openDeadlineModal = (assignment: any) => {
-    setSelectedAssignmentForDeadline(assignment);
-    setDeadlineInput(assignment.deadline || '');
-    setDeadlineError('');
-    setShowDeadlineModal(true);
-  };
-
-  const closeDeadlineModal = () => {
-    setShowDeadlineModal(false);
-    setSelectedAssignmentForDeadline(null);
-    setDeadlineInput('');
-    setDeadlineError('');
-  };
-
-  const handleSetDeadline = async () => {
-    if (!deadlineInput) {
-      setDeadlineError('Veuillez sélectionner une date limite');
-      return;
-    }
-
-    setDeadlineSaving(true);
+  const handleRemoveGlobalDeadline = async () => {
+    setGlobalDeadlineSaving(true);
     try {
-      await updateAssignment(selectedAssignmentForDeadline.id, { deadline: deadlineInput });
-      await reloadAssignments();
-      closeDeadlineModal();
+      await setGlobalSubmissionDeadline(null);
+      setGlobalSubmissionDeadlineState(null);
+      closeGlobalDeadlineModal();
     } catch (error) {
-      console.error('Erreur lors de la définition de la deadline:', error);
-      setDeadlineError('Erreur lors de la sauvegarde de la deadline');
+      console.error('Erreur lors de la suppression de la deadline globale:', error);
+      setGlobalDeadlineError('Erreur lors de la suppression de la deadline');
     } finally {
-      setDeadlineSaving(false);
+      setGlobalDeadlineSaving(false);
     }
   };
 
@@ -2123,12 +2040,20 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => openAssignmentModal()}
-                  className="px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center gap-2 text-sm lg:text-base"
+                  onClick={openGlobalDeadlineModal}
+                  className="px-4 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors font-medium flex items-center gap-2 text-sm lg:text-base"
+                  title="Définir la date limite de soumission pour TOUS les devoirs"
                 >
-                  <Plus className="w-4 h-4" />
-                  Ajouter un devoir
+                  <Calendar className="w-4 h-4" />
+                  Mettre une deadline
                 </button>
+                {globalSubmissionDeadline && (
+                  <div className="px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-xs">
+                    <p className="text-green-700 dark:text-green-300 font-semibold">
+                      Deadline: {new Date(globalSubmissionDeadline).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                )}
                 {filteredSubmissions.length > 0 && (
                   <button
                     onClick={handleDownloadAll}
@@ -2165,51 +2090,6 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                 </div>
               </div>
             </div>
-
-            {/* Liste des devoirs */}
-            {assignments.length > 0 && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
-                <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-700">
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">Devoirs disponibles ({assignments.length})</h3>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-700 max-h-96 overflow-y-auto">
-                  {assignments.map(assignment => (
-                    <div key={assignment.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-slate-900 dark:text-white text-sm">{assignment.title}</h4>
-                          <p className="text-xs text-slate-500 mt-1">{assignment.course}</p>
-                          {assignment.deadline ? (
-                            <p className="text-xs text-green-600 dark:text-green-400 mt-1 font-semibold">
-                              ✓ Deadline: {new Date(assignment.deadline).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          ) : (
-                            <p className="text-xs text-red-600 dark:text-red-400 mt-1 font-semibold">⚠️ Pas de deadline définie</p>
-                          )}
-                        </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button
-                            onClick={() => openDeadlineModal(assignment)}
-                            className="px-3 py-1.5 bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 rounded-lg text-xs font-medium hover:bg-orange-200 dark:hover:bg-orange-800 transition-colors whitespace-nowrap"
-                            title="Mettre ou modifier la deadline"
-                          >
-                            <Calendar className="w-3 h-3 inline mr-1" />
-                            Deadline
-                          </button>
-                          <button
-                            onClick={() => openAssignmentModal(assignment)}
-                            className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-lg text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                            title="Éditer le devoir"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Stats de soumission */}
             {!submissionsLoading && submissions.length > 0 && (
@@ -3703,145 +3583,10 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
           </div>
         )}
 
-        {/* Modal création/édition devoir */}
-        {showAssignmentModal && (
+        {/* Modal définition deadline globale */}
+        {showGlobalDeadlineModal && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    {editingAssignment ? 'Modifier le devoir' : 'Créer un devoir'}
-                  </h2>
-                  <button
-                    onClick={closeAssignmentModal}
-                    disabled={assignmentSaving}
-                    className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-6 space-y-4">
-                {/* Titre */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Titre du devoir *
-                  </label>
-                  <input
-                    type="text"
-                    value={assignmentForm.title}
-                    onChange={e => setAssignmentForm({...assignmentForm, title: e.target.value})}
-                    placeholder="Ex: Devoir 1 - Analyse des données"
-                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 text-slate-900 dark:text-white"
-                  />
-                </div>
-
-                {/* Cours */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Cours *
-                  </label>
-                  <input
-                    type="text"
-                    value={assignmentForm.course}
-                    onChange={e => setAssignmentForm({...assignmentForm, course: e.target.value})}
-                    placeholder="Ex: Mathématiques, Informatique"
-                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 text-slate-900 dark:text-white"
-                  />
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    value={assignmentForm.description}
-                    onChange={e => setAssignmentForm({...assignmentForm, description: e.target.value})}
-                    placeholder="Description du devoir (optionnel)"
-                    rows={3}
-                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
-                  />
-                </div>
-
-                {/* Date limite de soumission */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Date limite de soumission *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={assignmentForm.deadline}
-                    onChange={e => setAssignmentForm({...assignmentForm, deadline: e.target.value})}
-                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 text-slate-900 dark:text-white"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Les étudiants ne pourront pas soumettre après cette date</p>
-                </div>
-
-                {/* Points */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Points
-                  </label>
-                  <input
-                    type="number"
-                    value={assignmentForm.points}
-                    onChange={e => setAssignmentForm({...assignmentForm, points: parseInt(e.target.value) || 0})}
-                    min="0"
-                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 text-slate-900 dark:text-white"
-                  />
-                </div>
-
-                {/* Actif */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    checked={assignmentForm.is_active}
-                    onChange={e => setAssignmentForm({...assignmentForm, is_active: e.target.checked})}
-                    className="w-4 h-4 rounded border-slate-300"
-                  />
-                  <label htmlFor="is_active" className="text-sm text-slate-700 dark:text-slate-300">
-                    Devoir actif (visible aux étudiants)
-                  </label>
-                </div>
-
-                {/* Erreur */}
-                {assignmentError && (
-                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <p className="text-sm text-red-600 dark:text-red-400">{assignmentError}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex gap-3 sticky bottom-0 bg-white dark:bg-slate-800">
-                <button
-                  onClick={closeAssignmentModal}
-                  disabled={assignmentSaving}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-40"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleSaveAssignment}
-                  disabled={assignmentSaving}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40"
-                >
-                  {assignmentSaving ? 'Enregistrement...' : 'Enregistrer'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal Mettre une deadline */}
-        {showDeadlineModal && selectedAssignmentForDeadline && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md">
               {/* Header */}
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
                 <div className="flex items-center justify-between">
@@ -3849,14 +3594,11 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
                     <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
                       <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-300" />
                     </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-900 dark:text-white">Mettre une deadline</h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{selectedAssignmentForDeadline.title}</p>
-                    </div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Deadline globale</h2>
                   </div>
                   <button
-                    onClick={closeDeadlineModal}
-                    disabled={deadlineSaving}
+                    onClick={closeGlobalDeadlineModal}
+                    disabled={globalDeadlineSaving}
                     className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30"
                   >
                     <X className="w-5 h-5" />
@@ -3866,32 +3608,41 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
 
               {/* Content */}
               <div className="p-6 space-y-4">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Définissez la date limite de soumission pour TOUS les devoirs. Après cette date, aucun étudiant ne pourra soumettre aucun devoir.
+                </p>
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Date limite de soumission *
+                    Date limite de soumission pour tous les devoirs
                   </label>
                   <input
                     type="datetime-local"
-                    value={deadlineInput}
-                    onChange={e => setDeadlineInput(e.target.value)}
+                    value={globalDeadlineInput}
+                    onChange={e => setGlobalDeadlineInput(e.target.value)}
                     className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 text-slate-900 dark:text-white text-base"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                    Les étudiants ne pourront pas soumettre après cette date et heure
-                  </p>
                 </div>
 
-                {deadlineInput && (
+                {globalDeadlineInput && (
                   <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
                     <p className="text-sm text-orange-800 dark:text-orange-200">
-                      <strong>Deadline:</strong> {new Date(deadlineInput).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <strong>Deadline:</strong> {new Date(globalDeadlineInput).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 )}
 
-                {deadlineError && (
+                {globalSubmissionDeadline && (
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      <strong>Deadline actuelle:</strong> {new Date(globalSubmissionDeadline).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                )}
+
+                {globalDeadlineError && (
                   <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <p className="text-sm text-red-600 dark:text-red-400">{deadlineError}</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">{globalDeadlineError}</p>
                   </div>
                 )}
               </div>
@@ -3899,19 +3650,27 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
               {/* Footer */}
               <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex gap-3">
                 <button
-                  onClick={closeDeadlineModal}
-                  disabled={deadlineSaving}
+                  onClick={closeGlobalDeadlineModal}
+                  disabled={globalDeadlineSaving}
                   className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-40"
                 >
                   Annuler
                 </button>
+                {globalSubmissionDeadline && (
+                  <button
+                    onClick={handleRemoveGlobalDeadline}
+                    disabled={globalDeadlineSaving}
+                    className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors disabled:opacity-40"
+                  >
+                    Supprimer
+                  </button>
+                )}
                 <button
-                  onClick={handleSetDeadline}
-                  disabled={deadlineSaving || !deadlineInput}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+                  onClick={handleSetGlobalDeadline}
+                  disabled={globalDeadlineSaving || !globalDeadlineInput}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-40"
                 >
-                  <Calendar className="w-4 h-4" />
-                  {deadlineSaving ? 'Enregistrement...' : 'Définir la deadline'}
+                  {globalDeadlineSaving ? 'Enregistrement...' : 'Définir'}
                 </button>
               </div>
             </div>
