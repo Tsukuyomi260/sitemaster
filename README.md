@@ -1,46 +1,104 @@
-# Getting Started with Create React App
+# 🏦 ENSET-MASTERS
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> **Plateforme de gestion pédagogique pour les Masters de l'ENSET — réunissant étudiants, enseignants et administrateurs dans une seule interface intuitive**
 
-## Available Scripts
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat&logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?style=flat&logo=supabase)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-06B6D4?style=flat&logo=tailwindcss)
 
-In the project directory, you can run:
+## 🎯 Le problème
 
-### `npm start`
+Les Masters de l'ENSET manquaient d'une plateforme centralisée pour gérer les cours, les devoirs et les évaluations. Les enseignants dispersaient les ressources par mail et SMS, les étudiants n'avaient pas de vue claire sur leurs progressions, et les administrateurs n'avaient aucune visibilité sur l'effectif pédagogique. **ENSET-MASTERS** unifie ces trois univers dans une application web moderne et sécurisée.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## ✨ Fonctionnalités clés
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- 👥 **3 rôles distincts** — Student, Teacher, Admin avec dashboards et permissions spécifiques
+- 📚 **Gestion des Masters** — Sélection de master et navigation par code d'accès
+- 📊 **Dashboard temps réel** — Vue d'ensemble des cours, devoirs, notes et présences
+- 🔐 **Authentification sécurisée** — Email/password via Supabase Auth + RLS PostgreSQL
+- 📁 **Gestion de contenu** — Blog, articles, ressources pédagogiques
+- ✨ **Animations fluides** — Framer Motion + GSAP pour UX premium
+- 📱 **Responsive design** — Mobile, tablette, desktop
+- 📦 **Export de données** — Téléchargement de devoirs et documents
 
-### `npm test`
+## 🚀 Stack technique
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+**Frontend**
+- React 19 · TypeScript · Tailwind CSS
+- Framer Motion · GSAP · Lucide Icons
+- React Scripts (CRA)
 
-### `npm run build`
+**Backend**
+- Supabase (PostgreSQL + Auth + RLS)
+- Row Level Security pour isolation par rôle
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+**Infra**
+- Vercel (frontend)
+- Supabase Hosting
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🏗️ Architecture
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+ENSET-MASTERS/
+├── src/
+│   ├── components/
+│   │   ├── MasterSelection.tsx          # Sélection du master
+│   │   ├── LoginInterface.tsx           # Authentification
+│   │   ├── RoleSelection.tsx            # Choix du rôle (si multi-rôle)
+│   │   ├── StudentDashboard.tsx         # Tableau de bord étudiant
+│   │   ├── TeacherDashboard.tsx         # Tableau de bord enseignant
+│   │   └── AdminDashboard.tsx           # Tableau de bord administrateur
+│   ├── App.tsx                          # Routeur principal
+│   └── index.tsx
+└── package.json
+```
 
-### `npm run eject`
+**Flux de navigation** : MasterSelection → LoginInterface → RoleSelection (optionnel) → Dashboard
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 💡 Décisions techniques notables
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **Supabase RLS** — Chaque rôle ne voit que ses données grâce à PostgreSQL policies, pas d'auth côté client
+- **Master selection en amont** — Permet une isolation par école/programme ; extensible pour multi-site
+- **Animations natives** — Framer Motion + GSAP pour une UX fluide sans impacter la performance
+- **Create React App** — Simplicité de déploiement et intégration facile avec Vercel
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## 📦 Installation locale
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```bash
+git clone https://github.com/modulororg/enset-masters.git
+cd enset-masters
 
-## Learn More
+# Installer les dépendances
+npm install
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Configurer les variables d'environnement
+cp .env.example .env
+# Remplir : REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_ANON_KEY
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# Démarrer en développement
+npm start        # Frontend sur http://localhost:3000
+
+# Build pour production
+npm run build
+```
+
+## 🔐 Sécurité & Données
+
+- **Row Level Security (RLS)** — Chaque utilisateur ne voit que ses données et celles accessibles par rôle
+- **Authentification Supabase** — Tokens JWT, sessions sécurisées
+- **.env sécurisé** — Variables sensibles jamais commitées (cf. `.gitignore`)
+
+## 👥 Rôles & Permissions
+
+| Rôle | Accès | Permissions |
+|------|-------|-------------|
+| **Student** | Mes cours, mes devoirs, mes notes | Consulter, soumettre travaux |
+| **Teacher** | Classe(s), édition contenu, notations | Créer cours, noter, consulter présences |
+| **Admin** | Toute la plateforme | Gestion users, stats, rapports |
+
+## 📬 Contact
+
+**Développé pour l'ENSET** — Bénin
+
+Pour toute question : [modulororg@gmail.com](mailto:modulororg@gmail.com)

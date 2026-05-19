@@ -483,46 +483,37 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
   const submissionStats = (() => {
     const totalStudents = students.length;
 
-    // Grouper par année d'étude pour compter les unique assignments
-    const submissionsByYear: Record<number, { studentMap: Record<string, any>; assignmentIds: Set<number> }> = {};
+    // Compter tous les assignments UNIQUES soumis (reflète le nombre réel de devoirs)
+    const allAssignmentIds = new Set<number>();
+    const byStudent: Record<string, { nom: string; matricule: string; count: number }> = {};
 
     for (const s of submissions) {
-      const studentYear = (s.students as any)?.annee_etude || (s.students as any)?.annee_academique || 1;
       const studentId = s.student_id;
 
-      if (!submissionsByYear[studentYear]) {
-        submissionsByYear[studentYear] = {
-          studentMap: {},
-          assignmentIds: new Set<number>()
-        };
-      }
+      allAssignmentIds.add(s.assignment_id);
 
-      if (!submissionsByYear[studentYear].studentMap[studentId]) {
-        submissionsByYear[studentYear].studentMap[studentId] = {
+      if (!byStudent[studentId]) {
+        byStudent[studentId] = {
           nom: s.students?.nom_complet || studentId,
           matricule: s.students?.matricule || studentId,
           count: 0,
         };
       }
 
-      submissionsByYear[studentYear].studentMap[studentId].count++;
-      submissionsByYear[studentYear].assignmentIds.add(s.assignment_id);
+      byStudent[studentId].count++;
     }
 
-    // Créer la liste d'étudiants avec percentages basés sur les assignments uniques de leur année
-    const studentList = Object.entries(submissionsByYear).flatMap(([year, data]) => {
-      const totalAssignmentsForYear = Math.max(1, data.assignmentIds.size);
+    // Utiliser le nombre UNIQUE d'assignments (tous les étudiants combinés)
+    const totalAssignmentsGlobal = Math.max(1, allAssignmentIds.size);
 
-      return Object.entries(data.studentMap).map(([id, student]) => ({
-        id,
-        nom: student.nom,
-        matricule: student.matricule,
-        count: student.count,
-        percent: Math.min(100, Math.round((student.count / totalAssignmentsForYear) * 100)),
-      }));
-    }).sort((a, b) => b.percent - a.percent);
-
-    const globalTotalAssignments = Object.values(submissionsByYear).reduce((max, data) => Math.max(max, data.assignmentIds.size), 1);
+    // Créer la liste d'étudiants avec le même dénominateur pour tous
+    const studentList = Object.entries(byStudent).map(([id, student]) => ({
+      id,
+      nom: student.nom,
+      matricule: student.matricule,
+      count: student.count,
+      percent: Math.min(100, Math.round((student.count / totalAssignmentsGlobal) * 100)),
+    })).sort((a, b) => b.percent - a.percent);
     const submittedAll = studentList.filter(s => s.percent === 100).length;
     const submittedSome = studentList.filter(s => s.percent > 0 && s.percent < 100).length;
     const submittedNone = Math.max(0, totalStudents - studentList.length);
@@ -530,7 +521,9 @@ export default function AdminDashboard({ adminName, onLogout }: AdminDashboardPr
       ? Math.round(studentList.reduce((acc, s) => acc + s.percent, 0) / studentList.length)
       : 0;
 
-    return { totalAssignments: globalTotalAssignments, totalStudents, submittedAll, submittedSome, submittedNone, globalRate, studentList };
+    console.log('📊 Submission Stats:', { totalAssignmentsGlobal, totalStudents, submittedAll, submittedSome, submittedNone });
+
+    return { totalAssignments: totalAssignmentsGlobal, totalStudents, submittedAll, submittedSome, submittedNone, globalRate, studentList };
   })();
 
   // Effet pour logger les changements de submissions
