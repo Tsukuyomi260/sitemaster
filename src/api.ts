@@ -1441,7 +1441,7 @@ export async function getTotalAssignmentsByYear(anneeEtude: number) {
 
 export async function getAllSubmissions() {
   try {
-    // Récupérer toutes les soumissions sans JOIN sur assignments (table souvent vide)
+    // Récupérer toutes les soumissions
     const { data: submissions, error } = await supabase
       .from('assignment_submissions')
       .select('*')
@@ -1449,26 +1449,38 @@ export async function getAllSubmissions() {
 
     if (error) throw error;
 
-    // Récupérer les informations des étudiants
-    const allIds = submissions?.map(s => s.student_id) || [];
-    const studentIds = allIds.filter((id, idx) => allIds.indexOf(id) === idx);
+    if (!submissions || submissions.length === 0) {
+      return [];
+    }
 
-    const { data: studentsInfo } = await supabase
+    // Récupérer les IDs d'étudiants uniques
+    const studentIds = [...new Set(submissions.map(s => s.student_id))];
+
+    if (studentIds.length === 0) {
+      return submissions.map(s => ({ ...s, students: null, assignments: null }));
+    }
+
+    // Récupérer les infos des étudiants
+    const { data: studentsInfo, error: studentsError } = await supabase
       .from('students')
       .select('id, nom_complet, matricule, email, niveau, annee_etude, annee_academique')
       .in('id', studentIds);
 
+    if (studentsError) {
+      console.error('Erreur lors de la récupération des étudiants:', studentsError);
+    }
+
     // Combiner soumissions + infos étudiants
-    const submissionsWithDetails = submissions?.map(submission => {
-      const student = studentsInfo?.find(s => s.id === submission.student_id);
+    const submissionsWithDetails = submissions.map(submission => {
+      const student = (studentsInfo || []).find(s => s.id === submission.student_id);
       return {
         ...submission,
         assignments: null,
-        students: student
+        students: student || null
       };
     });
 
-    return submissionsWithDetails || [];
+    return submissionsWithDetails;
   } catch (error) {
     console.error('Erreur lors de la récupération de toutes les soumissions:', error);
     throw error;
